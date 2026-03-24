@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StatusBadge from '@/components/shared/StatusBadge';
+import { formatAddress } from '@/types';
 import type { Customer } from '@/types';
 
 const CustomerDetail = () => {
@@ -20,7 +21,7 @@ const CustomerDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from('customers').select('*').eq('id', id!).eq('user_id', user!.id).single();
       if (error) throw error;
-      return data as Customer;
+      return data as any as Customer;
     },
     enabled: !!user && !!id,
   });
@@ -71,6 +72,7 @@ const CustomerDetail = () => {
     return <div className="p-6 text-center text-muted-foreground">{t.common.noResults}</div>;
   }
 
+  const addr = formatAddress(customer);
   const offerStatusLabels: Record<string, string> = { draft: t.offers.draft, sent: t.offers.sent, accepted: t.offers.accepted, rejected: t.offers.rejected };
   const invoiceStatusLabels: Record<string, string> = { open: t.invoices.open, paid: t.invoices.paid, overdue: t.invoices.overdue, cancelled: t.invoices.cancelled };
 
@@ -103,7 +105,7 @@ const CustomerDetail = () => {
             {customer.contact_person && <p className="text-muted-foreground">{t.customers.contactPerson}: {customer.contact_person}</p>}
             {customer.phone && <p className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {customer.phone}</p>}
             {customer.email && <p className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4" /> {customer.email}</p>}
-            {customer.address && <p className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4" /> {customer.address}</p>}
+            {addr && <p className="flex items-start gap-2 text-muted-foreground"><MapPin className="h-4 w-4 mt-0.5" /> <span className="whitespace-pre-line">{addr}</span></p>}
             {customer.notes && (
               <div className="mt-4 rounded-lg bg-muted/50 p-3">
                 <p className="text-xs font-medium text-muted-foreground mb-1">{t.customers.notes}</p>
@@ -113,7 +115,6 @@ const CustomerDetail = () => {
           </div>
         </div>
 
-        {/* Extension fields */}
         {extension && extension.business_category !== 'general' && (
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
             <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
@@ -141,7 +142,6 @@ const CustomerDetail = () => {
           </div>
         )}
 
-        {/* Related Offers */}
         {relatedOffers.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
             <h3 className="mb-3 font-semibold text-foreground">{t.customers.relatedOffers}</h3>
@@ -162,7 +162,6 @@ const CustomerDetail = () => {
           </div>
         )}
 
-        {/* Related Invoices */}
         {relatedInvoices.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
             <h3 className="mb-3 font-semibold text-foreground">{t.customers.relatedInvoices}</h3>

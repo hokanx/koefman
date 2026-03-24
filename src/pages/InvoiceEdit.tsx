@@ -22,6 +22,9 @@ const InvoiceEdit = () => {
   const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState<InvoiceStatus>('open');
   const [notes, setNotes] = useState('');
+  const [introText, setIntroText] = useState('');
+  const [footerText, setFooterText] = useState('');
+  const [closingText, setClosingText] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
 
   const { data: invoice } = useQuery({
@@ -59,6 +62,9 @@ const InvoiceEdit = () => {
       setDueDate(invoice.due_date);
       setStatus(invoice.status as InvoiceStatus);
       setNotes(invoice.notes || '');
+      setIntroText((invoice as any).intro_text || '');
+      setFooterText((invoice as any).footer_text || '');
+      setClosingText((invoice as any).closing_text || '');
     }
   }, [invoice]);
 
@@ -80,8 +86,9 @@ const InvoiceEdit = () => {
 
       const { error } = await supabase.from('invoices').update({
         customer_id: customerId, date, due_date: dueDate, status, notes,
+        intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total,
-      }).eq('id', id!);
+      } as any).eq('id', id!);
       if (error) throw error;
 
       await supabase.from('invoice_items').delete().eq('invoice_id', id!);
@@ -112,6 +119,8 @@ const InvoiceEdit = () => {
     mutation.mutate();
   };
 
+  const inputClass = "w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none";
+
   return (
     <div className="animate-fade-in p-4 md:p-6">
       <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -122,8 +131,7 @@ const InvoiceEdit = () => {
         <FormSection title={t.invoices.invoiceDetails}>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.customer} *</label>
-            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none">
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required className={inputClass}>
               <option value="">{t.invoices.selectCustomer}</option>
               {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -131,29 +139,40 @@ const InvoiceEdit = () => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.date}</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none" />
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
             </div>
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.dueDate}</label>
-              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none" />
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputClass} />
             </div>
           </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.status}</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value as InvoiceStatus)}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none">
+            <select value={status} onChange={(e) => setStatus(e.target.value as InvoiceStatus)} className={inputClass}>
               <option value="open">{t.invoices.open}</option>
               <option value="paid">{t.invoices.paid}</option>
               <option value="overdue">{t.invoices.overdue}</option>
               <option value="cancelled">{t.invoices.cancelled}</option>
             </select>
           </div>
+        </FormSection>
+
+        <FormSection title={t.invoices.documentTexts}>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.introText}</label>
+            <textarea value={introText} onChange={(e) => setIntroText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+          </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.notes}</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none resize-none" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.footerText}</label>
+            <textarea value={footerText} onChange={(e) => setFooterText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.closingText}</label>
+            <input type="text" value={closingText} onChange={(e) => setClosingText(e.target.value)} className={inputClass} />
           </div>
         </FormSection>
 

@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { generatePdf } from '@/lib/generatePdf';
+import { formatAddress } from '@/types';
 import type { InvoiceStatus } from '@/types';
 
 const InvoiceDetail = () => {
@@ -67,6 +68,10 @@ const InvoiceDetail = () => {
     if (!invoice) return;
     setGenerating(true);
     try {
+      const customer = (invoice as any).customer;
+      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customerAddress = customer ? formatAddress(customer) : '';
+
       await generatePdf({
         type: 'invoice',
         documentTitle: t.invoices.documentTitle,
@@ -75,23 +80,30 @@ const InvoiceDetail = () => {
         dueDate: new Date(invoice.due_date).toLocaleDateString(),
         business: {
           business_name: settings?.business_name || '',
-          address: settings?.address || undefined,
+          address: businessAddress || undefined,
           email: settings?.email || undefined,
           phone: settings?.phone || undefined,
           tax_number: settings?.tax_number || undefined,
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
           payment_terms: settings?.payment_terms || undefined,
+          account_holder: (settings as any)?.account_holder || undefined,
+          bank_name: (settings as any)?.bank_name || undefined,
+          iban: (settings as any)?.iban || undefined,
+          bic: (settings as any)?.bic || undefined,
         },
         customer: {
-          name: (invoice as any).customer?.name || '',
-          address: (invoice as any).customer?.address || undefined,
+          name: customer?.name || '',
+          address: customerAddress || undefined,
         },
         items: items.map((i: any) => ({
           title: i.title, description: i.description, quantity: i.quantity,
           unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
         })),
         subtotal: invoice.subtotal, tax_total: invoice.tax_total, grand_total: invoice.grand_total,
+        intro_text: (invoice as any).intro_text || undefined,
+        footer_text: (invoice as any).footer_text || undefined,
+        closing_text: (invoice as any).closing_text || undefined,
         notes: invoice.notes || undefined,
         labels: {
           date: t.invoices.date, dueDate: t.invoices.dueDate, quantity: t.invoices.quantity,
