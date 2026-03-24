@@ -36,6 +36,7 @@ export type Database = {
           house_number: string | null
           iban: string | null
           id: string
+          intake_token: string | null
           invoice_number_prefix: string
           language: string
           logo_url: string | null
@@ -70,6 +71,7 @@ export type Database = {
           house_number?: string | null
           iban?: string | null
           id?: string
+          intake_token?: string | null
           invoice_number_prefix?: string
           language?: string
           logo_url?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           house_number?: string | null
           iban?: string | null
           id?: string
+          intake_token?: string | null
           invoice_number_prefix?: string
           language?: string
           logo_url?: string | null
@@ -231,6 +234,98 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      intake_submissions: {
+        Row: {
+          business_category: string | null
+          city: string | null
+          cleaning_frequency: string | null
+          company_or_name: string
+          contact_person: string | null
+          converted_customer_id: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          house_number: string | null
+          id: string
+          notes: string | null
+          owner_id: string
+          phone: string | null
+          postal_code: string | null
+          property_size: string | null
+          repair_notes: string | null
+          service_location: string | null
+          service_notes: string | null
+          service_type: string | null
+          status: string
+          street: string | null
+          vehicle_brand: string | null
+          vehicle_model: string | null
+          vehicle_plate: string | null
+        }
+        Insert: {
+          business_category?: string | null
+          city?: string | null
+          cleaning_frequency?: string | null
+          company_or_name?: string
+          contact_person?: string | null
+          converted_customer_id?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          house_number?: string | null
+          id?: string
+          notes?: string | null
+          owner_id: string
+          phone?: string | null
+          postal_code?: string | null
+          property_size?: string | null
+          repair_notes?: string | null
+          service_location?: string | null
+          service_notes?: string | null
+          service_type?: string | null
+          status?: string
+          street?: string | null
+          vehicle_brand?: string | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+        }
+        Update: {
+          business_category?: string | null
+          city?: string | null
+          cleaning_frequency?: string | null
+          company_or_name?: string
+          contact_person?: string | null
+          converted_customer_id?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          house_number?: string | null
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          phone?: string | null
+          postal_code?: string | null
+          property_size?: string | null
+          repair_notes?: string | null
+          service_location?: string | null
+          service_notes?: string | null
+          service_type?: string | null
+          status?: string
+          street?: string | null
+          vehicle_brand?: string | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_submissions_converted_customer_id_fkey"
+            columns: ["converted_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_items: {
         Row: {

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-type StatusVariant = 'draft' | 'sent' | 'accepted' | 'rejected' | 'open' | 'paid' | 'overdue' | 'cancelled';
+type StatusVariant = 'draft' | 'sent' | 'accepted' | 'rejected' | 'open' | 'paid' | 'overdue' | 'cancelled' | 'new' | 'reviewed' | 'converted' | 'archived';
 
 const variants: Record<StatusVariant, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -11,17 +11,22 @@ const variants: Record<StatusVariant, string> = {
   paid: 'bg-success/15 text-success',
   overdue: 'bg-warning/15 text-warning',
   cancelled: 'bg-muted text-muted-foreground',
+  new: 'bg-info/15 text-info',
+  reviewed: 'bg-warning/15 text-warning',
+  converted: 'bg-success/15 text-success',
+  archived: 'bg-muted text-muted-foreground',
 };
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
   status: StatusVariant;
-  label: string;
+  label?: string;
 }
 
 const StatusBadge = ({ status, label }: StatusBadgeProps) => {
+  const variant = variants[status] || variants.draft;
   return (
-    <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium', variants[status])}>
-      {label}
+    <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium', variant)}>
+      {label || status}
     </span>
   );
 };
