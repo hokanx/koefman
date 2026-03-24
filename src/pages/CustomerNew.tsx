@@ -18,7 +18,7 @@ const CustomerNew = () => {
 
   const [form, setForm] = useState({
     name: '', customer_type: 'private' as CustomerType, contact_person: '',
-    phone: '', email: '', address: '', notes: '',
+    phone: '', email: '', street: '', house_number: '', postal_code: '', city: '', country: '', notes: '',
   });
   const [ext, setExt] = useState({
     vehicle_plate: '', vehicle_brand: '', vehicle_model: '', repair_notes: '',
@@ -35,16 +35,23 @@ const CustomerNew = () => {
     enabled: !!user,
   });
 
-  // Set category from settings
   const category = settings?.business_category || 'general';
 
   const mutation = useMutation({
     mutationFn: async () => {
+      const address = [
+        [form.street, form.house_number].filter(Boolean).join(' '),
+        [form.postal_code, form.city].filter(Boolean).join(' '),
+        form.country,
+      ].filter(Boolean).join('\n');
+
       const { data: customer, error } = await supabase.from('customers').insert({
-        ...form, user_id: user!.id,
-      }).select().single();
+        name: form.name, customer_type: form.customer_type, contact_person: form.contact_person,
+        phone: form.phone, email: form.email, address, notes: form.notes, user_id: user!.id,
+        street: form.street, house_number: form.house_number, postal_code: form.postal_code,
+        city: form.city, country: form.country,
+      } as any).select().single();
       if (error) throw error;
-      // Insert extension if category is not general
       if (category !== 'general') {
         await supabase.from('customer_extensions').insert({
           customer_id: customer!.id, business_category: category, ...ext,
@@ -67,6 +74,7 @@ const CustomerNew = () => {
   };
 
   const update = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
+  const inputClass = "w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none";
 
   return (
     <div className="animate-fade-in p-4 md:p-6">
@@ -78,42 +86,59 @@ const CustomerNew = () => {
         <FormSection title={t.customers.customerDetails}>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.customers.customerType}</label>
-            <select value={form.customer_type} onChange={(e) => update('customer_type', e.target.value)}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none">
+            <select value={form.customer_type} onChange={(e) => update('customer_type', e.target.value)} className={inputClass}>
               <option value="private">{t.customers.private}</option>
               <option value="business">{t.customers.business}</option>
             </select>
           </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.customers.name} *</label>
-            <input type="text" value={form.name} onChange={(e) => update('name', e.target.value)} required
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none" />
+            <input type="text" value={form.name} onChange={(e) => update('name', e.target.value)} required className={inputClass} />
           </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.customers.contactPerson}</label>
-            <input type="text" value={form.contact_person} onChange={(e) => update('contact_person', e.target.value)}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none" />
+            <input type="text" value={form.contact_person} onChange={(e) => update('contact_person', e.target.value)} className={inputClass} />
           </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.customers.phone}</label>
-            <input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none" />
+            <input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} className={inputClass} />
           </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.customers.email}</label>
-            <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none" />
+            <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} className={inputClass} />
+          </div>
+        </FormSection>
+
+        <FormSection title={t.customers.address}>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <label className="mb-1 block text-sm text-muted-foreground">{t.customers.street}</label>
+              <input type="text" value={form.street} onChange={(e) => update('street', e.target.value)} className={inputClass} />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">{t.customers.houseNumber}</label>
+              <input type="text" value={form.house_number} onChange={(e) => update('house_number', e.target.value)} className={inputClass} />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">{t.customers.postalCode}</label>
+              <input type="text" value={form.postal_code} onChange={(e) => update('postal_code', e.target.value)} className={inputClass} />
+            </div>
+            <div className="col-span-2">
+              <label className="mb-1 block text-sm text-muted-foreground">{t.customers.city}</label>
+              <input type="text" value={form.city} onChange={(e) => update('city', e.target.value)} className={inputClass} />
+            </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.customers.address}</label>
-            <textarea value={form.address} onChange={(e) => update('address', e.target.value)} rows={2}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none resize-none" />
+            <label className="mb-1 block text-sm text-muted-foreground">{t.customers.country}</label>
+            <input type="text" value={form.country} onChange={(e) => update('country', e.target.value)} className={inputClass} />
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.customers.notes}</label>
-            <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none resize-none" />
-          </div>
+        </FormSection>
+
+        <FormSection title={t.customers.notes}>
+          <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2}
+            className={`${inputClass} resize-none`} />
         </FormSection>
 
         {category !== 'general' && (

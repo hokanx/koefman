@@ -22,6 +22,9 @@ const OfferEdit = () => {
   const [status, setStatus] = useState<OfferStatus>('draft');
   const [notes, setNotes] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
+  const [introText, setIntroText] = useState('');
+  const [footerText, setFooterText] = useState('');
+  const [closingText, setClosingText] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
 
   const { data: offer } = useQuery({
@@ -59,6 +62,9 @@ const OfferEdit = () => {
       setStatus(offer.status as OfferStatus);
       setNotes(offer.notes || '');
       setInternalNotes(offer.internal_notes || '');
+      setIntroText((offer as any).intro_text || '');
+      setFooterText((offer as any).footer_text || '');
+      setClosingText((offer as any).closing_text || '');
     }
   }, [offer]);
 
@@ -80,11 +86,11 @@ const OfferEdit = () => {
 
       const { error } = await supabase.from('offers').update({
         customer_id: customerId, date, status, notes, internal_notes: internalNotes,
+        intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total,
-      }).eq('id', id!);
+      } as any).eq('id', id!);
       if (error) throw error;
 
-      // Delete old items and insert new
       await supabase.from('offer_items').delete().eq('offer_id', id!);
       if (items.length > 0) {
         const { error: itemsError } = await supabase.from('offer_items').insert(
@@ -113,6 +119,8 @@ const OfferEdit = () => {
     mutation.mutate();
   };
 
+  const inputClass = "w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none";
+
   return (
     <div className="animate-fade-in p-4 md:p-6">
       <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -123,8 +131,7 @@ const OfferEdit = () => {
         <FormSection title={t.offers.offerDetails}>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.customer} *</label>
-            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none">
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required className={inputClass}>
               <option value="">{t.offers.selectCustomer}</option>
               {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -132,13 +139,11 @@ const OfferEdit = () => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t.offers.date}</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none" />
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
             </div>
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t.offers.status}</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as OfferStatus)}
-                className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none">
+              <select value={status} onChange={(e) => setStatus(e.target.value as OfferStatus)} className={inputClass}>
                 <option value="draft">{t.offers.draft}</option>
                 <option value="sent">{t.offers.sent}</option>
                 <option value="accepted">{t.offers.accepted}</option>
@@ -146,15 +151,28 @@ const OfferEdit = () => {
               </select>
             </div>
           </div>
+        </FormSection>
+
+        <FormSection title={t.offers.documentTexts}>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.introText}</label>
+            <textarea value={introText} onChange={(e) => setIntroText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+          </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.notes}</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none resize-none" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.footerText}</label>
+            <textarea value={footerText} onChange={(e) => setFooterText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.closingText}</label>
+            <input type="text" value={closingText} onChange={(e) => setClosingText(e.target.value)} className={inputClass} />
           </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.internalNotes}</label>
-            <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={2}
-              className="w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none resize-none" />
+            <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
           </div>
         </FormSection>
 
