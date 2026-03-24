@@ -17,9 +17,9 @@ const variants: Record<StatusVariant, string> = {
   archived: 'bg-muted text-muted-foreground',
 };
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
   status: StatusVariant;
-  label: string;
+  label?: string;
 }
 
 const StatusBadge = ({ status, label }: StatusBadgeProps) => {
