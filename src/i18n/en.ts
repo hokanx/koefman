@@ -50,6 +50,7 @@ export const en: Translations = {
     customers: 'Customers',
     offers: 'Offers',
     invoices: 'Invoices',
+    leads: 'Leads',
     settings: 'Settings',
     logout: 'Logout',
   },

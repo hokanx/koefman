@@ -48,6 +48,7 @@ export const de = {
     customers: 'Kunden',
     offers: 'Angebote',
     invoices: 'Rechnungen',
+    leads: 'Anfragen',
     settings: 'Einstellungen',
     logout: 'Abmelden',
   },

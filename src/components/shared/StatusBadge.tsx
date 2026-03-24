@@ -23,9 +23,10 @@ export interface StatusBadgeProps {
 }
 
 const StatusBadge = ({ status, label }: StatusBadgeProps) => {
+  const variant = variants[status] || variants.draft;
   return (
-    <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium', variants[status])}>
-      {label}
+    <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium', variant)}>
+      {label || status}
     </span>
   );
 };

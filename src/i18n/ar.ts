@@ -50,6 +50,7 @@ export const ar: Translations = {
     customers: 'العملاء',
     offers: 'العروض',
     invoices: 'الفواتير',
+    leads: 'الطلبات',
     settings: 'الإعدادات',
     logout: 'تسجيل الخروج',
   },
