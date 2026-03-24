@@ -1,17 +1,23 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Download, FileText, Edit } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from '@/components/shared/StatusBadge';
-import type { Offer, OfferStatus } from '@/types';
+import { toast } from 'sonner';
+import { generatePdf } from '@/lib/generatePdf';
+import type { OfferStatus } from '@/types';
 
 const OfferDetail = () => {
   const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [generating, setGenerating] = useState(false);
+  const [converting, setConverting] = useState(false);
 
   const statusLabels: Record<OfferStatus, string> = {
     draft: t.offers.draft, sent: t.offers.sent, accepted: t.offers.accepted, rejected: t.offers.rejected,
@@ -22,12 +28,12 @@ const OfferDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('offers')
-        .select('*, customer:customers(name)')
+        .select('*, customer:customers(*)')
         .eq('id', id!)
         .eq('user_id', user!.id)
         .single();
       if (error) throw error;
-      return data as Offer & { customer: { name: string } | null };
+      return data;
     },
     enabled: !!user && !!id,
   });
@@ -35,20 +41,126 @@ const OfferDetail = () => {
   const { data: items = [] } = useQuery({
     queryKey: ['offer-items', id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('offer_items')
-        .select('*')
-        .eq('offer_id', id!)
-        .order('sort_order');
+      const { data } = await supabase.from('offer_items').select('*').eq('offer_id', id!).order('sort_order');
       return data || [];
     },
     enabled: !!id,
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ['business-settings'],
+    queryFn: async () => {
+      const { data } = await supabase.from('business_settings').select('*').eq('user_id', user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Check if already converted
+  const { data: linkedInvoices = [] } = useQuery({
+    queryKey: ['linked-invoices', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('invoices').select('id, invoice_number').eq('source_offer_id', id!);
+      return data || [];
+    },
+    enabled: !!id,
+  });
+
+  const handlePdfExport = async () => {
+    if (!offer) return;
+    setGenerating(true);
+    try {
+      await generatePdf({
+        type: 'offer',
+        documentTitle: t.offers.documentTitle,
+        documentNumber: offer.offer_number,
+        date: new Date(offer.date).toLocaleDateString(),
+        business: {
+          business_name: settings?.business_name || '',
+          address: settings?.address || undefined,
+          email: settings?.email || undefined,
+          phone: settings?.phone || undefined,
+          tax_number: settings?.tax_number || undefined,
+          vat_id: settings?.vat_id || undefined,
+          logo_url: settings?.logo_url || undefined,
+          payment_terms: settings?.payment_terms || undefined,
+        },
+        customer: {
+          name: (offer as any).customer?.name || '',
+          address: (offer as any).customer?.address || undefined,
+        },
+        items: items.map((i: any) => ({
+          title: i.title, description: i.description, quantity: i.quantity,
+          unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
+        })),
+        subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
+        notes: offer.notes || undefined,
+        labels: {
+          date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
+          unitPrice: t.offers.unitPrice, taxRate: t.offers.taxRate, total: t.offers.total,
+          subtotal: t.offers.subtotal, taxTotal: t.offers.taxTotal, grandTotal: t.offers.grandTotal,
+          description: t.offers.description, itemTitle: t.offers.itemTitle, page: 'Seite',
+        },
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleConvertToInvoice = async () => {
+    if (!offer || !user) return;
+    if (linkedInvoices.length > 0) {
+      if (!confirm(t.common.convertConfirm)) return;
+    }
+    setConverting(true);
+    try {
+      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+      const prefix = settings?.invoice_number_prefix || 'RE-';
+      const invoiceNumber = `${prefix}${String((count ?? 0) + 1).padStart(4, '0')}`;
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 14);
+
+      const { data: invoice, error } = await supabase.from('invoices').insert({
+        user_id: user.id,
+        customer_id: offer.customer_id,
+        source_offer_id: offer.id,
+        invoice_number: invoiceNumber,
+        date: new Date().toISOString().split('T')[0],
+        due_date: dueDate.toISOString().split('T')[0],
+        status: 'open',
+        notes: offer.notes,
+        subtotal: offer.subtotal,
+        tax_total: offer.tax_total,
+        grand_total: offer.grand_total,
+      }).select().single();
+      if (error) throw error;
+
+      if (items.length > 0) {
+        await supabase.from('invoice_items').insert(
+          items.map((item: any, index: number) => ({
+            invoice_id: invoice!.id,
+            title: item.title, description: item.description, quantity: item.quantity,
+            unit: item.unit, unit_price: item.unit_price, tax_rate: item.tax_rate,
+            total: item.total, sort_order: index,
+          }))
+        );
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['linked-invoices', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoice-counts'] });
+      toast.success(t.common.conversionSuccess);
+      navigate(`/invoices/${invoice!.id}`);
+    } catch {
+      toast.error(t.common.error);
+    } finally {
+      setConverting(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center p-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   }
-
   if (!offer) {
     return <div className="p-6 text-center text-muted-foreground">{t.common.noResults}</div>;
   }
@@ -66,10 +178,36 @@ const OfferDetail = () => {
               <h2 className="text-xl font-bold text-foreground">{offer.offer_number}</h2>
               <p className="text-sm text-muted-foreground">{(offer as any).customer?.name}</p>
             </div>
-            <StatusBadge status={offer.status} label={statusLabels[offer.status]} />
+            <StatusBadge status={offer.status as any} label={statusLabels[offer.status as OfferStatus]} />
           </div>
           <p className="text-sm text-muted-foreground">{t.offers.date}: {new Date(offer.date).toLocaleDateString()}</p>
           {offer.notes && <p className="mt-2 text-sm text-foreground">{offer.notes}</p>}
+
+          {linkedInvoices.length > 0 && (
+            <div className="mt-3 rounded-lg bg-muted/50 p-2 text-sm text-muted-foreground">
+              {t.invoices.fromOffer}: {linkedInvoices.map((inv) => (
+                <Link key={inv.id} to={`/invoices/${inv.id}`} className="font-medium text-primary hover:underline ml-1">{inv.invoice_number}</Link>
+              ))}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link to={`/offers/${id}/edit`}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+              <Edit className="h-4 w-4" /> {t.offers.editOffer}
+            </Link>
+            <button onClick={handlePdfExport} disabled={generating}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
+              <Download className="h-4 w-4" /> {generating ? t.common.generating : t.common.downloadPdf}
+            </button>
+            {offer.status === 'accepted' && (
+              <button onClick={handleConvertToInvoice} disabled={converting}
+                className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                <FileText className="h-4 w-4" /> {converting ? t.common.loading : t.offers.convertToInvoice}
+              </button>
+            )}
+          </div>
         </div>
 
         {items.length > 0 && (
@@ -89,16 +227,13 @@ const OfferDetail = () => {
             </div>
             <div className="mt-3 space-y-1 border-t border-border pt-3 text-sm">
               <div className="flex justify-between text-muted-foreground">
-                <span>{t.offers.subtotal}</span>
-                <span>{t.common.currency}{offer.subtotal.toFixed(2)}</span>
+                <span>{t.offers.subtotal}</span><span>{t.common.currency}{offer.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
-                <span>{t.offers.taxTotal}</span>
-                <span>{t.common.currency}{offer.tax_total.toFixed(2)}</span>
+                <span>{t.offers.taxTotal}</span><span>{t.common.currency}{offer.tax_total.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-semibold text-foreground">
-                <span>{t.offers.grandTotal}</span>
-                <span>{t.common.currency}{offer.grand_total.toFixed(2)}</span>
+                <span>{t.offers.grandTotal}</span><span>{t.common.currency}{offer.grand_total.toFixed(2)}</span>
               </div>
             </div>
           </div>

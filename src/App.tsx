@@ -11,12 +11,15 @@ import Dashboard from "@/pages/Dashboard";
 import Customers from "@/pages/Customers";
 import CustomerNew from "@/pages/CustomerNew";
 import CustomerDetail from "@/pages/CustomerDetail";
+import CustomerEdit from "@/pages/CustomerEdit";
 import Offers from "@/pages/Offers";
 import OfferNew from "@/pages/OfferNew";
 import OfferDetail from "@/pages/OfferDetail";
+import OfferEdit from "@/pages/OfferEdit";
 import Invoices from "@/pages/Invoices";
 import InvoiceNew from "@/pages/InvoiceNew";
 import InvoiceDetail from "@/pages/InvoiceDetail";
+import InvoiceEdit from "@/pages/InvoiceEdit";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 
@@ -37,12 +40,15 @@ const App = () => (
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/customers/new" element={<CustomerNew />} />
                 <Route path="/customers/:id" element={<CustomerDetail />} />
+                <Route path="/customers/:id/edit" element={<CustomerEdit />} />
                 <Route path="/offers" element={<Offers />} />
                 <Route path="/offers/new" element={<OfferNew />} />
                 <Route path="/offers/:id" element={<OfferDetail />} />
+                <Route path="/offers/:id/edit" element={<OfferEdit />} />
                 <Route path="/invoices" element={<Invoices />} />
                 <Route path="/invoices/new" element={<InvoiceNew />} />
                 <Route path="/invoices/:id" element={<InvoiceDetail />} />
+                <Route path="/invoices/:id/edit" element={<InvoiceEdit />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
               <Route path="*" element={<NotFound />} />
