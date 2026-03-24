@@ -30,10 +30,10 @@ const IntakeForm = () => {
   useEffect(() => {
     if (!token) { setInvalid(true); setLoading(false); return; }
     const resolve = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('business_settings')
         .select('user_id, business_name, business_category')
-        .eq('intake_token' as any, token)
+        .eq('intake_token', token)
         .maybeSingle();
       if (error || !data) { setInvalid(true); setLoading(false); return; }
       setOwnerId(data.user_id);
