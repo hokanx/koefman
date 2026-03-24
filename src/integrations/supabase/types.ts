@@ -16,13 +16,25 @@ export type Database = {
     Tables: {
       business_settings: {
         Row: {
+          account_holder: string | null
           address: string | null
+          bank_name: string | null
+          bic: string | null
           business_category: string
           business_name: string
+          city: string | null
+          country: string | null
           created_at: string
           currency: string
+          default_closing_text: string | null
+          default_invoice_footer_text: string | null
+          default_invoice_intro_text: string | null
+          default_offer_footer_text: string | null
+          default_offer_intro_text: string | null
           default_tax_rate: number
           email: string | null
+          house_number: string | null
+          iban: string | null
           id: string
           invoice_number_prefix: string
           language: string
@@ -30,19 +42,33 @@ export type Database = {
           offer_number_prefix: string
           payment_terms: string | null
           phone: string | null
+          postal_code: string | null
+          street: string | null
           tax_number: string | null
           updated_at: string
           user_id: string
           vat_id: string | null
         }
         Insert: {
+          account_holder?: string | null
           address?: string | null
+          bank_name?: string | null
+          bic?: string | null
           business_category?: string
           business_name?: string
+          city?: string | null
+          country?: string | null
           created_at?: string
           currency?: string
+          default_closing_text?: string | null
+          default_invoice_footer_text?: string | null
+          default_invoice_intro_text?: string | null
+          default_offer_footer_text?: string | null
+          default_offer_intro_text?: string | null
           default_tax_rate?: number
           email?: string | null
+          house_number?: string | null
+          iban?: string | null
           id?: string
           invoice_number_prefix?: string
           language?: string
@@ -50,19 +76,33 @@ export type Database = {
           offer_number_prefix?: string
           payment_terms?: string | null
           phone?: string | null
+          postal_code?: string | null
+          street?: string | null
           tax_number?: string | null
           updated_at?: string
           user_id: string
           vat_id?: string | null
         }
         Update: {
+          account_holder?: string | null
           address?: string | null
+          bank_name?: string | null
+          bic?: string | null
           business_category?: string
           business_name?: string
+          city?: string | null
+          country?: string | null
           created_at?: string
           currency?: string
+          default_closing_text?: string | null
+          default_invoice_footer_text?: string | null
+          default_invoice_intro_text?: string | null
+          default_offer_footer_text?: string | null
+          default_offer_intro_text?: string | null
           default_tax_rate?: number
           email?: string | null
+          house_number?: string | null
+          iban?: string | null
           id?: string
           invoice_number_prefix?: string
           language?: string
@@ -70,6 +110,8 @@ export type Database = {
           offer_number_prefix?: string
           payment_terms?: string | null
           phone?: string | null
+          postal_code?: string | null
+          street?: string | null
           tax_number?: string | null
           updated_at?: string
           user_id?: string
@@ -136,40 +178,55 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          city: string | null
           contact_person: string | null
+          country: string | null
           created_at: string
           customer_type: string
           email: string | null
+          house_number: string | null
           id: string
           name: string
           notes: string | null
           phone: string | null
+          postal_code: string | null
+          street: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           address?: string | null
+          city?: string | null
           contact_person?: string | null
+          country?: string | null
           created_at?: string
           customer_type?: string
           email?: string | null
+          house_number?: string | null
           id?: string
           name: string
           notes?: string | null
           phone?: string | null
+          postal_code?: string | null
+          street?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           address?: string | null
+          city?: string | null
           contact_person?: string | null
+          country?: string | null
           created_at?: string
           customer_type?: string
           email?: string | null
+          house_number?: string | null
           id?: string
           name?: string
           notes?: string | null
           phone?: string | null
+          postal_code?: string | null
+          street?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -227,12 +284,15 @@ export type Database = {
       }
       invoices: {
         Row: {
+          closing_text: string | null
           created_at: string
           customer_id: string
           date: string
           due_date: string
+          footer_text: string | null
           grand_total: number
           id: string
+          intro_text: string | null
           invoice_number: string
           notes: string | null
           source_offer_id: string | null
@@ -243,12 +303,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          closing_text?: string | null
           created_at?: string
           customer_id: string
           date?: string
           due_date?: string
+          footer_text?: string | null
           grand_total?: number
           id?: string
+          intro_text?: string | null
           invoice_number: string
           notes?: string | null
           source_offer_id?: string | null
@@ -259,12 +322,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          closing_text?: string | null
           created_at?: string
           customer_id?: string
           date?: string
           due_date?: string
+          footer_text?: string | null
           grand_total?: number
           id?: string
+          intro_text?: string | null
           invoice_number?: string
           notes?: string | null
           source_offer_id?: string | null
@@ -343,12 +409,15 @@ export type Database = {
       }
       offers: {
         Row: {
+          closing_text: string | null
           created_at: string
           customer_id: string
           date: string
+          footer_text: string | null
           grand_total: number
           id: string
           internal_notes: string | null
+          intro_text: string | null
           notes: string | null
           offer_number: string
           status: string
@@ -358,12 +427,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          closing_text?: string | null
           created_at?: string
           customer_id: string
           date?: string
+          footer_text?: string | null
           grand_total?: number
           id?: string
           internal_notes?: string | null
+          intro_text?: string | null
           notes?: string | null
           offer_number: string
           status?: string
@@ -373,12 +445,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          closing_text?: string | null
           created_at?: string
           customer_id?: string
           date?: string
+          footer_text?: string | null
           grand_total?: number
           id?: string
           internal_notes?: string | null
+          intro_text?: string | null
           notes?: string | null
           offer_number?: string
           status?: string
