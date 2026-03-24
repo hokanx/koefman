@@ -11,6 +11,10 @@ const variants: Record<StatusVariant, string> = {
   paid: 'bg-success/15 text-success',
   overdue: 'bg-warning/15 text-warning',
   cancelled: 'bg-muted text-muted-foreground',
+  new: 'bg-info/15 text-info',
+  reviewed: 'bg-warning/15 text-warning',
+  converted: 'bg-success/15 text-success',
+  archived: 'bg-muted text-muted-foreground',
 };
 
 interface StatusBadgeProps {
