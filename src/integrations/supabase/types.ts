@@ -14,7 +14,407 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      business_settings: {
+        Row: {
+          address: string | null
+          business_category: string
+          business_name: string
+          created_at: string
+          currency: string
+          default_tax_rate: number
+          email: string | null
+          id: string
+          invoice_number_prefix: string
+          language: string
+          logo_url: string | null
+          offer_number_prefix: string
+          payment_terms: string | null
+          phone: string | null
+          tax_number: string | null
+          updated_at: string
+          user_id: string
+          vat_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_category?: string
+          business_name?: string
+          created_at?: string
+          currency?: string
+          default_tax_rate?: number
+          email?: string | null
+          id?: string
+          invoice_number_prefix?: string
+          language?: string
+          logo_url?: string | null
+          offer_number_prefix?: string
+          payment_terms?: string | null
+          phone?: string | null
+          tax_number?: string | null
+          updated_at?: string
+          user_id: string
+          vat_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_category?: string
+          business_name?: string
+          created_at?: string
+          currency?: string
+          default_tax_rate?: number
+          email?: string | null
+          id?: string
+          invoice_number_prefix?: string
+          language?: string
+          logo_url?: string | null
+          offer_number_prefix?: string
+          payment_terms?: string | null
+          phone?: string | null
+          tax_number?: string | null
+          updated_at?: string
+          user_id?: string
+          vat_id?: string | null
+        }
+        Relationships: []
+      }
+      customer_extensions: {
+        Row: {
+          business_category: string
+          cleaning_frequency: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          property_size: string | null
+          repair_notes: string | null
+          service_location: string | null
+          service_notes: string | null
+          updated_at: string
+          vehicle_brand: string | null
+          vehicle_model: string | null
+          vehicle_plate: string | null
+        }
+        Insert: {
+          business_category?: string
+          cleaning_frequency?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          property_size?: string | null
+          repair_notes?: string | null
+          service_location?: string | null
+          service_notes?: string | null
+          updated_at?: string
+          vehicle_brand?: string | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+        }
+        Update: {
+          business_category?: string
+          cleaning_frequency?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          property_size?: string | null
+          repair_notes?: string | null
+          service_location?: string | null
+          service_notes?: string | null
+          updated_at?: string
+          vehicle_brand?: string | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_extensions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          customer_type: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          customer_type?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          customer_type?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          quantity: number
+          sort_order: number
+          tax_rate: number
+          title: string
+          total: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          quantity?: number
+          sort_order?: number
+          tax_rate?: number
+          title: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          sort_order?: number
+          tax_rate?: number
+          title?: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          customer_id: string
+          date: string
+          due_date: string
+          grand_total: number
+          id: string
+          invoice_number: string
+          notes: string | null
+          source_offer_id: string | null
+          status: string
+          subtotal: number
+          tax_total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          date?: string
+          due_date?: string
+          grand_total?: number
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          source_offer_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          date?: string
+          due_date?: string
+          grand_total?: number
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          source_offer_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_source_offer_id_fkey"
+            columns: ["source_offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          offer_id: string
+          quantity: number
+          sort_order: number
+          tax_rate: number
+          title: string
+          total: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          offer_id: string
+          quantity?: number
+          sort_order?: number
+          tax_rate?: number
+          title: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          offer_id?: string
+          quantity?: number
+          sort_order?: number
+          tax_rate?: number
+          title?: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers: {
+        Row: {
+          created_at: string
+          customer_id: string
+          date: string
+          grand_total: number
+          id: string
+          internal_notes: string | null
+          notes: string | null
+          offer_number: string
+          status: string
+          subtotal: number
+          tax_total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          date?: string
+          grand_total?: number
+          id?: string
+          internal_notes?: string | null
+          notes?: string | null
+          offer_number: string
+          status?: string
+          subtotal?: number
+          tax_total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          date?: string
+          grand_total?: number
+          id?: string
+          internal_notes?: string | null
+          notes?: string | null
+          offer_number?: string
+          status?: string
+          subtotal?: number
+          tax_total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
