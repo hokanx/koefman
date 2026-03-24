@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-type StatusVariant = 'draft' | 'sent' | 'accepted' | 'rejected' | 'open' | 'paid' | 'overdue' | 'cancelled';
+type StatusVariant = 'draft' | 'sent' | 'accepted' | 'rejected' | 'open' | 'paid' | 'overdue' | 'cancelled' | 'new' | 'reviewed' | 'converted' | 'archived';
 
 const variants: Record<StatusVariant, string> = {
   draft: 'bg-muted text-muted-foreground',
