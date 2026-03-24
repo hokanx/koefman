@@ -21,6 +21,8 @@ import InvoiceNew from "@/pages/InvoiceNew";
 import InvoiceDetail from "@/pages/InvoiceDetail";
 import InvoiceEdit from "@/pages/InvoiceEdit";
 import Settings from "@/pages/Settings";
+import Leads from "@/pages/Leads";
+import IntakeForm from "@/pages/IntakeForm";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
