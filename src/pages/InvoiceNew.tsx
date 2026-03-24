@@ -69,7 +69,7 @@ const InvoiceNew = () => {
       if (items.length > 0) {
         const { error: itemsError } = await supabase.from('invoice_items').insert(
           items.map((item, index) => ({
-            invoice_id: invoice.id,
+            invoice_id: invoice!.id,
             title: item.title,
             description: item.description,
             quantity: item.quantity,
