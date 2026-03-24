@@ -10,6 +10,10 @@ interface BusinessInfo {
   vat_id?: string;
   logo_url?: string;
   payment_terms?: string;
+  account_holder?: string;
+  bank_name?: string;
+  iban?: string;
+  bic?: string;
 }
 
 interface CustomerInfo {
@@ -41,6 +45,9 @@ interface PdfData {
   subtotal: number;
   tax_total: number;
   grand_total: number;
+  intro_text?: string;
+  footer_text?: string;
+  closing_text?: string;
   notes?: string;
   labels: {
     date: string;
@@ -91,7 +98,7 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   }
 
   // Sender line (small, above recipient)
-  const senderParts = [data.business.business_name, data.business.address, data.business.phone, data.business.email].filter(Boolean);
+  const senderParts = [data.business.business_name, data.business.address?.replace(/\n/g, ', '), data.business.phone, data.business.email].filter(Boolean);
   doc.setFontSize(7);
   doc.setTextColor(120, 120, 120);
   doc.text(senderParts.join(' · '), margin, y + 30);
@@ -153,6 +160,16 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
     y += 5;
   }
   y += 5;
+
+  // --- INTRO TEXT ---
+  if (data.intro_text) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    const introLines = doc.splitTextToSize(data.intro_text, contentWidth);
+    doc.text(introLines, margin, y);
+    y += introLines.length * 5 + 5;
+  }
 
   // --- ITEMS TABLE ---
   const tableHead = [[
@@ -243,6 +260,43 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
     doc.setTextColor(80, 80, 80);
     const termLines = doc.splitTextToSize(data.business.payment_terms, contentWidth);
     doc.text(termLines, margin, y);
+    y += termLines.length * 4 + 5;
+  }
+
+  // --- BANK DETAILS (invoices only) ---
+  if (data.type === 'invoice' && (data.business.iban || data.business.bank_name)) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    const bankLines: string[] = [];
+    if (data.business.account_holder) bankLines.push(`Kontoinhaber: ${data.business.account_holder}`);
+    if (data.business.bank_name) bankLines.push(`Bank: ${data.business.bank_name}`);
+    if (data.business.iban) bankLines.push(`IBAN: ${data.business.iban}`);
+    if (data.business.bic) bankLines.push(`BIC: ${data.business.bic}`);
+    bankLines.forEach((line) => {
+      doc.text(line, margin, y);
+      y += 4;
+    });
+    y += 3;
+  }
+
+  // --- FOOTER TEXT ---
+  if (data.footer_text) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    const footerLines = doc.splitTextToSize(data.footer_text, contentWidth);
+    doc.text(footerLines, margin, y);
+    y += footerLines.length * 4 + 5;
+  }
+
+  // --- CLOSING TEXT ---
+  if (data.closing_text) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(data.closing_text, margin, y);
+    y += 8;
   }
 
   // --- FOOTER ---

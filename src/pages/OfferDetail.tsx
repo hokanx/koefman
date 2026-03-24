@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { generatePdf } from '@/lib/generatePdf';
+import { formatAddress } from '@/types';
 import type { OfferStatus } from '@/types';
 
 const OfferDetail = () => {
@@ -27,11 +28,7 @@ const OfferDetail = () => {
     queryKey: ['offer', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('offers')
-        .select('*, customer:customers(*)')
-        .eq('id', id!)
-        .eq('user_id', user!.id)
-        .single();
+        .from('offers').select('*, customer:customers(*)').eq('id', id!).eq('user_id', user!.id).single();
       if (error) throw error;
       return data;
     },
@@ -56,7 +53,6 @@ const OfferDetail = () => {
     enabled: !!user,
   });
 
-  // Check if already converted
   const { data: linkedInvoices = [] } = useQuery({
     queryKey: ['linked-invoices', id],
     queryFn: async () => {
@@ -70,6 +66,10 @@ const OfferDetail = () => {
     if (!offer) return;
     setGenerating(true);
     try {
+      const customer = (offer as any).customer;
+      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customerAddress = customer ? formatAddress(customer) : '';
+
       await generatePdf({
         type: 'offer',
         documentTitle: t.offers.documentTitle,
@@ -77,7 +77,7 @@ const OfferDetail = () => {
         date: new Date(offer.date).toLocaleDateString(),
         business: {
           business_name: settings?.business_name || '',
-          address: settings?.address || undefined,
+          address: businessAddress || undefined,
           email: settings?.email || undefined,
           phone: settings?.phone || undefined,
           tax_number: settings?.tax_number || undefined,
@@ -86,14 +86,17 @@ const OfferDetail = () => {
           payment_terms: settings?.payment_terms || undefined,
         },
         customer: {
-          name: (offer as any).customer?.name || '',
-          address: (offer as any).customer?.address || undefined,
+          name: customer?.name || '',
+          address: customerAddress || undefined,
         },
         items: items.map((i: any) => ({
           title: i.title, description: i.description, quantity: i.quantity,
           unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
         })),
         subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
+        intro_text: (offer as any).intro_text || undefined,
+        footer_text: (offer as any).footer_text || undefined,
+        closing_text: (offer as any).closing_text || undefined,
         notes: offer.notes || undefined,
         labels: {
           date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
@@ -121,27 +124,24 @@ const OfferDetail = () => {
       dueDate.setDate(dueDate.getDate() + 14);
 
       const { data: invoice, error } = await supabase.from('invoices').insert({
-        user_id: user.id,
-        customer_id: offer.customer_id,
-        source_offer_id: offer.id,
+        user_id: user.id, customer_id: offer.customer_id, source_offer_id: offer.id,
         invoice_number: invoiceNumber,
         date: new Date().toISOString().split('T')[0],
         due_date: dueDate.toISOString().split('T')[0],
-        status: 'open',
-        notes: offer.notes,
-        subtotal: offer.subtotal,
-        tax_total: offer.tax_total,
-        grand_total: offer.grand_total,
-      }).select().single();
+        status: 'open', notes: offer.notes,
+        intro_text: (settings as any)?.default_invoice_intro_text || '',
+        footer_text: (settings as any)?.default_invoice_footer_text || '',
+        closing_text: (settings as any)?.default_closing_text || '',
+        subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
+      } as any).select().single();
       if (error) throw error;
 
       if (items.length > 0) {
         await supabase.from('invoice_items').insert(
           items.map((item: any, index: number) => ({
-            invoice_id: invoice!.id,
-            title: item.title, description: item.description, quantity: item.quantity,
-            unit: item.unit, unit_price: item.unit_price, tax_rate: item.tax_rate,
-            total: item.total, sort_order: index,
+            invoice_id: invoice!.id, title: item.title, description: item.description,
+            quantity: item.quantity, unit: item.unit, unit_price: item.unit_price,
+            tax_rate: item.tax_rate, total: item.total, sort_order: index,
           }))
         );
       }
@@ -191,7 +191,6 @@ const OfferDetail = () => {
             </div>
           )}
 
-          {/* Action buttons */}
           <div className="mt-4 flex flex-wrap gap-2">
             <Link to={`/offers/${id}/edit`}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
