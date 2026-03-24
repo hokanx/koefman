@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ const Settings = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     business_name: '',
@@ -26,6 +28,8 @@ const Settings = () => {
     invoice_number_prefix: 'RE-',
     business_category: 'general',
   });
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const { data: settings } = useQuery({
     queryKey: ['business-settings'],
@@ -56,8 +60,57 @@ const Settings = () => {
         invoice_number_prefix: settings.invoice_number_prefix || 'RE-',
         business_category: settings.business_category || 'general',
       });
+      setLogoUrl(settings.logo_url || null);
     }
   }, [settings]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/logo.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('business-logos')
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('business-logos').getPublicUrl(path);
+      const newUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      setLogoUrl(newUrl);
+      // Save logo_url to settings
+      if (settings) {
+        await supabase.from('business_settings').update({ logo_url: newUrl }).eq('id', settings.id);
+      } else {
+        await supabase.from('business_settings').insert({ user_id: user.id, logo_url: newUrl });
+      }
+      queryClient.invalidateQueries({ queryKey: ['business-settings'] });
+      toast.success(t.common.logoUploaded);
+    } catch {
+      toast.error(t.common.logoError);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleLogoRemove = async () => {
+    if (!user) return;
+    try {
+      const { data: files } = await supabase.storage.from('business-logos').list(user.id);
+      if (files && files.length > 0) {
+        await supabase.storage.from('business-logos').remove(files.map((f) => `${user.id}/${f.name}`));
+      }
+      if (settings) {
+        await supabase.from('business_settings').update({ logo_url: null }).eq('id', settings.id);
+      }
+      setLogoUrl(null);
+      queryClient.invalidateQueries({ queryKey: ['business-settings'] });
+      toast.success(t.common.logoRemoved);
+    } catch {
+      toast.error(t.common.error);
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -94,6 +147,47 @@ const Settings = () => {
       <h2 className="mb-6 text-xl font-bold text-foreground">{t.settings.title}</h2>
 
       <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
+        {/* Logo Section */}
+        <FormSection title={t.settings.logoSection}>
+          <p className="text-sm text-muted-foreground mb-3">{t.settings.logoDescription}</p>
+          <div className="flex items-center gap-4">
+            {logoUrl ? (
+              <div className="relative">
+                <img src={logoUrl} alt="Logo" className="h-16 w-auto max-w-[120px] rounded-lg border border-border object-contain bg-white p-1" />
+                <button
+                  type="button"
+                  onClick={handleLogoRemove}
+                  className="absolute -top-2 -right-2 rounded-full bg-destructive p-1 text-destructive-foreground hover:bg-destructive/90"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30">
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {uploading ? t.common.logoUploading : logoUrl ? t.settings.replaceLogo : t.settings.uploadLogo}
+              </button>
+            </div>
+          </div>
+        </FormSection>
+
         <FormSection title={t.settings.businessProfile}>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.settings.businessName}</label>

@@ -1,17 +1,18 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import FormSection from '@/components/shared/FormSection';
 import CustomerExtensionFields from '@/components/shared/CustomerExtensionFields';
 import { toast } from 'sonner';
 import type { CustomerType } from '@/types';
 
-const CustomerNew = () => {
+const CustomerEdit = () => {
   const { t } = useLanguage();
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -26,6 +27,25 @@ const CustomerNew = () => {
     business_category: 'general',
   });
 
+  const { data: customer } = useQuery({
+    queryKey: ['customer', id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('customers').select('*').eq('id', id!).eq('user_id', user!.id).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!id,
+  });
+
+  const { data: extension } = useQuery({
+    queryKey: ['customer-extension', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('customer_extensions').select('*').eq('customer_id', id!).maybeSingle();
+      return data;
+    },
+    enabled: !!id,
+  });
+
   const { data: settings } = useQuery({
     queryKey: ['business-settings'],
     queryFn: async () => {
@@ -35,27 +55,51 @@ const CustomerNew = () => {
     enabled: !!user,
   });
 
-  // Set category from settings
-  const category = settings?.business_category || 'general';
+  useEffect(() => {
+    if (customer) {
+      setForm({
+        name: customer.name, customer_type: customer.customer_type as CustomerType,
+        contact_person: customer.contact_person || '', phone: customer.phone || '',
+        email: customer.email || '', address: customer.address || '', notes: customer.notes || '',
+      });
+    }
+  }, [customer]);
+
+  useEffect(() => {
+    if (extension) {
+      setExt({
+        vehicle_plate: extension.vehicle_plate || '', vehicle_brand: extension.vehicle_brand || '',
+        vehicle_model: extension.vehicle_model || '', repair_notes: extension.repair_notes || '',
+        property_size: extension.property_size || '', cleaning_frequency: extension.cleaning_frequency || '',
+        service_location: extension.service_location || '', service_notes: extension.service_notes || '',
+        business_category: extension.business_category || settings?.business_category || 'general',
+      });
+    } else if (settings) {
+      setExt((prev) => ({ ...prev, business_category: settings.business_category || 'general' }));
+    }
+  }, [extension, settings]);
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { data: customer, error } = await supabase.from('customers').insert({
-        ...form, user_id: user!.id,
-      }).select().single();
+      const { error } = await supabase.from('customers').update(form).eq('id', id!);
       if (error) throw error;
-      // Insert extension if category is not general
+      // Handle extension
+      const category = ext.business_category;
       if (category !== 'general') {
-        await supabase.from('customer_extensions').insert({
-          customer_id: customer!.id, business_category: category, ...ext,
-        });
+        const extData = { customer_id: id!, business_category: category, ...ext };
+        if (extension) {
+          await supabase.from('customer_extensions').update(extData).eq('id', extension.id);
+        } else {
+          await supabase.from('customer_extensions').insert(extData);
+        }
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer', id] });
+      queryClient.invalidateQueries({ queryKey: ['customer-extension', id] });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      queryClient.invalidateQueries({ queryKey: ['customer-count'] });
-      toast.success(t.common.success);
-      navigate('/customers');
+      toast.success(t.common.updated);
+      navigate(`/customers/${id}`);
     },
     onError: () => toast.error(t.common.error),
   });
@@ -67,13 +111,14 @@ const CustomerNew = () => {
   };
 
   const update = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
+  const category = ext.business_category;
 
   return (
     <div className="animate-fade-in p-4 md:p-6">
       <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> {t.common.back}
       </button>
-      <h2 className="mb-6 text-xl font-bold text-foreground">{t.customers.newCustomer}</h2>
+      <h2 className="mb-6 text-xl font-bold text-foreground">{t.customers.editCustomer}</h2>
       <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
         <FormSection title={t.customers.customerDetails}>
           <div>
@@ -124,12 +169,12 @@ const CustomerNew = () => {
 
         <div className="flex gap-3">
           <button type="button" onClick={() => navigate(-1)}
-            className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent md:flex-none md:px-6">
+            className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent md:flex-none md:px-6">
             {t.common.cancel}
           </button>
           <button type="submit" disabled={mutation.isPending}
-            className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 md:flex-none md:px-6">
-            {mutation.isPending ? t.common.loading : t.customers.saveCustomer}
+            className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 md:flex-none md:px-6">
+            {mutation.isPending ? t.common.loading : t.common.update}
           </button>
         </div>
       </form>
@@ -137,4 +182,4 @@ const CustomerNew = () => {
   );
 };
 
-export default CustomerNew;
+export default CustomerEdit;
