@@ -13,6 +13,11 @@ export interface Customer {
   phone?: string;
   email?: string;
   address?: string;
+  street?: string;
+  house_number?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -55,6 +60,9 @@ export interface Offer {
   status: OfferStatus;
   notes?: string;
   internal_notes?: string;
+  intro_text?: string;
+  footer_text?: string;
+  closing_text?: string;
   subtotal: number;
   tax_total: number;
   grand_total: number;
@@ -77,6 +85,9 @@ export interface Invoice {
   due_date: string;
   status: InvoiceStatus;
   notes?: string;
+  intro_text?: string;
+  footer_text?: string;
+  closing_text?: string;
   subtotal: number;
   tax_total: number;
   grand_total: number;
@@ -94,6 +105,11 @@ export interface BusinessSettings {
   user_id: string;
   business_name: string;
   address?: string;
+  street?: string;
+  house_number?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
   email?: string;
   phone?: string;
   tax_number?: string;
@@ -106,6 +122,24 @@ export interface BusinessSettings {
   invoice_number_prefix: string;
   language: Language;
   business_category: BusinessCategory;
+  default_offer_intro_text?: string;
+  default_offer_footer_text?: string;
+  default_invoice_intro_text?: string;
+  default_invoice_footer_text?: string;
+  default_closing_text?: string;
+  account_holder?: string;
+  bank_name?: string;
+  iban?: string;
+  bic?: string;
   created_at: string;
   updated_at: string;
 }
+
+export const formatAddress = (obj: { street?: string; house_number?: string; postal_code?: string; city?: string; country?: string; address?: string }): string => {
+  if (obj.street || obj.postal_code || obj.city) {
+    const line1 = [obj.street, obj.house_number].filter(Boolean).join(' ');
+    const line2 = [obj.postal_code, obj.city].filter(Boolean).join(' ');
+    return [line1, line2, obj.country].filter(Boolean).join('\n');
+  }
+  return obj.address || '';
+};

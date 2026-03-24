@@ -34,7 +34,7 @@ const Invoices = () => {
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as (Invoice & { customer: { name: string } | null })[];
+      return (data || []) as unknown as (Invoice & { customer: { name: string } | null })[];
     },
     enabled: !!user,
   });
