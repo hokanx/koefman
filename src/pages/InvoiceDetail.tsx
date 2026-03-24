@@ -126,7 +126,7 @@ const InvoiceDetail = () => {
               <h2 className="text-xl font-bold text-foreground">{invoice.invoice_number}</h2>
               <p className="text-sm text-muted-foreground">{(invoice as any).customer?.name}</p>
             </div>
-            <StatusBadge status={invoice.status} label={statusLabels[invoice.status as InvoiceStatus]} />
+            <StatusBadge status={invoice.status as any} label={statusLabels[invoice.status as InvoiceStatus]} />
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>{t.invoices.date}: {new Date(invoice.date).toLocaleDateString()}</p>
