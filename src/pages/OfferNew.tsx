@@ -69,7 +69,7 @@ const OfferNew = () => {
       if (items.length > 0) {
         const { error: itemsError } = await supabase.from('offer_items').insert(
           items.map((item, index) => ({
-            offer_id: offer.id,
+            offer_id: offer!.id,
             title: item.title,
             description: item.description,
             quantity: item.quantity,
