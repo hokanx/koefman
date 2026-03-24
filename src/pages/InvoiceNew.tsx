@@ -41,12 +41,12 @@ const InvoiceNew = () => {
       const tax_total = items.reduce((s, i) => s + (i.total * i.tax_rate) / 100, 0);
       const grand_total = subtotal + tax_total;
 
-      const { data: countData } = await supabase
+      const { count } = await supabase
         .from('invoices')
-        .select('id', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id);
 
-      const invoiceNumber = `RE-${String((countData || 0) + 1).padStart(4, '0')}`;
+      const invoiceNumber = `RE-${String((count ?? 0) + 1).padStart(4, '0')}`;
 
       const { data: invoice, error } = await supabase
         .from('invoices')
