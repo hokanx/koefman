@@ -15,6 +15,7 @@ const AppLayout = () => {
     { to: '/customers', icon: Users, label: t.nav.customers },
     { to: '/offers', icon: FileText, label: t.nav.offers },
     { to: '/invoices', icon: Receipt, label: t.nav.invoices },
+    { to: '/leads', icon: Inbox, label: t.nav.leads },
     { to: '/settings', icon: Settings, label: t.nav.settings },
   ];
 

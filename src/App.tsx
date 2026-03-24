@@ -51,8 +51,10 @@ const App = () => (
                 <Route path="/invoices/new" element={<InvoiceNew />} />
                 <Route path="/invoices/:id" element={<InvoiceDetail />} />
                 <Route path="/invoices/:id/edit" element={<InvoiceEdit />} />
-                <Route path="/settings" element={<Settings />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/leads" element={<Leads />} />
               </Route>
+              <Route path="/intake" element={<IntakeForm />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
