@@ -458,6 +458,44 @@ export type Database = {
           },
         ]
       }
+      offer_acceptances: {
+        Row: {
+          accepted_at: string
+          accepted_by_name: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          offer_id: string
+          signature_text: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_by_name: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          offer_id: string
+          signature_text?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          accepted_by_name?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          offer_id?: string
+          signature_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_acceptances_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_items: {
         Row: {
           created_at: string
@@ -521,11 +559,13 @@ export type Database = {
           intro_text: string | null
           notes: string | null
           offer_number: string
+          public_token: string | null
           status: string
           subtotal: number
           tax_total: number
           updated_at: string
           user_id: string
+          validity_days: number | null
         }
         Insert: {
           closing_text?: string | null
@@ -539,11 +579,13 @@ export type Database = {
           intro_text?: string | null
           notes?: string | null
           offer_number: string
+          public_token?: string | null
           status?: string
           subtotal?: number
           tax_total?: number
           updated_at?: string
           user_id: string
+          validity_days?: number | null
         }
         Update: {
           closing_text?: string | null
@@ -557,11 +599,13 @@ export type Database = {
           intro_text?: string | null
           notes?: string | null
           offer_number?: string
+          public_token?: string | null
           status?: string
           subtotal?: number
           tax_total?: number
           updated_at?: string
           user_id?: string
+          validity_days?: number | null
         }
         Relationships: [
           {

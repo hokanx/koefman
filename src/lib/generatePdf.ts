@@ -35,11 +35,12 @@ interface DocumentItem {
 }
 
 interface PdfData {
-  type: 'offer' | 'invoice';
+  type: 'offer' | 'invoice' | 'confirmation';
   documentTitle: string;
   documentNumber: string;
   date: string;
   dueDate?: string;
+  validityDate?: string;
   business: BusinessInfo;
   customer: CustomerInfo;
   items: DocumentItem[];
@@ -50,6 +51,15 @@ interface PdfData {
   footer_text?: string;
   closing_text?: string;
   notes?: string;
+  // Offer-specific
+  validity_days?: number;
+  legal_note?: string;
+  // Invoice-specific (payment_terms is on business)
+  // Confirmation-specific
+  accepted_by_name?: string;
+  accepted_at?: string;
+  signature_text?: string;
+  reference_offer_number?: string;
   labels: {
     date: string;
     dueDate?: string;
@@ -114,7 +124,7 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
     }
   }
 
-  // Sender line on the left (same level as logo)
+  // Sender line on the left
   const senderParts = [
     data.business.business_name,
     data.business.address?.replace(/\n/g, ', '),
@@ -130,7 +140,7 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   doc.setLineWidth(0.3);
   doc.line(margin, dividerY, rightEdge, dividerY);
 
-  // Business contact details on the right (below logo)
+  // Business contact details on the right
   let contactY = dividerY + 4;
   doc.setFontSize(7.5);
   doc.setTextColor(100, 100, 100);
@@ -140,7 +150,7 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   if (data.business.vat_id) { doc.text(`USt-IdNr.: ${data.business.vat_id}`, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
 
   // ============================================================
-  // 2. RECEIVER BLOCK — DIN 5008 window position
+  // 2. RECEIVER BLOCK
   // ============================================================
   let y = dividerY + 8;
   doc.setFontSize(10.5);
@@ -164,20 +174,18 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   // ============================================================
   y = Math.max(y + 10, 62);
 
-  const numberLabel = data.type === 'offer' ? 'Angebotsnummer' : 'Rechnungsnummer';
+  const numberLabel = data.type === 'invoice' ? 'Rechnungsnummer' : data.type === 'confirmation' ? 'Bestätigungsnr.' : 'Angebotsnummer';
 
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 100, 100);
-
-  // Left column: document number
   doc.text(numberLabel, margin, y);
   doc.setTextColor(30, 30, 30);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
   doc.text(data.documentNumber, margin, y + 4.5);
 
-  // Right column: date (and due date for invoices)
+  // Date column
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 100, 100);
@@ -188,8 +196,8 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   doc.setFontSize(9.5);
   doc.text(data.date, dateX, y + 4.5);
 
-  // Due date column (invoices)
-  if (data.dueDate && data.labels.dueDate) {
+  // Due date column (invoices only)
+  if (data.type === 'invoice' && data.dueDate && data.labels.dueDate) {
     const dueDateX = margin + 120;
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
@@ -213,7 +221,18 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   y += 10;
 
   // ============================================================
-  // 5. INTRO TEXT
+  // 5. CONFIRMATION-SPECIFIC: Reference info
+  // ============================================================
+  if (data.type === 'confirmation' && data.reference_offer_number) {
+    doc.setFontSize(9.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(`Bezug: ${data.reference_offer_number}`, margin, y);
+    y += 6;
+  }
+
+  // ============================================================
+  // 6. INTRO TEXT (offers & invoices)
   // ============================================================
   if (data.intro_text) {
     doc.setFontSize(9.5);
@@ -225,116 +244,102 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   }
 
   // ============================================================
-  // 6. ITEMS TABLE — minimal design
+  // 7. ITEMS TABLE (offers & invoices only)
   // ============================================================
+  if (data.type !== 'confirmation' && data.items.length > 0) {
+    doc.setDrawColor(60, 60, 60);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, rightEdge, y);
+    y += 1;
 
-  // Strong separator above the table
-  doc.setDrawColor(60, 60, 60);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, rightEdge, y);
-  y += 1;
+    const tableHead = [[
+      'Pos.',
+      data.labels.itemTitle,
+      data.labels.quantity,
+      data.labels.unit,
+      data.labels.unitPrice,
+      data.labels.taxRate,
+      data.labels.total,
+    ]];
 
-  const tableHead = [[
-    'Pos.',
-    data.labels.itemTitle,
-    data.labels.quantity,
-    data.labels.unit,
-    data.labels.unitPrice,
-    data.labels.taxRate,
-    data.labels.total,
-  ]];
+    const tableBody = data.items.map((item, i) => [
+      String(i + 1),
+      item.description ? `${item.title}\n${item.description}` : item.title,
+      item.quantity.toFixed(2).replace('.', ','),
+      item.unit,
+      formatCurrency(item.unit_price),
+      `${item.tax_rate} %`,
+      formatCurrency(item.total),
+    ]);
 
-  const tableBody = data.items.map((item, i) => [
-    String(i + 1),
-    item.description ? `${item.title}\n${item.description}` : item.title,
-    item.quantity.toFixed(2).replace('.', ','),
-    item.unit,
-    formatCurrency(item.unit_price),
-    `${item.tax_rate} %`,
-    formatCurrency(item.total),
-  ]);
+    autoTable(doc, {
+      startY: y,
+      head: tableHead,
+      body: tableBody,
+      margin: { left: margin, right: margin },
+      styles: {
+        fontSize: 8.5,
+        cellPadding: { top: 3, right: 2, bottom: 3, left: 2 },
+        textColor: [30, 30, 30],
+        lineColor: [220, 220, 220],
+        lineWidth: 0,
+      },
+      headStyles: {
+        fillColor: false as any,
+        textColor: [80, 80, 80],
+        fontStyle: 'bold',
+        fontSize: 8,
+      },
+      bodyStyles: { lineWidth: 0 },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
+      columnStyles: {
+        0: { cellWidth: 12, halign: 'center' },
+        1: { cellWidth: 'auto' },
+        2: { halign: 'right', cellWidth: 18 },
+        3: { cellWidth: 16 },
+        4: { halign: 'right', cellWidth: 26 },
+        5: { halign: 'right', cellWidth: 18 },
+        6: { halign: 'right', cellWidth: 26 },
+      },
+      theme: 'plain',
+      tableLineColor: [60, 60, 60],
+      tableLineWidth: 0,
+    });
 
-  autoTable(doc, {
-    startY: y,
-    head: tableHead,
-    body: tableBody,
-    margin: { left: margin, right: margin },
-    styles: {
-      fontSize: 8.5,
-      cellPadding: { top: 3, right: 2, bottom: 3, left: 2 },
-      textColor: [30, 30, 30],
-      lineColor: [220, 220, 220],
-      lineWidth: 0,
-    },
-    headStyles: {
-      fillColor: false as any,
-      textColor: [80, 80, 80],
-      fontStyle: 'bold',
-      fontSize: 8,
-    },
-    bodyStyles: {
-      lineWidth: 0,
-    },
-    alternateRowStyles: {
-      fillColor: [248, 248, 248],
-    },
-    columnStyles: {
-      0: { cellWidth: 12, halign: 'center' },
-      1: { cellWidth: 'auto' },
-      2: { halign: 'right', cellWidth: 18 },
-      3: { cellWidth: 16 },
-      4: { halign: 'right', cellWidth: 26 },
-      5: { halign: 'right', cellWidth: 18 },
-      6: { halign: 'right', cellWidth: 26 },
-    },
-    theme: 'plain',
-    tableLineColor: [60, 60, 60],
-    tableLineWidth: 0,
-    didDrawPage: () => {
-      // Bottom line after header row is drawn by autoTable with plain theme
-    },
-  });
+    const tableEndY = (doc as any).lastAutoTable.finalY;
+    doc.setDrawColor(60, 60, 60);
+    doc.setLineWidth(0.5);
+    doc.line(margin, tableEndY + 1, rightEdge, tableEndY + 1);
+    y = tableEndY + 10;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tableEndY = (doc as any).lastAutoTable.finalY;
+    // ============================================================
+    // 8. TOTALS
+    // ============================================================
+    const totalsLabelX = rightEdge - 55;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text(data.labels.subtotal, totalsLabelX, y);
+    doc.text(formatCurrency(data.subtotal), rightEdge, y, { align: 'right' });
+    y += 5;
+    doc.text(data.labels.taxTotal, totalsLabelX, y);
+    doc.text(formatCurrency(data.tax_total), rightEdge, y, { align: 'right' });
+    y += 6;
 
-  // Line below table
-  doc.setDrawColor(60, 60, 60);
-  doc.setLineWidth(0.5);
-  doc.line(margin, tableEndY + 1, rightEdge, tableEndY + 1);
+    doc.setDrawColor(40, 40, 40);
+    doc.setLineWidth(0.4);
+    doc.line(totalsLabelX, y - 1.5, rightEdge, y - 1.5);
 
-  y = tableEndY + 10;
-
-  // ============================================================
-  // 7. TOTALS — right-aligned
-  // ============================================================
-  const totalsLabelX = rightEdge - 55;
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(80, 80, 80);
-  doc.text(data.labels.subtotal, totalsLabelX, y);
-  doc.text(formatCurrency(data.subtotal), rightEdge, y, { align: 'right' });
-  y += 5;
-
-  doc.text(data.labels.taxTotal, totalsLabelX, y);
-  doc.text(formatCurrency(data.tax_total), rightEdge, y, { align: 'right' });
-  y += 6;
-
-  // Grand total separator
-  doc.setDrawColor(40, 40, 40);
-  doc.setLineWidth(0.4);
-  doc.line(totalsLabelX, y - 1.5, rightEdge, y - 1.5);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(11);
-  doc.text(data.labels.grandTotal, totalsLabelX, y + 3);
-  doc.text(formatCurrency(data.grand_total), rightEdge, y + 3, { align: 'right' });
-  y += 14;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.text(data.labels.grandTotal, totalsLabelX, y + 3);
+    doc.text(formatCurrency(data.grand_total), rightEdge, y + 3, { align: 'right' });
+    y += 14;
+  }
 
   // ============================================================
-  // 8. POST-TABLE CONTENT — differentiated by type
+  // 9. POST-TABLE CONTENT — differentiated by type
   // ============================================================
 
   // Notes
@@ -347,45 +352,110 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
     y += noteLines.length * 4 + 5;
   }
 
-  // Footer text (validity for offers, payment terms intro for invoices)
-  if (data.footer_text) {
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    const footerLines = doc.splitTextToSize(data.footer_text, contentWidth);
-    doc.text(footerLines, margin, y);
-    y += footerLines.length * 4 + 5;
+  // --- OFFER-SPECIFIC: legal note + validity ---
+  if (data.type === 'offer') {
+    if (data.legal_note) {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(80, 80, 80);
+      const legalLines = doc.splitTextToSize(data.legal_note, contentWidth);
+      doc.text(legalLines, margin, y);
+      y += legalLines.length * 4 + 4;
+    }
+
+    if (data.validity_days) {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      let validityText = `Dieses Angebot ist ${data.validity_days} Tage gültig`;
+      if (data.validityDate) {
+        validityText += ` (bis ${data.validityDate})`;
+      }
+      validityText += '.';
+      doc.text(validityText, margin, y);
+      y += 8;
+    }
+
+    // Footer text for offers (custom text after validity)
+    if (data.footer_text) {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      const footerLines = doc.splitTextToSize(data.footer_text, contentWidth);
+      doc.text(footerLines, margin, y);
+      y += footerLines.length * 4 + 5;
+    }
   }
 
-  // Payment terms (invoices primarily)
-  if (data.business.payment_terms) {
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    const termLines = doc.splitTextToSize(data.business.payment_terms, contentWidth);
-    doc.text(termLines, margin, y);
-    y += termLines.length * 4 + 5;
-  }
+  // --- INVOICE-SPECIFIC: payment terms + bank details ---
+  if (data.type === 'invoice') {
+    // Footer text
+    if (data.footer_text) {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      const footerLines = doc.splitTextToSize(data.footer_text, contentWidth);
+      doc.text(footerLines, margin, y);
+      y += footerLines.length * 4 + 5;
+    }
 
-  // Bank details (invoices only)
-  if (data.type === 'invoice' && (data.business.iban || data.business.bank_name)) {
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(40, 40, 40);
-    doc.text('Bankverbindung', margin, y);
-    y += 4.5;
+    // Payment terms
+    if (data.business.payment_terms) {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      const termLines = doc.splitTextToSize(data.business.payment_terms, contentWidth);
+      doc.text(termLines, margin, y);
+      y += termLines.length * 4 + 5;
+    }
 
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    if (data.business.account_holder) { doc.text(`Kontoinhaber: ${data.business.account_holder}`, margin, y); y += 4; }
-    if (data.business.bank_name) { doc.text(`Bank: ${data.business.bank_name}`, margin, y); y += 4; }
-    if (data.business.iban) { doc.text(`IBAN: ${formatIban(data.business.iban)}`, margin, y); y += 4; }
-    if (data.business.bic) { doc.text(`BIC: ${data.business.bic.toUpperCase()}`, margin, y); y += 4; }
-    y += 5;
+    // Bank details
+    if (data.business.iban || data.business.bank_name) {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(40, 40, 40);
+      doc.text('Bankverbindung', margin, y);
+      y += 4.5;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      if (data.business.account_holder) { doc.text(`Kontoinhaber: ${data.business.account_holder}`, margin, y); y += 4; }
+      if (data.business.bank_name) { doc.text(`Bank: ${data.business.bank_name}`, margin, y); y += 4; }
+      if (data.business.iban) { doc.text(`IBAN: ${formatIban(data.business.iban)}`, margin, y); y += 4; }
+      if (data.business.bic) { doc.text(`BIC: ${data.business.bic.toUpperCase()}`, margin, y); y += 4; }
+      y += 5;
+    }
   }
 
   // ============================================================
-  // 9. CLOSING — signature block
+  // 10. CONFIRMATION-SPECIFIC: acceptance details
+  // ============================================================
+  if (data.type === 'confirmation') {
+    doc.setFontSize(9.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+
+    const confirmText = `Hiermit bestätigen wir den Eingang Ihrer Auftragserteilung zum Angebot ${data.reference_offer_number || data.documentNumber}.`;
+    const confirmLines = doc.splitTextToSize(confirmText, contentWidth);
+    doc.text(confirmLines, margin, y);
+    y += confirmLines.length * 4.5 + 6;
+
+    if (data.accepted_by_name) {
+      doc.text(`Angenommen von: ${data.accepted_by_name}`, margin, y);
+      y += 5;
+    }
+    if (data.accepted_at) {
+      doc.text(`Datum der Annahme: ${data.accepted_at}`, margin, y);
+      y += 5;
+    }
+    if (data.signature_text) {
+      doc.text(`Unterschrift: ${data.signature_text}`, margin, y);
+      y += 5;
+    }
+    y += 8;
+  }
+
+  // ============================================================
+  // 11. CLOSING — signature block
   // ============================================================
   if (data.closing_text) {
     doc.setFontSize(9.5);
@@ -412,7 +482,7 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   }
 
   // ============================================================
-  // 10. PAGE FOOTER
+  // 12. PAGE FOOTER
   // ============================================================
   const pageFooterY = 284;
   doc.setDrawColor(190, 190, 190);
@@ -431,4 +501,8 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   doc.text(pageFooterParts, pageWidth / 2, pageFooterY, { align: 'center' });
 
   doc.save(`${data.documentNumber}.pdf`);
+};
+
+export const generateConfirmationPdf = async (data: PdfData): Promise<void> => {
+  return generatePdf(data);
 };
