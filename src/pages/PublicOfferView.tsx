@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatAddress } from '@/types';
-import { CheckCircle, FileText } from 'lucide-react';
+import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
 
 const formatCurrency = (value: number): string => {
@@ -12,9 +12,13 @@ const formatCurrency = (value: number): string => {
 
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
+  const queryClient = useQueryClient();
   const [acceptName, setAcceptName] = useState('');
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
+  const [rejected, setRejected] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   const { data: offer, isLoading } = useQuery({
     queryKey: ['public-offer', token],
