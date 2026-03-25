@@ -407,5 +407,6 @@ export const en: Translations = {
     showQr: 'Show QR code',
     qrTitle: 'QR Code for Clients',
     qrDescription: 'The client scans the code and can enter their data directly.',
+    createOffer: 'Create offer',
   },
 };
