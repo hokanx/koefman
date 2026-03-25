@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import FormSection from '@/components/shared/FormSection';
 import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import { toast } from 'sonner';
+import { generateDocumentNumber } from '@/lib/documentUtils';
 import type { Customer, LineItem } from '@/types';
 
 const OfferNew = () => {
