@@ -175,8 +175,63 @@ const InvoiceDetail = () => {
       setGenerating(false);
     }
   };
+  const handleCreateReminder = async () => {
+    if (!invoice || !user || !settings) return;
+    setCreatingReminder(true);
+    try {
+      const customer = (invoice as any).customer;
+      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customerAddress = customer ? formatAddress(customer) : '';
+      const nextLevel = reminders.length + 1;
 
-  if (isLoading) {
+      // Save reminder record
+      await supabase.from('invoice_reminders').insert({
+        invoice_id: id!,
+        user_id: user.id,
+        reminder_type: 'zahlungserinnerung',
+        reminder_level: nextLevel,
+      } as any);
+
+      // Generate PDF
+      await generateReminderPdf({
+        business: {
+          business_name: settings?.business_name || '',
+          address: businessAddress || undefined,
+          email: settings?.email || undefined,
+          phone: settings?.phone || undefined,
+          tax_number: settings?.tax_number || undefined,
+          vat_id: settings?.vat_id || undefined,
+          logo_url: settings?.logo_url || undefined,
+          payment_terms: settings?.payment_terms || undefined,
+          account_holder: (settings as any)?.account_holder || undefined,
+          bank_name: (settings as any)?.bank_name || undefined,
+          iban: (settings as any)?.iban || undefined,
+          bic: (settings as any)?.bic || undefined,
+          owner_name: (settings as any)?.owner_name || undefined,
+        },
+        customer: {
+          name: customer?.name || '',
+          address: customerAddress || undefined,
+        },
+        invoiceNumber: invoice.invoice_number,
+        invoiceDate: formatDateDE(invoice.date),
+        dueDate: formatDateDE(invoice.due_date),
+        grandTotal: invoice.grand_total,
+        reminderDate: formatDateDE(new Date()),
+        reminderLevel: nextLevel,
+        labels: { page: 'Seite' },
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['invoice-reminders', id] });
+      toast.success(t.invoices.reminderCreated);
+    } catch {
+      toast.error(t.common.error);
+    } finally {
+      setCreatingReminder(false);
+    }
+  };
+
+
     return <div className="flex justify-center p-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   }
   if (!invoice) {
