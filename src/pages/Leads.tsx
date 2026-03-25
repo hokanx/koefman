@@ -282,7 +282,7 @@ const Leads = () => {
             <button key={lead.id} onClick={() => {
                 setSelected(lead);
                 if (lead.status === 'new') {
-                  updateStatus.mutate({ id: lead.id, status: 'reviewed' });
+                  updateStatus.mutate({ id: lead.id, status: 'reviewed', silent: true });
                 }
               }}
               className="card-hover block w-full text-start rounded-xl border border-border bg-card p-4">
