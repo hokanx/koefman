@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
+import { generateDocumentNumber } from '@/lib/documentUtils';
 import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { InvoiceStatus } from '@/types';
@@ -73,7 +74,7 @@ const InvoiceDetail = () => {
     try {
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
       const prefix = settings?.invoice_number_prefix || 'RE-';
-      const invoiceNumber = `${prefix}${String((count ?? 0) + 1).padStart(4, '0')}`;
+      const invoiceNumber = generateDocumentNumber(prefix, count ?? 0);
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 14);
 
@@ -194,7 +195,18 @@ const InvoiceDetail = () => {
             <p className={isOverdue ? 'text-destructive font-medium' : ''}>
               {t.invoices.dueDate}: {formatDateDE(invoice.due_date)}
             </p>
+            {settings?.payment_terms && (
+              <p>{t.invoices.paymentTerms}: {settings.payment_terms}</p>
+            )}
           </div>
+
+          {/* Overdue warning */}
+          {isOverdue && (
+            <div className="mt-3 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm">
+              <p className="font-medium text-destructive">{t.invoices.overdueWarning}</p>
+            </div>
+          )}
+
           {invoice.notes && <p className="mt-2 text-sm text-foreground">{invoice.notes}</p>}
           {invoice.source_offer_id && (
             <p className="mt-2 text-sm text-muted-foreground">

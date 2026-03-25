@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import FormSection from '@/components/shared/FormSection';
 import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import { toast } from 'sonner';
+import { generateDocumentNumber } from '@/lib/documentUtils';
 import type { Customer, LineItem } from '@/types';
 
 const InvoiceNew = () => {
@@ -68,7 +69,7 @@ const InvoiceNew = () => {
 
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user!.id);
       const prefix = settings?.invoice_number_prefix || 'RE-';
-      const invoiceNumber = `${prefix}${String((count ?? 0) + 1).padStart(4, '0')}`;
+      const invoiceNumber = generateDocumentNumber(prefix, count ?? 0);
 
       const { data: invoice, error } = await supabase.from('invoices').insert({
         user_id: user!.id, customer_id: customerId, invoice_number: invoiceNumber,
