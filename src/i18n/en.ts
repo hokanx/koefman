@@ -117,6 +117,7 @@ export const en: Translations = {
     relatedInvoices: 'Related invoices',
     saveCustomer: 'Save customer',
     deleteConfirm: 'Are you sure you want to delete this customer?',
+    letClientFillIn: 'Let the client fill in their own details?',
   },
   offers: {
     title: 'Offers',

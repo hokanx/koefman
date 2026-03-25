@@ -115,6 +115,7 @@ export const de = {
     relatedInvoices: 'Zugehörige Rechnungen',
     saveCustomer: 'Kunde speichern',
     deleteConfirm: 'Möchten Sie diesen Kunden wirklich löschen?',
+    letClientFillIn: 'Kunde selbst Daten eingeben lassen?',
   },
   offers: {
     title: 'Angebote',

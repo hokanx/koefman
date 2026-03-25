@@ -117,6 +117,7 @@ export const ar: Translations = {
     relatedInvoices: 'الفواتير المتعلقة',
     saveCustomer: 'حفظ العميل',
     deleteConfirm: 'هل أنت متأكد من حذف هذا العميل؟',
+    letClientFillIn: 'هل تريد أن يملأ العميل بياناته بنفسه؟',
   },
   offers: {
     title: 'العروض',
