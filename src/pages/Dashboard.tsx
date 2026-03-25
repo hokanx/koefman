@@ -199,7 +199,7 @@ const Dashboard = () => {
                   <p className="text-xs text-muted-foreground">{formatDateDE(offer.date)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-2 shrink-0">
-                  <StatusBadge status={offer.status as any} />
+                  <StatusBadge status={offer.status as any} label={(t.status as any)[offer.status] || offer.status} />
                 </div>
               </button>
             ))}
@@ -216,7 +216,7 @@ const Dashboard = () => {
                   <p className="text-xs text-muted-foreground">{formatDateDE(inv.date)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-2 shrink-0">
-                  <StatusBadge status={inv.status as any} />
+                  <StatusBadge status={inv.status as any} label={(t.status as any)[inv.status] || inv.status} />
                 </div>
               </button>
             ))}
