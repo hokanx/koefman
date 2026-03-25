@@ -19,6 +19,7 @@ const PublicOfferView = () => {
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [hasValidSignature, setHasValidSignature] = useState(false);
   const [showAcceptValidation, setShowAcceptValidation] = useState(false);
+  const [acceptErrorMessage, setAcceptErrorMessage] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [rejected, setRejected] = useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
@@ -81,13 +82,23 @@ const PublicOfferView = () => {
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      if (!signatureImage || !hasValidSignature) {
+      const trimmedName = acceptName.trim();
+
+      if (!trimmedName) {
+        throw new Error('missing_name');
+      }
+
+      if (!hasValidSignature) {
         throw new Error('missing_signature');
+      }
+
+      if (!signatureImage) {
+        throw new Error('invalid_signature_data');
       }
 
       const { error: acceptError } = await supabase.from('offer_acceptances').insert({
         offer_id: offer!.id,
-        accepted_by_name: acceptName,
+        accepted_by_name: trimmedName,
         signature_image: signatureImage,
       } as any);
       if (acceptError) throw acceptError;
@@ -98,11 +109,35 @@ const PublicOfferView = () => {
         .eq('id', offer!.id);
       if (updateError) throw updateError;
     },
+    onMutate: () => {
+      setAcceptErrorMessage(null);
+    },
     onSuccess: () => {
       setAccepted(true);
       setShowAcceptValidation(false);
+      setAcceptErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: ['public-offer', token] });
       queryClient.invalidateQueries({ queryKey: ['public-offer-acceptance', offer?.id] });
+    },
+    onError: (error: any) => {
+      setShowAcceptValidation(true);
+
+      if (error?.message === 'missing_name') {
+        setAcceptErrorMessage(t.offers.nameRequired);
+        return;
+      }
+
+      if (error?.message === 'missing_signature') {
+        setAcceptErrorMessage(t.offers.signatureRequired);
+        return;
+      }
+
+      if (error?.message === 'invalid_signature_data') {
+        setAcceptErrorMessage(t.offers.signatureProcessingFailed);
+        return;
+      }
+
+      setAcceptErrorMessage(t.offers.acceptSubmitFailed);
     },
   });
 
@@ -127,9 +162,27 @@ const PublicOfferView = () => {
 
   const handleAccept = (e: React.FormEvent) => {
     e.preventDefault();
-    const isValid = !!acceptName.trim() && !!signatureImage && hasValidSignature;
+
+    const trimmedName = acceptName.trim();
+    const isValid = !!trimmedName && hasValidSignature && !!signatureImage;
     setShowAcceptValidation(!isValid);
-    if (!isValid) return;
+    setAcceptErrorMessage(null);
+
+    if (!trimmedName) {
+      setAcceptErrorMessage(t.offers.nameRequired);
+      return;
+    }
+
+    if (!hasValidSignature) {
+      setAcceptErrorMessage(t.offers.signatureRequired);
+      return;
+    }
+
+    if (!signatureImage) {
+      setAcceptErrorMessage(t.offers.signatureProcessingFailed);
+      return;
+    }
+
     acceptMutation.mutate();
   };
 
@@ -356,7 +409,7 @@ const PublicOfferView = () => {
                 <FileText className="h-5 w-5 text-blue-600" />
                 <h3 className="text-lg font-bold text-gray-900">{t.offers.acceptOfferTitle}</h3>
               </div>
-              <form onSubmit={handleAccept} className="space-y-4">
+              <form onSubmit={handleAccept} className="space-y-4" noValidate>
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-gray-800">
                     {t.offers.signerNameLabel} *
@@ -364,8 +417,12 @@ const PublicOfferView = () => {
                   <input
                     type="text"
                     value={acceptName}
-                    onChange={(e) => setAcceptName(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setAcceptName(e.target.value);
+                      if (showAcceptValidation && e.target.value.trim()) {
+                        setAcceptErrorMessage(hasValidSignature && signatureImage ? null : acceptErrorMessage);
+                      }
+                    }}
                     placeholder={t.offers.signerNamePlaceholder}
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -378,12 +435,14 @@ const PublicOfferView = () => {
                     onSignatureChange={(dataUrl) => {
                       setSignatureImage(dataUrl);
                       if (dataUrl) {
+                        setAcceptErrorMessage(null);
                         setShowAcceptValidation(false);
                       }
                     }}
                     onSignatureStateChange={(hasSignature) => {
                       setHasValidSignature(hasSignature);
                       if (hasSignature) {
+                        setAcceptErrorMessage(null);
                         setShowAcceptValidation(false);
                       }
                     }}
@@ -391,22 +450,37 @@ const PublicOfferView = () => {
                     instructionLabel={t.offers.signatureInstruction}
                   />
                 </div>
-                {acceptMutation.isError && (
-                  <p className="text-sm font-medium text-red-600">{t.common.error}</p>
+                {showAcceptValidation && !acceptName.trim() && (
+                  <p className="text-sm font-medium text-red-600">{t.offers.nameRequired}</p>
                 )}
-                {showAcceptValidation && (!acceptName.trim() || !hasValidSignature || !signatureImage) && (
+                {showAcceptValidation && !hasValidSignature && (
                   <p className="text-sm font-medium text-red-600">{t.offers.signatureRequired}</p>
+                )}
+                {showAcceptValidation && hasValidSignature && !signatureImage && (
+                  <p className="text-sm font-medium text-red-600">{t.offers.signatureProcessingFailed}</p>
+                )}
+                {acceptErrorMessage && (
+                  <p className="text-sm font-medium text-red-600">{acceptErrorMessage}</p>
                 )}
                 <button
                   type="submit"
-                  disabled={acceptMutation.isPending || !acceptName.trim() || !hasValidSignature || !signatureImage}
-                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                  disabled={acceptMutation.isPending}
+                  aria-busy={acceptMutation.isPending}
+                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {acceptMutation.isPending ? t.common.loading : t.offers.acceptOfferButton}
+                  {acceptMutation.isPending ? t.offers.acceptSubmitting : t.offers.acceptOfferButton}
                 </button>
                 <p className="text-center text-sm text-gray-500">
                   {t.offers.acceptOfferHelper}
                 </p>
+                {import.meta.env.DEV && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+                    <p>Name erkannt: {acceptName.trim() ? 'ja' : 'nein'}</p>
+                    <p>Signatur erkannt: {hasValidSignature ? 'ja' : 'nein'}</p>
+                    <p>Signaturdaten vorhanden: {signatureImage ? 'ja' : 'nein'}</p>
+                    <p>Submit gesperrt: {acceptMutation.isPending ? 'ja' : 'nein'}</p>
+                  </div>
+                )}
               </form>
             </div>
 

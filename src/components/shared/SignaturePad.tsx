@@ -25,14 +25,15 @@ const SignaturePad = ({ onSignatureChange, onSignatureStateChange, clearLabel, i
       return;
     }
 
-    const trimmedCanvas = sigRef.current.getTrimmedCanvas();
-    if (!trimmedCanvas || trimmedCanvas.width === 0 || trimmedCanvas.height === 0) {
+    const strokeData = sigRef.current.toData();
+    const hasStrokeData = strokeData.some((stroke) => stroke.points && stroke.points.length > 0);
+    if (!hasStrokeData) {
       emitEmptyState();
       return;
     }
 
-    const dataUrl = trimmedCanvas.toDataURL('image/png');
-    if (!dataUrl || dataUrl === 'data:,' || dataUrl.length < 200) {
+    const dataUrl = sigRef.current.toDataURL('image/png');
+    if (!dataUrl || dataUrl === 'data:,' || !dataUrl.startsWith('data:image/png;base64,')) {
       emitEmptyState();
       return;
     }
@@ -84,13 +85,13 @@ const SignaturePad = ({ onSignatureChange, onSignatureStateChange, clearLabel, i
         <SignatureCanvas
           ref={sigRef}
           penColor="#1a1a1a"
-          backgroundColor="rgba(255,255,255,0)"
+          backgroundColor="#ffffff"
           minWidth={1.5}
           maxWidth={3}
           onEnd={handleEnd}
           canvasProps={{
-            className: 'absolute inset-0 w-full h-full rounded-lg',
-            style: { zIndex: 2 },
+            className: 'absolute inset-0 block h-full w-full rounded-lg',
+            style: { zIndex: 2, touchAction: 'none', pointerEvents: 'auto' },
           }}
         />
         {isEmpty && (
