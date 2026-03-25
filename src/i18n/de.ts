@@ -52,6 +52,9 @@ export const de = {
     templates: 'Vorlagen',
     settings: 'Einstellungen',
     logout: 'Abmelden',
+    more: 'Mehr',
+    lightMode: 'Heller Modus',
+    darkMode: 'Dunkler Modus',
   },
   auth: {
     login: 'Anmelden',

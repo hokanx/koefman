@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -33,6 +34,32 @@ const DEFAULT_TEXTS = {
     payment_terms: 'مستحق الدفع خلال 14 يوماً بدون خصم.',
     closing: 'مع أطيب التحيات',
   },
+};
+
+const ThemeToggle = () => {
+  const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
+      <div className="flex items-center gap-3">
+        {theme === 'dark' ? <Moon className="h-5 w-5 text-muted-foreground" /> : <Sun className="h-5 w-5 text-muted-foreground" />}
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            {theme === 'dark' ? t.nav.darkMode : t.nav.lightMode}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={theme === 'dark'}
+        onClick={toggleTheme}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${theme === 'dark' ? 'bg-primary' : 'bg-input'}`}
+      >
+        <span className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+    </div>
+  );
 };
 
 const Settings = () => {
@@ -421,6 +448,10 @@ const Settings = () => {
             <label className="mb-1 block text-sm text-muted-foreground">{t.settings.bic}</label>
             <input type="text" value={form.bic} onChange={(e) => update('bic', e.target.value)} className={inputClass} />
           </div>
+        </FormSection>
+
+        <FormSection title={t.settings.appearance}>
+          <ThemeToggle />
         </FormSection>
 
         <FormSection title={t.settings.languageSettings}>

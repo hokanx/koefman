@@ -1,24 +1,42 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, FileStack } from 'lucide-react';
+import { useState } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, FileStack, MoreHorizontal, Sun, Moon } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import { cn } from '@/lib/utils';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 const AppLayout = () => {
   const { t } = useLanguage();
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [moreOpen, setMoreOpen] = useState(false);
 
-  const navItems = [
+  const primaryNavItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: t.nav.dashboard },
     { to: '/customers', icon: Users, label: t.nav.customers },
     { to: '/offers', icon: FileText, label: t.nav.offers },
     { to: '/invoices', icon: Receipt, label: t.nav.invoices },
+  ];
+
+  const secondaryNavItems = [
     { to: '/leads', icon: Inbox, label: t.nav.leads },
     { to: '/templates', icon: FileStack, label: t.nav.templates },
     { to: '/settings', icon: Settings, label: t.nav.settings },
   ];
+
+  const allNavItems = [...primaryNavItems, ...secondaryNavItems];
+
+  const isSecondaryActive = secondaryNavItems.some((item) => location.pathname.startsWith(item.to));
 
   const handleSignOut = async () => {
     await signOut();
@@ -31,6 +49,13 @@ const AppLayout = () => {
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4">
         <h1 className="text-lg font-bold tracking-tight text-primary">KÖFMAN</h1>
         <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+            title={t.settings.appearance}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           <LanguageSwitcher />
           <button
             onClick={handleSignOut}
@@ -46,7 +71,7 @@ const AppLayout = () => {
         {/* Desktop sidebar */}
         <aside className="hidden w-56 flex-col border-e border-border bg-card md:flex">
           <nav className="flex flex-1 flex-col gap-1 p-3">
-            {navItems.map((item) => (
+            {allNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -81,9 +106,9 @@ const AppLayout = () => {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — 5 items: 4 primary + Mehr */}
       <nav className="fixed inset-x-0 bottom-0 z-50 flex border-t border-border bg-card md:hidden">
-        {navItems.map((item) => (
+        {primaryNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -98,7 +123,68 @@ const AppLayout = () => {
             {item.label}
           </NavLink>
         ))}
+        <button
+          onClick={() => setMoreOpen(true)}
+          className={cn(
+            'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+            isSecondaryActive ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
+          <MoreHorizontal className="h-5 w-5" />
+          {t.nav.more}
+        </button>
       </nav>
+
+      {/* "Mehr" sheet */}
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl pb-8">
+          <SheetHeader>
+            <SheetTitle>{t.nav.more}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 flex flex-col gap-1">
+            {secondaryNavItems.map((item) => (
+              <button
+                key={item.to}
+                onClick={() => {
+                  setMoreOpen(false);
+                  navigate(item.to);
+                }}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors text-start',
+                  location.pathname.startsWith(item.to)
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-foreground hover:bg-accent'
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </button>
+            ))}
+
+            {/* Theme toggle in Mehr */}
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent text-start"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === 'dark' ? t.nav.lightMode : t.nav.darkMode}
+            </button>
+
+            <div className="my-2 border-t border-border" />
+
+            <button
+              onClick={() => {
+                setMoreOpen(false);
+                handleSignOut();
+              }}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 text-start"
+            >
+              <LogOut className="h-5 w-5" />
+              {t.nav.logout}
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
