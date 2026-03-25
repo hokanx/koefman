@@ -267,6 +267,10 @@ export const ar: Translations = {
     bankName: 'اسم البنك',
     iban: 'IBAN',
     bic: 'BIC',
+    smallBusinessRegulation: 'نظام المشاريع الصغيرة (§19 UStG)',
+    smallBusinessRegulationDescription: 'عند التفعيل، لن تظهر ضريبة القيمة المضافة على مستنداتك وسيظهر إشعار §19 تلقائياً.',
+    signatureInstruction: 'يرجى التوقيع هنا باستخدام إصبعك أو الماوس.',
+    clearSignature: 'مسح التوقيع',
   },
   garage: {
     vehiclePlate: 'رقم اللوحة',
