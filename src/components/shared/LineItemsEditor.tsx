@@ -1,10 +1,12 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import TemplatePicker from './TemplatePicker';
 import type { LineItem } from '@/types';
 
 interface LineItemsEditorProps {
   items: LineItem[];
   onChange: (items: LineItem[]) => void;
+  showTemplatePicker?: boolean;
   labels: {
     addItem: string;
     itemTitle: string;
@@ -29,7 +31,7 @@ const createEmptyItem = (sortOrder: number): LineItem => ({
   sort_order: sortOrder,
 });
 
-const LineItemsEditor = ({ items, onChange, labels }: LineItemsEditorProps) => {
+const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false }: LineItemsEditorProps) => {
   const { t } = useLanguage();
 
   const addItem = () => {
@@ -142,14 +144,19 @@ const LineItemsEditor = ({ items, onChange, labels }: LineItemsEditorProps) => {
         </div>
       ))}
 
-      <button
-        type="button"
-        onClick={addItem}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-      >
-        <Plus className="h-4 w-4" />
-        {labels.addItem}
-      </button>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={addItem}
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          <Plus className="h-4 w-4" />
+          {labels.addItem}
+        </button>
+        {showTemplatePicker && (
+          <TemplatePicker onInsert={(newItems) => onChange([...items, ...newItems.map((ni, i) => ({ ...ni, sort_order: items.length + i }))])} />
+        )}
+      </div>
 
       {items.length > 0 && (
         <div className="space-y-1 rounded-lg bg-muted/50 p-3 text-sm">

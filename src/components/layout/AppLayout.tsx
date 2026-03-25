@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, FileStack } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -16,6 +16,7 @@ const AppLayout = () => {
     { to: '/offers', icon: FileText, label: t.nav.offers },
     { to: '/invoices', icon: Receipt, label: t.nav.invoices },
     { to: '/leads', icon: Inbox, label: t.nav.leads },
+    { to: '/templates', icon: FileStack, label: t.nav.templates },
     { to: '/settings', icon: Settings, label: t.nav.settings },
   ];
 

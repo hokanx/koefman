@@ -177,7 +177,7 @@ const InvoiceEdit = () => {
         </FormSection>
 
         <FormSection title={t.invoices.items}>
-          <LineItemsEditor items={items} onChange={setItems} labels={{
+          <LineItemsEditor items={items} onChange={setItems} showTemplatePicker labels={{
             addItem: t.invoices.addItem, itemTitle: t.invoices.itemTitle, description: t.invoices.description,
             quantity: t.invoices.quantity, unit: t.invoices.unit, unitPrice: t.invoices.unitPrice,
             taxRate: t.invoices.taxRate, total: t.invoices.total,
