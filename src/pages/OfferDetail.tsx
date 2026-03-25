@@ -175,14 +175,18 @@ const OfferDetail = () => {
       const businessAddress = settings ? formatAddress(settings as any) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
 
+      const acceptedAtDate = new Date((acceptance as any).accepted_at);
+
       await generatePdf({
         type: 'confirmation',
         documentTitle: t.offers.orderConfirmation,
         documentNumber: `AB-${offer.offer_number}`,
         date: new Date().toLocaleDateString(),
         reference_offer_number: offer.offer_number,
+        reference_offer_date: new Date(offer.date).toLocaleDateString(),
         accepted_by_name: (acceptance as any).accepted_by_name,
-        accepted_at: new Date((acceptance as any).accepted_at).toLocaleDateString(),
+        accepted_at: acceptedAtDate.toLocaleDateString(),
+        accepted_at_time: acceptedAtDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         signature_text: (acceptance as any).signature_text || undefined,
         signature_image: (acceptance as any).signature_image || undefined,
         business: {
@@ -199,8 +203,12 @@ const OfferDetail = () => {
           name: customer?.name || '',
           address: customerAddress || undefined,
         },
-        items: [],
+        items: items.map((i: any) => ({
+          title: i.title, description: i.description, quantity: i.quantity,
+          unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
+        })),
         subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
+        small_business_regulation: !!(settings as any)?.small_business_regulation,
         closing_text: (offer as any).closing_text || 'Mit freundlichen Grüßen',
         labels: {
           date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
