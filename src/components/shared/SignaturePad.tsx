@@ -26,7 +26,7 @@ const SignaturePad = ({ onSignatureChange, onSignatureStateChange, clearLabel, i
     }
 
     const strokeData = sigRef.current.toData();
-    const hasStrokeData = strokeData.some((stroke) => stroke.points && stroke.points.length > 0);
+    const hasStrokeData = strokeData.some((stroke) => stroke.length > 0);
     if (!hasStrokeData) {
       emitEmptyState();
       return;
