@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, Sun, Moon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Sun, Moon, Building2, Receipt, FileText, Palette, Globe } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,40 +36,16 @@ const DEFAULT_TEXTS = {
   },
 };
 
-const ThemeToggle = () => {
-  const { theme, toggleTheme } = useTheme();
-  const { t } = useLanguage();
-  return (
-    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
-      <div className="flex items-center gap-3">
-        {theme === 'dark' ? <Moon className="h-5 w-5 text-muted-foreground" /> : <Sun className="h-5 w-5 text-muted-foreground" />}
-        <div>
-          <p className="text-sm font-medium text-foreground">
-            {theme === 'dark' ? t.nav.darkMode : t.nav.lightMode}
-          </p>
-        </div>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={theme === 'dark'}
-        onClick={toggleTheme}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${theme === 'dark' ? 'bg-primary' : 'bg-input'}`}
-      >
-        <span className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
-      </button>
-    </div>
-  );
-};
-
 const Settings = () => {
   const { t, language } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     business_name: '',
+    owner_name: '',
     street: '',
     house_number: '',
     postal_code: '',
@@ -77,30 +53,30 @@ const Settings = () => {
     country: 'Deutschland',
     email: '',
     phone: '',
+    business_category: 'general',
+    // Billing & Tax
     tax_number: '',
     vat_id: '',
-    currency: 'EUR',
+    small_business_regulation: false,
     default_tax_rate: 19,
-    payment_terms: '',
+    account_holder: '',
+    bank_name: '',
+    iban: '',
+    bic: '',
+    // Documents
+    currency: 'EUR',
     offer_number_prefix: 'ANG-',
     invoice_number_prefix: 'RE-',
-    business_category: 'general',
+    payment_terms: '',
     default_offer_intro_text: '',
     default_offer_footer_text: '',
     default_invoice_intro_text: '',
     default_invoice_footer_text: '',
     default_closing_text: '',
-    owner_name: '',
     default_offer_title: '',
-    account_holder: '',
-    bank_name: '',
-    iban: '',
-    bic: '',
-    small_business_regulation: false,
   });
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [isNewSettings, setIsNewSettings] = useState(true);
 
   const { data: settings } = useQuery({
     queryKey: ['business-settings'],
@@ -116,43 +92,40 @@ const Settings = () => {
   });
 
   useEffect(() => {
+    const defaults = DEFAULT_TEXTS[language as keyof typeof DEFAULT_TEXTS] || DEFAULT_TEXTS.de;
     if (settings) {
-      setIsNewSettings(false);
-      const defaults = DEFAULT_TEXTS[language as keyof typeof DEFAULT_TEXTS] || DEFAULT_TEXTS.de;
       setForm({
         business_name: settings.business_name || '',
-        street: (settings as any).street || '',
-        house_number: (settings as any).house_number || '',
-        postal_code: (settings as any).postal_code || '',
-        city: (settings as any).city || '',
-        country: (settings as any).country || 'Deutschland',
+        owner_name: settings.owner_name || '',
+        street: settings.street || '',
+        house_number: settings.house_number || '',
+        postal_code: settings.postal_code || '',
+        city: settings.city || '',
+        country: settings.country || 'Deutschland',
         email: settings.email || '',
         phone: settings.phone || '',
+        business_category: settings.business_category || 'general',
         tax_number: settings.tax_number || '',
         vat_id: settings.vat_id || '',
-        currency: settings.currency || 'EUR',
+        small_business_regulation: !!settings.small_business_regulation,
         default_tax_rate: settings.default_tax_rate ?? 19,
-        payment_terms: settings.payment_terms || defaults.payment_terms,
+        account_holder: settings.account_holder || '',
+        bank_name: settings.bank_name || '',
+        iban: settings.iban || '',
+        bic: settings.bic || '',
+        currency: settings.currency || 'EUR',
         offer_number_prefix: settings.offer_number_prefix || 'ANG-',
         invoice_number_prefix: settings.invoice_number_prefix || 'RE-',
-        business_category: settings.business_category || 'general',
-        default_offer_intro_text: (settings as any).default_offer_intro_text || defaults.offer_intro,
-        default_offer_footer_text: (settings as any).default_offer_footer_text || defaults.offer_footer,
-        default_invoice_intro_text: (settings as any).default_invoice_intro_text || defaults.invoice_intro,
-        default_invoice_footer_text: (settings as any).default_invoice_footer_text || defaults.invoice_footer,
-        default_closing_text: (settings as any).default_closing_text || defaults.closing,
-        owner_name: (settings as any).owner_name || '',
-        default_offer_title: (settings as any).default_offer_title || '',
-        account_holder: (settings as any).account_holder || '',
-        bank_name: (settings as any).bank_name || '',
-        iban: (settings as any).iban || '',
-        bic: (settings as any).bic || '',
-        small_business_regulation: !!(settings as any).small_business_regulation,
+        payment_terms: settings.payment_terms || defaults.payment_terms,
+        default_offer_intro_text: settings.default_offer_intro_text || defaults.offer_intro,
+        default_offer_footer_text: settings.default_offer_footer_text || defaults.offer_footer,
+        default_invoice_intro_text: settings.default_invoice_intro_text || defaults.invoice_intro,
+        default_invoice_footer_text: settings.default_invoice_footer_text || defaults.invoice_footer,
+        default_closing_text: settings.default_closing_text || defaults.closing,
+        default_offer_title: settings.default_offer_title || '',
       });
       setLogoUrl(settings.logo_url || null);
     } else {
-      // Prefill defaults for new settings
-      const defaults = DEFAULT_TEXTS[language as keyof typeof DEFAULT_TEXTS] || DEFAULT_TEXTS.de;
       setForm((prev) => ({
         ...prev,
         payment_terms: defaults.payment_terms,
@@ -214,7 +187,6 @@ const Settings = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      // Build address field from structured fields for backward compat
       const address = [
         [form.street, form.house_number].filter(Boolean).join(' '),
         [form.postal_code, form.city].filter(Boolean).join(' '),
@@ -248,7 +220,7 @@ const Settings = () => {
     mutation.mutate();
   };
 
-  const update = (field: string, value: string | number) =>
+  const update = (field: string, value: string | number | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const inputClass = "w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none";
@@ -258,10 +230,241 @@ const Settings = () => {
     <div className="animate-fade-in p-4 md:p-6">
       <h2 className="mb-6 text-xl font-bold text-foreground">{t.settings.title}</h2>
 
-      <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
-        {/* Logo Section */}
-        <FormSection title={t.settings.logoSection}>
-          <p className="text-sm text-muted-foreground mb-3">{t.settings.logoDescription}</p>
+      <form onSubmit={handleSubmit} className="max-w-lg space-y-6">
+
+        {/* ── 1. UNTERNEHMENSDATEN ── */}
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">{t.settings.sectionCompany}</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionCompanyDesc}</p>
+
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.businessName}</label>
+              <input type="text" value={form.business_name} onChange={(e) => update('business_name', e.target.value)} className={inputClass} />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.ownerName}</label>
+              <input type="text" value={form.owner_name} onChange={(e) => update('owner_name', e.target.value)} className={inputClass} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.street}</label>
+                <input type="text" value={form.street} onChange={(e) => update('street', e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.houseNumber}</label>
+                <input type="text" value={form.house_number} onChange={(e) => update('house_number', e.target.value)} className={inputClass} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.postalCode}</label>
+                <input type="text" value={form.postal_code} onChange={(e) => update('postal_code', e.target.value)} className={inputClass} />
+              </div>
+              <div className="col-span-2">
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.city}</label>
+                <input type="text" value={form.city} onChange={(e) => update('city', e.target.value)} className={inputClass} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.country}</label>
+              <input type="text" value={form.country} onChange={(e) => update('country', e.target.value)} className={inputClass} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.email}</label>
+                <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.phone}</label>
+                <input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} className={inputClass} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.businessCategory}</label>
+              <select value={form.business_category} onChange={(e) => update('business_category', e.target.value)} className={inputClass}>
+                <option value="general">{t.settings.general}</option>
+                <option value="garage">{t.settings.garage}</option>
+                <option value="cleaning">{t.settings.cleaning}</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <hr className="border-border" />
+
+        {/* ── 2. RECHNUNGS- & STEUERDATEN ── */}
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Receipt className="h-5 w-5 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">{t.settings.sectionBilling}</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionBillingDesc}</p>
+
+          <div className="space-y-3">
+            {/* Tax mode radio */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">{t.settings.taxModeLabel}</label>
+              <div className="space-y-2">
+                <label className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
+                  <input
+                    type="radio"
+                    name="tax_mode"
+                    checked={form.small_business_regulation}
+                    onChange={() => update('small_business_regulation', true)}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{t.settings.taxModeSmallBusiness}</p>
+                    <p className="text-xs text-muted-foreground">{t.settings.taxModeSmallBusinessHint}</p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
+                  <input
+                    type="radio"
+                    name="tax_mode"
+                    checked={!form.small_business_regulation}
+                    onChange={() => update('small_business_regulation', false)}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{t.settings.taxModeVat}</p>
+                    <p className="text-xs text-muted-foreground">{t.settings.taxModeVatHint}</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {!form.small_business_regulation && (
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultTaxRate} (%)</label>
+                <input type="number" value={form.default_tax_rate} onChange={(e) => update('default_tax_rate', parseFloat(e.target.value) || 0)} className={inputClass} />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.taxNumber}</label>
+                <input type="text" value={form.tax_number} onChange={(e) => update('tax_number', e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.vatId}</label>
+                <input type="text" value={form.vat_id} onChange={(e) => update('vat_id', e.target.value)} className={inputClass} />
+              </div>
+            </div>
+
+            {/* Bank details inline */}
+            <div className="mt-2">
+              <p className="text-sm font-medium text-foreground mb-2">{t.settings.bankDetails}</p>
+              <p className="text-xs text-muted-foreground mb-3">{t.settings.bankDetailsDescription}</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.accountHolder}</label>
+                  <input type="text" value={form.account_holder} onChange={(e) => update('account_holder', e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.bankName}</label>
+                  <input type="text" value={form.bank_name} onChange={(e) => update('bank_name', e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.iban}</label>
+                  <input type="text" value={form.iban} onChange={(e) => update('iban', e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.bic}</label>
+                  <input type="text" value={form.bic} onChange={(e) => update('bic', e.target.value)} className={inputClass} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr className="border-border" />
+
+        {/* ── 3. DOKUMENT-EINSTELLUNGEN ── */}
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">{t.settings.sectionDocuments}</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionDocumentsDesc}</p>
+
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.offerNumberFormat}</label>
+                <input type="text" value={form.offer_number_prefix} onChange={(e) => update('offer_number_prefix', e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-muted-foreground">{t.settings.invoiceNumberFormat}</label>
+                <input type="text" value={form.invoice_number_prefix} onChange={(e) => update('invoice_number_prefix', e.target.value)} className={inputClass} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.currency}</label>
+              <select value={form.currency} onChange={(e) => update('currency', e.target.value)} className={inputClass}>
+                <option value="EUR">EUR (€)</option>
+                <option value="USD">USD ($)</option>
+                <option value="GBP">GBP (£)</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.paymentTerms}</label>
+              <textarea value={form.payment_terms} onChange={(e) => update('payment_terms', e.target.value)} rows={2} className={textareaClass} />
+            </div>
+
+            {/* Default texts */}
+            <div className="mt-2">
+              <p className="text-sm font-medium text-foreground mb-1">{t.settings.defaultTexts}</p>
+              <p className="text-xs text-muted-foreground mb-3">{t.settings.defaultTextsDescription}</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferIntro}</label>
+                  <textarea value={form.default_offer_intro_text} onChange={(e) => update('default_offer_intro_text', e.target.value)} rows={2} className={textareaClass} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferFooter}</label>
+                  <textarea value={form.default_offer_footer_text} onChange={(e) => update('default_offer_footer_text', e.target.value)} rows={2} className={textareaClass} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultInvoiceIntro}</label>
+                  <textarea value={form.default_invoice_intro_text} onChange={(e) => update('default_invoice_intro_text', e.target.value)} rows={2} className={textareaClass} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultInvoiceFooter}</label>
+                  <textarea value={form.default_invoice_footer_text} onChange={(e) => update('default_invoice_footer_text', e.target.value)} rows={2} className={textareaClass} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultClosingText}</label>
+                  <input type="text" value={form.default_closing_text} onChange={(e) => update('default_closing_text', e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.ownerName}</label>
+                  <p className="text-xs text-muted-foreground mb-1">{t.settings.ownerNameDescription}</p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferTitle}</label>
+                  <p className="text-xs text-muted-foreground mb-1">{t.settings.defaultOfferTitleDescription}</p>
+                  <input type="text" value={form.default_offer_title} onChange={(e) => update('default_offer_title', e.target.value)} className={inputClass} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr className="border-border" />
+
+        {/* ── 4. BRANDING ── */}
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Palette className="h-5 w-5 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">{t.settings.sectionBranding}</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionBrandingDesc}</p>
+
           <div className="flex items-center gap-4">
             {logoUrl ? (
               <div className="relative">
@@ -285,179 +488,43 @@ const Settings = () => {
               </button>
             </div>
           </div>
-        </FormSection>
+        </section>
 
-        <FormSection title={t.settings.businessProfile}>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.businessName}</label>
-            <input type="text" value={form.business_name} onChange={(e) => update('business_name', e.target.value)} className={inputClass} />
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.street}</label>
-              <input type="text" value={form.street} onChange={(e) => update('street', e.target.value)} className={inputClass} />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.houseNumber}</label>
-              <input type="text" value={form.house_number} onChange={(e) => update('house_number', e.target.value)} className={inputClass} />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.postalCode}</label>
-              <input type="text" value={form.postal_code} onChange={(e) => update('postal_code', e.target.value)} className={inputClass} />
-            </div>
-            <div className="col-span-2">
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.city}</label>
-              <input type="text" value={form.city} onChange={(e) => update('city', e.target.value)} className={inputClass} />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.country}</label>
-            <input type="text" value={form.country} onChange={(e) => update('country', e.target.value)} className={inputClass} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.email}</label>
-              <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} className={inputClass} />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.phone}</label>
-              <input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} className={inputClass} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.taxNumber}</label>
-              <input type="text" value={form.tax_number} onChange={(e) => update('tax_number', e.target.value)} className={inputClass} />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.vatId}</label>
-              <input type="text" value={form.vat_id} onChange={(e) => update('vat_id', e.target.value)} className={inputClass} />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.businessCategory}</label>
-            <select value={form.business_category} onChange={(e) => update('business_category', e.target.value)} className={inputClass}>
-              <option value="general">{t.settings.general}</option>
-              <option value="garage">{t.settings.garage}</option>
-              <option value="cleaning">{t.settings.cleaning}</option>
-            </select>
-          </div>
-        </FormSection>
+        <hr className="border-border" />
 
-        <FormSection title={t.settings.documentSettings}>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.offerNumberFormat}</label>
-              <input type="text" value={form.offer_number_prefix} onChange={(e) => update('offer_number_prefix', e.target.value)} className={inputClass} />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.invoiceNumberFormat}</label>
-              <input type="text" value={form.invoice_number_prefix} onChange={(e) => update('invoice_number_prefix', e.target.value)} className={inputClass} />
-            </div>
+        {/* ── 5. SPRACHE & DARSTELLUNG ── */}
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">{t.settings.sectionLanguage}</h3>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.currency}</label>
-              <select value={form.currency} onChange={(e) => update('currency', e.target.value)} className={inputClass}>
-                <option value="EUR">EUR (€)</option>
-                <option value="USD">USD ($)</option>
-                <option value="GBP">GBP (£)</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultTaxRate}</label>
-              <input type="number" value={form.default_tax_rate} onChange={(e) => update('default_tax_rate', parseFloat(e.target.value) || 0)} className={inputClass} />
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionLanguageDesc}</p>
 
-          {/* Small business regulation toggle */}
-          <div className="rounded-lg border border-border bg-muted/30 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 pr-4">
-                <label className="text-sm font-medium text-foreground">{t.settings.smallBusinessRegulation}</label>
-                <p className="text-xs text-muted-foreground mt-0.5">{t.settings.smallBusinessRegulationDescription}</p>
+          <div className="space-y-3">
+            <LanguageSwitcher />
+
+            {/* Theme toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
+              <div className="flex items-center gap-3">
+                {theme === 'dark' ? <Moon className="h-5 w-5 text-muted-foreground" /> : <Sun className="h-5 w-5 text-muted-foreground" />}
+                <p className="text-sm font-medium text-foreground">
+                  {theme === 'dark' ? t.nav.darkMode : t.nav.lightMode}
+                </p>
               </div>
               <button
                 type="button"
                 role="switch"
-                aria-checked={form.small_business_regulation}
-                onClick={() => setForm((prev) => ({ ...prev, small_business_regulation: !prev.small_business_regulation }))}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${form.small_business_regulation ? 'bg-primary' : 'bg-input'}`}
+                aria-checked={theme === 'dark'}
+                onClick={toggleTheme}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${theme === 'dark' ? 'bg-primary' : 'bg-input'}`}
               >
-                <span className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${form.small_business_regulation ? 'translate-x-5' : 'translate-x-0'}`} />
+                <span className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
             </div>
           </div>
-        </FormSection>
+        </section>
 
-        <FormSection title={t.settings.defaultTexts}>
-          <p className="text-sm text-muted-foreground mb-3">{t.settings.defaultTextsDescription}</p>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferIntro}</label>
-            <textarea value={form.default_offer_intro_text} onChange={(e) => update('default_offer_intro_text', e.target.value)} rows={2} className={textareaClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferFooter}</label>
-            <textarea value={form.default_offer_footer_text} onChange={(e) => update('default_offer_footer_text', e.target.value)} rows={2} className={textareaClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultInvoiceIntro}</label>
-            <textarea value={form.default_invoice_intro_text} onChange={(e) => update('default_invoice_intro_text', e.target.value)} rows={2} className={textareaClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultInvoiceFooter}</label>
-            <textarea value={form.default_invoice_footer_text} onChange={(e) => update('default_invoice_footer_text', e.target.value)} rows={2} className={textareaClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.paymentTerms}</label>
-            <textarea value={form.payment_terms} onChange={(e) => update('payment_terms', e.target.value)} rows={2} className={textareaClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultClosingText}</label>
-            <input type="text" value={form.default_closing_text} onChange={(e) => update('default_closing_text', e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.ownerName}</label>
-            <p className="text-xs text-muted-foreground mb-1">{t.settings.ownerNameDescription}</p>
-            <input type="text" value={form.owner_name} onChange={(e) => update('owner_name', e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferTitle}</label>
-            <p className="text-xs text-muted-foreground mb-1">{t.settings.defaultOfferTitleDescription}</p>
-            <input type="text" value={form.default_offer_title} onChange={(e) => update('default_offer_title', e.target.value)} className={inputClass} placeholder="z.B. Angebot für Reinigungsdienstleistungen" />
-          </div>
-        </FormSection>
-
-        <FormSection title={t.settings.bankDetails}>
-          <p className="text-sm text-muted-foreground mb-3">{t.settings.bankDetailsDescription}</p>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.accountHolder}</label>
-            <input type="text" value={form.account_holder} onChange={(e) => update('account_holder', e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.bankName}</label>
-            <input type="text" value={form.bank_name} onChange={(e) => update('bank_name', e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.iban}</label>
-            <input type="text" value={form.iban} onChange={(e) => update('iban', e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.bic}</label>
-            <input type="text" value={form.bic} onChange={(e) => update('bic', e.target.value)} className={inputClass} />
-          </div>
-        </FormSection>
-
-        <FormSection title={t.settings.appearance}>
-          <ThemeToggle />
-        </FormSection>
-
-        <FormSection title={t.settings.languageSettings}>
-          <LanguageSwitcher />
-        </FormSection>
-
+        {/* Save button */}
         <button
           type="submit"
           disabled={mutation.isPending}
