@@ -404,5 +404,8 @@ export const en: Translations = {
     statusReviewed: 'Reviewed',
     statusConverted: 'Converted',
     statusArchived: 'Archived',
+    showQr: 'Show QR code',
+    qrTitle: 'QR Code for Clients',
+    qrDescription: 'The client scans the code and can enter their data directly.',
   },
 };
