@@ -90,7 +90,30 @@ const PublicOfferView = () => {
         .eq('id', offer!.id);
       if (updateError) throw updateError;
     },
-    onSuccess: () => setAccepted(true),
+    onSuccess: () => {
+      setAccepted(true);
+      queryClient.invalidateQueries({ queryKey: ['public-offer', token] });
+      queryClient.invalidateQueries({ queryKey: ['public-offer-acceptance', offer?.id] });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('offers')
+        .update({
+          status: 'rejected',
+          rejected_at: new Date().toISOString(),
+          rejected_reason: rejectReason.trim() || null,
+        } as any)
+        .eq('id', offer!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setRejected(true);
+      setShowRejectConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['public-offer', token] });
+    },
   });
 
   const handleAccept = (e: React.FormEvent) => {
@@ -100,6 +123,7 @@ const PublicOfferView = () => {
   };
 
   const isAlreadyAccepted = offer?.status === 'accepted' || !!existingAcceptance || accepted;
+  const isAlreadyRejected = offer?.status === 'rejected' || rejected;
 
   const getValidityDate = (): string | null => {
     if (!offer) return null;
