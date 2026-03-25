@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Edit, Send, Check, X } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +19,7 @@ const OfferDetail = () => {
   const queryClient = useQueryClient();
   const [generating, setGenerating] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [generatingConfirmation, setGeneratingConfirmation] = useState(false);
 
   const statusLabels: Record<OfferStatus, string> = {
     draft: t.offers.draft, sent: t.offers.sent, accepted: t.offers.accepted, rejected: t.offers.rejected,
@@ -62,6 +63,21 @@ const OfferDetail = () => {
     enabled: !!id,
   });
 
+  const { data: acceptance } = useQuery({
+    queryKey: ['offer-acceptance', id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('offer_acceptances')
+        .select('*')
+        .eq('offer_id', id!)
+        .order('accepted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id,
+  });
+
   const statusMutation = useMutation({
     mutationFn: async (newStatus: OfferStatus) => {
       const { error } = await supabase.from('offers').update({ status: newStatus }).eq('id', id!);
@@ -74,6 +90,26 @@ const OfferDetail = () => {
     },
   });
 
+  const getPublicLink = () => {
+    if (!offer) return '';
+    const token = (offer as any).public_token;
+    return `${window.location.origin}/offer/view/${token}`;
+  };
+
+  const copyLink = async () => {
+    const link = getPublicLink();
+    await navigator.clipboard.writeText(link);
+    toast.success(t.offers.linkCopied);
+  };
+
+  const getValidityDate = (): string | null => {
+    if (!offer) return null;
+    const days = (offer as any).validity_days || 14;
+    const offerDate = new Date(offer.date);
+    offerDate.setDate(offerDate.getDate() + days);
+    return offerDate.toLocaleDateString();
+  };
+
   const handlePdfExport = async () => {
     if (!offer) return;
     setGenerating(true);
@@ -81,14 +117,18 @@ const OfferDetail = () => {
       const customer = (offer as any).customer;
       const businessAddress = settings ? formatAddress(settings as any) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
-
       const customTitle = (settings as any)?.default_offer_title || t.offers.documentTitle;
+      const validityDays = (offer as any).validity_days || 14;
+      const validityDate = getValidityDate();
 
       await generatePdf({
         type: 'offer',
         documentTitle: customTitle,
         documentNumber: offer.offer_number,
         date: new Date(offer.date).toLocaleDateString(),
+        validityDate: validityDate || undefined,
+        validity_days: validityDays,
+        legal_note: 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.',
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
@@ -97,7 +137,6 @@ const OfferDetail = () => {
           tax_number: settings?.tax_number || undefined,
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
-          payment_terms: settings?.payment_terms || undefined,
           owner_name: (settings as any)?.owner_name || undefined,
         },
         customer: {
@@ -122,6 +161,52 @@ const OfferDetail = () => {
       });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleConfirmationPdf = async () => {
+    if (!offer || !acceptance) return;
+    setGeneratingConfirmation(true);
+    try {
+      const customer = (offer as any).customer;
+      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customerAddress = customer ? formatAddress(customer) : '';
+
+      await generatePdf({
+        type: 'confirmation',
+        documentTitle: t.offers.orderConfirmation,
+        documentNumber: `AB-${offer.offer_number}`,
+        date: new Date().toLocaleDateString(),
+        reference_offer_number: offer.offer_number,
+        accepted_by_name: (acceptance as any).accepted_by_name,
+        accepted_at: new Date((acceptance as any).accepted_at).toLocaleDateString(),
+        signature_text: (acceptance as any).signature_text || undefined,
+        business: {
+          business_name: settings?.business_name || '',
+          address: businessAddress || undefined,
+          email: settings?.email || undefined,
+          phone: settings?.phone || undefined,
+          tax_number: settings?.tax_number || undefined,
+          vat_id: settings?.vat_id || undefined,
+          logo_url: settings?.logo_url || undefined,
+          owner_name: (settings as any)?.owner_name || undefined,
+        },
+        customer: {
+          name: customer?.name || '',
+          address: customerAddress || undefined,
+        },
+        items: [],
+        subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
+        closing_text: (offer as any).closing_text || 'Mit freundlichen Grüßen',
+        labels: {
+          date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
+          unitPrice: t.offers.unitPrice, taxRate: t.offers.taxRate, total: t.offers.total,
+          subtotal: t.offers.subtotal, taxTotal: t.offers.taxTotal, grandTotal: t.offers.grandTotal,
+          description: t.offers.description, itemTitle: t.offers.itemTitle, page: 'Seite',
+        },
+      });
+    } finally {
+      setGeneratingConfirmation(false);
     }
   };
 
@@ -206,7 +291,10 @@ const OfferDetail = () => {
             </div>
             <StatusBadge status={offer.status as any} label={statusLabels[offer.status as OfferStatus]} />
           </div>
-          <p className="text-sm text-muted-foreground">{t.offers.date}: {new Date(offer.date).toLocaleDateString()}</p>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>{t.offers.date}: {new Date(offer.date).toLocaleDateString()}</p>
+            <p>{t.offers.validUntil}: {getValidityDate()}</p>
+          </div>
           {offer.notes && <p className="mt-2 text-sm text-foreground">{offer.notes}</p>}
 
           {linkedInvoices.length > 0 && (
@@ -216,6 +304,18 @@ const OfferDetail = () => {
                 {linkedInvoices.map((inv) => (
                   <Link key={inv.id} to={`/invoices/${inv.id}`} className="font-medium text-primary hover:underline mr-2">{inv.invoice_number}</Link>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Acceptance details */}
+          {acceptance && (
+            <div className="mt-3 rounded-lg bg-success/10 border border-success/20 p-3 text-sm">
+              <p className="font-medium text-success">{t.offers.acceptedDigitally}</p>
+              <div className="mt-1 space-y-0.5 text-muted-foreground">
+                <p>{t.offers.acceptedBy}: {(acceptance as any).accepted_by_name}</p>
+                <p>{t.offers.acceptedAt}: {new Date((acceptance as any).accepted_at).toLocaleDateString()}</p>
+                {(acceptance as any).signature_text && <p>{t.offers.signature}: {(acceptance as any).signature_text}</p>}
               </div>
             </div>
           )}
@@ -237,6 +337,21 @@ const OfferDetail = () => {
             </div>
           )}
 
+          {/* Share link */}
+          <div className="mt-4 rounded-lg bg-muted/30 border border-border p-3">
+            <p className="text-xs font-medium text-muted-foreground mb-2">{t.offers.shareOfferLink}</p>
+            <div className="flex gap-2">
+              <button onClick={copyLink}
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+                <Copy className="h-4 w-4" /> {t.offers.copyLink}
+              </button>
+              <a href={getPublicLink()} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+                <LinkIcon className="h-4 w-4" /> {t.offers.openLink}
+              </a>
+            </div>
+          </div>
+
           <div className="mt-4 flex flex-wrap gap-2">
             <Link to={`/offers/${id}/edit`}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
@@ -246,6 +361,12 @@ const OfferDetail = () => {
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <Download className="h-4 w-4" /> {generating ? t.common.generating : t.common.downloadPdf}
             </button>
+            {acceptance && (
+              <button onClick={handleConfirmationPdf} disabled={generatingConfirmation}
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
+                <ClipboardCheck className="h-4 w-4" /> {generatingConfirmation ? t.common.generating : t.offers.downloadConfirmation}
+              </button>
+            )}
             {(offer.status === 'accepted' || offer.status === 'sent') && (
               <button onClick={handleConvertToInvoice} disabled={converting}
                 className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
