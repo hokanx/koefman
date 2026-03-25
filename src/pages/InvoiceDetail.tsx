@@ -485,7 +485,43 @@ const InvoiceDetail = () => {
             </div>
           )}
         </div>
+
+        {/* Email History */}
+        {sentEmails.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4 md:p-6">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+              <Mail className="h-4 w-4" /> {t.email.emailHistory}
+            </h3>
+            <div className="space-y-2">
+              {sentEmails.map((e: any) => (
+                <div key={e.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
+                  <span className="text-foreground">{t.email.sentAt} {formatDateDE(e.sent_at)}</span>
+                  <span className="text-xs text-muted-foreground">{e.recipient_email}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      <EmailModal
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        recipientEmail={(invoice as any)?.customer?.email || ''}
+        defaultSubject={emailType === 'reminder'
+          ? t.email.reminderSubject.replace('{number}', invoice?.invoice_number || '')
+          : t.email.invoiceSubject.replace('{number}', invoice?.invoice_number || '')}
+        defaultBody={emailType === 'reminder'
+          ? t.email.reminderBody.replace(/{number}/g, invoice?.invoice_number || '')
+          : t.email.invoiceBody.replace(/{number}/g, invoice?.invoice_number || '')}
+        pdfGenerator={emailType === 'reminder' ? getReminderPdfBase64 : getInvoicePdfBase64}
+        pdfFilename={emailType === 'reminder'
+          ? `Zahlungserinnerung_${invoice?.invoice_number}.pdf`
+          : `${invoice?.invoice_number}.pdf`}
+        documentType={emailType === 'reminder' ? 'reminder' : 'invoice'}
+        documentId={id!}
+        onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'invoice', id] })}
+      />
     </div>
   );
 };
