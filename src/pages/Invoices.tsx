@@ -19,9 +19,7 @@ const Invoices = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'all'>('all');
 
-  const statusLabels: Record<InvoiceStatus, string> = {
-    draft: t.invoices.draft, open: t.invoices.open, paid: t.invoices.paid, overdue: t.invoices.overdue, cancelled: t.invoices.cancelled,
-  };
+  const statusLabels = t.status as Record<string, string>;
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['invoices'],
