@@ -47,7 +47,9 @@ const AppLayout = () => {
     <div className="flex min-h-screen flex-col bg-background">
       {/* Top header */}
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4">
-        <h1 className="text-lg font-bold tracking-tight text-primary">KÖFMAN</h1>
+        <div className="flex items-center gap-2">
+          <img src="/logo-koefman.jpeg" alt="KÖFMAN" className="h-8 w-auto" />
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={toggleTheme}
