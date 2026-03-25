@@ -54,11 +54,13 @@ interface PdfData {
   // Offer-specific
   validity_days?: number;
   legal_note?: string;
+  small_business_regulation?: boolean;
   // Invoice-specific (payment_terms is on business)
   // Confirmation-specific
   accepted_by_name?: string;
   accepted_at?: string;
   signature_text?: string;
+  signature_image?: string;
   reference_offer_number?: string;
   labels: {
     date: string;
