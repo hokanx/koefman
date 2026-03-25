@@ -231,7 +231,7 @@ const InvoiceDetail = () => {
     }
   };
 
-
+  if (isLoading) {
     return <div className="flex justify-center p-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   }
   if (!invoice) {
