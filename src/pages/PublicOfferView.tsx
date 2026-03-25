@@ -118,7 +118,7 @@ const PublicOfferView = () => {
 
   const handleAccept = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!acceptName.trim()) return;
+    if (!acceptName.trim() || !signatureImage) return;
     acceptMutation.mutate();
   };
 
