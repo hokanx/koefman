@@ -36,6 +36,32 @@ const DEFAULT_TEXTS = {
   },
 };
 
+const ThemeToggle = () => {
+  const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
+      <div className="flex items-center gap-3">
+        {theme === 'dark' ? <Moon className="h-5 w-5 text-muted-foreground" /> : <Sun className="h-5 w-5 text-muted-foreground" />}
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            {theme === 'dark' ? t.nav.darkMode : t.nav.lightMode}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={theme === 'dark'}
+        onClick={toggleTheme}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${theme === 'dark' ? 'bg-primary' : 'bg-input'}`}
+      >
+        <span className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+    </div>
+  );
+};
+
 const Settings = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
