@@ -194,6 +194,7 @@ const Leads = () => {
     onError: () => toast.error(t.common.error),
   });
 
+  const filtered = leads.filter(l => {
     const matchSearch = l.company_or_name.toLowerCase().includes(search.toLowerCase()) ||
       (l.email?.toLowerCase().includes(search.toLowerCase())) ||
       (l.phone?.includes(search));
