@@ -77,47 +77,6 @@ interface PdfData {
     page: string;
   };
 }
-  documentNumber: string;
-  date: string;
-  dueDate?: string;
-  validityDate?: string;
-  business: BusinessInfo;
-  customer: CustomerInfo;
-  items: DocumentItem[];
-  subtotal: number;
-  tax_total: number;
-  grand_total: number;
-  intro_text?: string;
-  footer_text?: string;
-  closing_text?: string;
-  notes?: string;
-  // Offer-specific
-  validity_days?: number;
-  legal_note?: string;
-  small_business_regulation?: boolean;
-  // Invoice-specific (payment_terms is on business)
-  // Confirmation-specific
-  accepted_by_name?: string;
-  accepted_at?: string;
-  signature_text?: string;
-  signature_image?: string;
-  reference_offer_number?: string;
-  labels: {
-    date: string;
-    dueDate?: string;
-    quantity: string;
-    unit: string;
-    unitPrice: string;
-    taxRate: string;
-    total: string;
-    subtotal: string;
-    taxTotal: string;
-    grandTotal: string;
-    description: string;
-    itemTitle: string;
-    page: string;
-  };
-}
 
 const formatCurrency = (value: number): string => {
   const formatted = value.toFixed(2).replace('.', ',');
