@@ -321,6 +321,12 @@ const InvoiceDetail = () => {
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <CopyPlus className="h-4 w-4" /> {duplicating ? t.common.loading : t.invoices.duplicateInvoice}
             </button>
+            {(currentStatus === 'open' || currentStatus === 'draft' || isOverdue) && (
+              <button onClick={handleCreateReminder} disabled={creatingReminder}
+                className="flex items-center gap-2 rounded-lg bg-warning px-3 py-2 text-sm font-semibold text-warning-foreground hover:bg-warning/90 disabled:opacity-50">
+                <Bell className="h-4 w-4" /> {creatingReminder ? t.common.generating : t.invoices.createReminder}
+              </button>
+            )}
           </div>
         </div>
 
