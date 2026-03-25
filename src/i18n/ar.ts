@@ -404,5 +404,8 @@ export const ar: Translations = {
     statusReviewed: 'تمت المراجعة',
     statusConverted: 'تم التحويل',
     statusArchived: 'مؤرشف',
+    showQr: 'عرض رمز QR',
+    qrTitle: 'رمز QR للعملاء',
+    qrDescription: 'يقوم العميل بمسح الرمز ويمكنه إدخال بياناته مباشرة.',
   },
 };

@@ -403,6 +403,9 @@ export const de = {
     statusReviewed: 'Gesehen',
     statusConverted: 'Angelegt',
     statusArchived: 'Archiviert',
+    showQr: 'QR-Code anzeigen',
+    qrTitle: 'QR-Code für Kunden',
+    qrDescription: 'Kunde scannt den Code und kann seine Daten direkt eingeben.',
   },
 };
 
