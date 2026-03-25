@@ -230,7 +230,7 @@ const OfferDetail = () => {
     try {
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
       const prefix = settings?.invoice_number_prefix || 'RE-';
-      const invoiceNumber = `${prefix}${String((count ?? 0) + 1).padStart(4, '0')}`;
+      const invoiceNumber = generateDocumentNumber(prefix, count ?? 0);
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 14);
 
@@ -275,7 +275,7 @@ const OfferDetail = () => {
     try {
       const { count } = await supabase.from('offers').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
       const prefix = settings?.offer_number_prefix || 'ANG-';
-      const offerNumber = `${prefix}${String((count ?? 0) + 1).padStart(4, '0')}`;
+      const offerNumber = generateDocumentNumber(prefix, count ?? 0);
 
       const { data: newOffer, error } = await supabase.from('offers').insert({
         user_id: user.id, customer_id: offer.customer_id, offer_number: offerNumber,

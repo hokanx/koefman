@@ -61,7 +61,7 @@ const OfferNew = () => {
 
       const { count } = await supabase.from('offers').select('*', { count: 'exact', head: true }).eq('user_id', user!.id);
       const prefix = settings?.offer_number_prefix || 'ANG-';
-      const offerNumber = `${prefix}${String((count ?? 0) + 1).padStart(4, '0')}`;
+      const offerNumber = generateDocumentNumber(prefix, count ?? 0);
 
       const { data: offer, error } = await supabase.from('offers').insert({
         user_id: user!.id, customer_id: customerId, offer_number: offerNumber,
