@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Inbox, Eye, UserPlus, Archive, Copy, Check } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,10 +44,16 @@ const Leads = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<string>('all');
+  const [filter, setFilter] = useState<string>(searchParams.get('status') || 'all');
   const [selected, setSelected] = useState<IntakeSubmission | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+
+  useEffect(() => {
+    const s = searchParams.get('status');
+    if (s) setFilter(s);
+  }, [searchParams]);
 
   const { data: settings } = useQuery({
     queryKey: ['business-settings'],
@@ -84,13 +90,15 @@ const Leads = () => {
   };
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, silent }: { id: string; status: string; silent?: boolean }) => {
       const { error } = await supabase.from('intake_submissions' as any).update({ status } as any).eq('id', id);
       if (error) throw error;
+      return { silent };
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      setSelected(null);
+      queryClient.invalidateQueries({ queryKey: ['new-leads-count'] });
+      if (!variables.silent) setSelected(null);
     },
   });
 
@@ -136,6 +144,7 @@ const Leads = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['new-leads-count'] });
       toast.success(t.leads.convertedSuccess);
       setSelected(null);
     },
@@ -271,7 +280,12 @@ const Leads = () => {
       ) : (
         <div className="space-y-2">
           {filtered.map(lead => (
-            <button key={lead.id} onClick={() => setSelected(lead)}
+            <button key={lead.id} onClick={() => {
+                setSelected(lead);
+                if (lead.status === 'new') {
+                  updateStatus.mutate({ id: lead.id, status: 'reviewed', silent: true });
+                }
+              }}
               className="card-hover block w-full text-start rounded-xl border border-border bg-card p-4">
               <div className="flex items-start justify-between">
                 <div className="min-w-0 flex-1">

@@ -4,6 +4,8 @@ import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, Fil
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import LanguageSwitcher from './LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import {
@@ -15,11 +17,25 @@ import {
 
 const AppLayout = () => {
   const { t } = useLanguage();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  const { data: newLeadsCount = 0 } = useQuery({
+    queryKey: ['new-leads-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('intake_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('owner_id', user!.id)
+        .eq('status', 'new');
+      return count || 0;
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
 
   const primaryNavItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: t.nav.dashboard },
@@ -29,9 +45,9 @@ const AppLayout = () => {
   ];
 
   const secondaryNavItems = [
-    { to: '/leads', icon: Inbox, label: t.nav.leads },
-    { to: '/templates', icon: FileStack, label: t.nav.templates },
-    { to: '/settings', icon: Settings, label: t.nav.settings },
+    { to: '/leads', icon: Inbox, label: t.nav.leads, badge: newLeadsCount },
+    { to: '/templates', icon: FileStack, label: t.nav.templates, badge: 0 },
+    { to: '/settings', icon: Settings, label: t.nav.settings, badge: 0 },
   ];
 
   const allNavItems = [...primaryNavItems, ...secondaryNavItems];
@@ -88,6 +104,11 @@ const AppLayout = () => {
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
+                {'badge' in item && (item as any).badge > 0 && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {(item as any).badge}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -128,11 +149,18 @@ const AppLayout = () => {
         <button
           onClick={() => setMoreOpen(true)}
           className={cn(
-            'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+            'relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
             isSecondaryActive ? 'text-primary' : 'text-muted-foreground'
           )}
         >
-          <MoreHorizontal className="h-5 w-5" />
+          <div className="relative">
+            <MoreHorizontal className="h-5 w-5" />
+            {newLeadsCount > 0 && (
+              <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                {newLeadsCount}
+              </span>
+            )}
+          </div>
           {t.nav.more}
         </button>
       </nav>
@@ -160,6 +188,11 @@ const AppLayout = () => {
               >
                 <item.icon className="h-5 w-5" />
                 {item.label}
+                {item.badge > 0 && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             ))}
 
