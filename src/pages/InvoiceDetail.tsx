@@ -20,6 +20,7 @@ const InvoiceDetail = () => {
   const queryClient = useQueryClient();
   const [generating, setGenerating] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [creatingReminder, setCreatingReminder] = useState(false);
 
   const statusLabels = t.status as Record<string, string>;
 
@@ -49,6 +50,15 @@ const InvoiceDetail = () => {
       return data;
     },
     enabled: !!user,
+  });
+
+  const { data: reminders = [] } = useQuery({
+    queryKey: ['invoice-reminders', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('invoice_reminders').select('*').eq('invoice_id', id!).order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!id && !!user,
   });
 
   const statusMutation = useMutation({
