@@ -10,26 +10,26 @@ import { toast } from 'sonner';
 
 const DEFAULT_TEXTS = {
   de: {
-    offer_intro: 'Vielen Dank für Ihre Anfrage. Gern unterbreiten wir Ihnen folgendes Angebot.',
-    offer_footer: 'Bei Rückfragen stehen wir Ihnen jederzeit gerne zur Verfügung.',
-    invoice_intro: 'Vielen Dank für Ihren Auftrag.',
-    invoice_footer: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer.',
+    offer_intro: 'Sehr geehrte Damen und Herren,\n\nwir bieten Ihnen die nachfolgend aufgeführten Leistungen zu den genannten Konditionen an:',
+    offer_footer: 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.\n\nDieses Angebot ist 14 Tage gültig.',
+    invoice_intro: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:',
+    invoice_footer: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
     payment_terms: 'Zahlbar innerhalb von 14 Tagen ohne Abzug.',
     closing: 'Mit freundlichen Grüßen',
   },
   en: {
-    offer_intro: 'Thank you for your request. We are pleased to provide you with the following offer.',
-    offer_footer: 'If you have any questions, feel free to contact us.',
-    invoice_intro: 'Thank you for your business.',
-    invoice_footer: 'Please transfer the invoice amount stating the invoice number.',
+    offer_intro: 'Dear Sir or Madam,\n\nwe are pleased to offer you the following services under the stated conditions:',
+    offer_footer: 'This offer is valid for 14 days.',
+    invoice_intro: 'Dear Sir or Madam,\n\nplease find below our invoice for the services rendered:',
+    invoice_footer: 'Please transfer the invoice amount stating the invoice number to the account below.',
     payment_terms: 'Payable within 14 days without deduction.',
     closing: 'Kind regards',
   },
   ar: {
-    offer_intro: 'شكراً لطلبكم، يسعدنا أن نقدم لكم العرض التالي.',
-    offer_footer: 'في حال وجود أي استفسار، لا تترددوا في التواصل معنا.',
-    invoice_intro: 'شكراً لتعاملكم معنا.',
-    invoice_footer: 'يرجى تحويل المبلغ مع ذكر رقم الفاتورة.',
+    offer_intro: 'السادة الكرام،\n\nيسعدنا أن نقدم لكم العرض التالي بالشروط المذكورة:',
+    offer_footer: 'هذا العرض صالح لمدة 14 يوماً.',
+    invoice_intro: 'السادة الكرام،\n\nنرفق لكم فاتورتنا عن الخدمات المقدمة:',
+    invoice_footer: 'يرجى تحويل المبلغ مع ذكر رقم الفاتورة إلى الحساب المذكور أدناه.',
     payment_terms: 'مستحق الدفع خلال 14 يوماً بدون خصم.',
     closing: 'مع أطيب التحيات',
   },
@@ -63,6 +63,8 @@ const Settings = () => {
     default_invoice_intro_text: '',
     default_invoice_footer_text: '',
     default_closing_text: '',
+    owner_name: '',
+    default_offer_title: '',
     account_holder: '',
     bank_name: '',
     iban: '',
@@ -111,6 +113,8 @@ const Settings = () => {
         default_invoice_intro_text: (settings as any).default_invoice_intro_text || defaults.invoice_intro,
         default_invoice_footer_text: (settings as any).default_invoice_footer_text || defaults.invoice_footer,
         default_closing_text: (settings as any).default_closing_text || defaults.closing,
+        owner_name: (settings as any).owner_name || '',
+        default_offer_title: (settings as any).default_offer_title || '',
         account_holder: (settings as any).account_holder || '',
         bank_name: (settings as any).bank_name || '',
         iban: (settings as any).iban || '',
@@ -365,6 +369,16 @@ const Settings = () => {
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultClosingText}</label>
             <input type="text" value={form.default_closing_text} onChange={(e) => update('default_closing_text', e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.ownerName}</label>
+            <p className="text-xs text-muted-foreground mb-1">{t.settings.ownerNameDescription}</p>
+            <input type="text" value={form.owner_name} onChange={(e) => update('owner_name', e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferTitle}</label>
+            <p className="text-xs text-muted-foreground mb-1">{t.settings.defaultOfferTitleDescription}</p>
+            <input type="text" value={form.default_offer_title} onChange={(e) => update('default_offer_title', e.target.value)} className={inputClass} placeholder="z.B. Angebot für Reinigungsdienstleistungen" />
           </div>
         </FormSection>
 

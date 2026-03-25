@@ -14,6 +14,7 @@ interface BusinessInfo {
   bank_name?: string;
   iban?: string;
   bic?: string;
+  owner_name?: string;
 }
 
 interface CustomerInfo {
@@ -91,45 +92,39 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   const pageWidth = 210;
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
-  let y = 20;
 
-  // --- LOGO (top-left, if available) ---
+  // --- HEADER: Sender line (left) + Logo (right) on same level ---
+  const headerY = 15;
+
+  // Logo on the right
+  let logoEndY = headerY;
   if (data.business.logo_url) {
     const img = await loadImage(data.business.logo_url);
     if (img) {
-      const maxW = 50;
+      const maxW = 45;
       const maxH = 20;
       const ratio = Math.min(maxW / img.width, maxH / img.height);
       const w = img.width * ratio;
       const h = img.height * ratio;
-      doc.addImage(img, 'PNG', margin, y, w, h);
-      y += h + 5;
+      const logoX = pageWidth - margin - w;
+      doc.addImage(img, 'PNG', logoX, headerY, w, h);
+      logoEndY = headerY + h;
     }
   }
 
-  // --- BUSINESS DETAILS (right column) ---
+  // Business details on the right (below logo or at top-right if no logo)
   const rightX = pageWidth - margin;
-  let rightY = 20;
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(50, 50, 50);
-  doc.text(data.business.business_name || '', rightX, rightY, { align: 'right' });
+  let rightY = Math.max(logoEndY + 3, headerY + 3);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  rightY += 5;
-  if (data.business.address) {
-    const addrLines = data.business.address.split('\n');
-    addrLines.forEach((line) => {
-      doc.text(line.trim(), rightX, rightY, { align: 'right' });
-      rightY += 4;
-    });
-  }
-  if (data.business.phone) { doc.text(data.business.phone, rightX, rightY, { align: 'right' }); rightY += 4; }
-  if (data.business.email) { doc.text(data.business.email, rightX, rightY, { align: 'right' }); rightY += 4; }
-  if (data.business.tax_number) { doc.text(`St.-Nr.: ${data.business.tax_number}`, rightX, rightY, { align: 'right' }); rightY += 4; }
-  if (data.business.vat_id) { doc.text(`USt-IdNr.: ${data.business.vat_id}`, rightX, rightY, { align: 'right' }); rightY += 4; }
+  doc.setTextColor(100, 100, 100);
+  if (data.business.phone) { doc.text(data.business.phone, rightX, rightY, { align: 'right' }); rightY += 3.5; }
+  if (data.business.email) { doc.text(data.business.email, rightX, rightY, { align: 'right' }); rightY += 3.5; }
+  if (data.business.tax_number) { doc.text(`St.-Nr.: ${data.business.tax_number}`, rightX, rightY, { align: 'right' }); rightY += 3.5; }
+  if (data.business.vat_id) { doc.text(`USt-IdNr.: ${data.business.vat_id}`, rightX, rightY, { align: 'right' }); rightY += 3.5; }
 
   // --- SENDER LINE (compact, single line above receiver) --- DIN 5008 ~27mm
-  y = 27;
+  let y = 27;
   const senderParts = [
     data.business.business_name,
     data.business.address?.replace(/\n/g, ' · '),
@@ -311,13 +306,31 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
     y += footerLines.length * 4 + 5;
   }
 
-  // --- CLOSING TEXT ---
+  // --- CLOSING TEXT + Company + Owner ---
   if (data.closing_text) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(30, 30, 30);
     doc.text(data.closing_text, margin, y);
     y += 8;
+  }
+
+  // Company name in closing
+  if (data.business.business_name) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 30, 30);
+    doc.text(data.business.business_name, margin, y);
+    y += 5;
+  }
+
+  // Owner name (Inhaber)
+  if (data.business.owner_name) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Inhaber: ${data.business.owner_name}`, margin, y);
+    y += 5;
   }
 
   // --- PAGE FOOTER ---

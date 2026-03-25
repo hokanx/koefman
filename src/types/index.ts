@@ -127,6 +127,8 @@ export interface BusinessSettings {
   default_invoice_intro_text?: string;
   default_invoice_footer_text?: string;
   default_closing_text?: string;
+  owner_name?: string;
+  default_offer_title?: string;
   account_holder?: string;
   bank_name?: string;
   iban?: string;
