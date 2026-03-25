@@ -90,13 +90,15 @@ const Leads = () => {
   };
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, silent }: { id: string; status: string; silent?: boolean }) => {
       const { error } = await supabase.from('intake_submissions' as any).update({ status } as any).eq('id', id);
       if (error) throw error;
+      return { silent };
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      setSelected(null);
+      queryClient.invalidateQueries({ queryKey: ['new-leads-count'] });
+      if (!variables.silent) setSelected(null);
     },
   });
 
