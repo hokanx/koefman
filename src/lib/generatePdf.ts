@@ -91,7 +91,10 @@ const formatIban = (iban: string): string => {
 const loadImage = (url: string): Promise<HTMLImageElement | null> => {
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Only set crossOrigin for external URLs, not data URIs
+    if (!url.startsWith('data:')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
     img.src = url;
