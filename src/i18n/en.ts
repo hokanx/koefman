@@ -118,6 +118,7 @@ export const en: Translations = {
     saveCustomer: 'Save customer',
     deleteConfirm: 'Are you sure you want to delete this customer?',
     letClientFillIn: 'Let the client fill in their own details?',
+    suggestCreateOffer: 'Create an offer for this customer?',
   },
   offers: {
     title: 'Offers',
@@ -226,6 +227,7 @@ export const en: Translations = {
     noInvoicesDesc: 'Create your first invoice.',
     editInvoice: 'Edit invoice',
     deleteInvoice: 'Delete invoice',
+    duplicateInvoice: 'Duplicate invoice',
     invoiceDetails: 'Invoice details',
     fromOffer: 'Created from offer',
     selectCustomer: 'Select customer',

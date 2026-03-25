@@ -7,6 +7,8 @@ interface LineItemsEditorProps {
   items: LineItem[];
   onChange: (items: LineItem[]) => void;
   showTemplatePicker?: boolean;
+  defaultTaxRate?: number;
+  defaultUnit?: string;
   labels: {
     addItem: string;
     itemTitle: string;
@@ -19,23 +21,21 @@ interface LineItemsEditorProps {
   };
 }
 
-const createEmptyItem = (sortOrder: number): LineItem => ({
-  id: crypto.randomUUID(),
-  title: '',
-  description: '',
-  quantity: 1,
-  unit: 'Stück',
-  unit_price: 0,
-  tax_rate: 19,
-  total: 0,
-  sort_order: sortOrder,
-});
-
-const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false }: LineItemsEditorProps) => {
+const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, defaultTaxRate = 19, defaultUnit = 'Pauschal' }: LineItemsEditorProps) => {
   const { t } = useLanguage();
 
   const addItem = () => {
-    onChange([...items, createEmptyItem(items.length)]);
+    onChange([...items, {
+      id: crypto.randomUUID(),
+      title: '',
+      description: '',
+      quantity: 1,
+      unit: defaultUnit,
+      unit_price: 0,
+      tax_rate: defaultTaxRate,
+      total: 0,
+      sort_order: items.length,
+    }]);
   };
 
   const removeItem = (id: string) => {

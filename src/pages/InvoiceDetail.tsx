@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +18,7 @@ const InvoiceDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [generating, setGenerating] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   const statusLabels: Record<InvoiceStatus, string> = {
     draft: t.invoices.draft, open: t.invoices.open, paid: t.invoices.paid, overdue: t.invoices.overdue, cancelled: t.invoices.cancelled,
@@ -67,6 +68,47 @@ const InvoiceDetail = () => {
   // Auto-detect overdue
   const currentStatus = invoice?.status as InvoiceStatus;
   const isOverdue = currentStatus === 'open' && invoice?.due_date && new Date(invoice.due_date) < new Date();
+
+  const handleDuplicate = async () => {
+    if (!invoice || !user) return;
+    setDuplicating(true);
+    try {
+      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+      const prefix = settings?.invoice_number_prefix || 'RE-';
+      const invoiceNumber = `${prefix}${String((count ?? 0) + 1).padStart(4, '0')}`;
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 14);
+
+      const { data: newInvoice, error } = await supabase.from('invoices').insert({
+        user_id: user.id, customer_id: invoice.customer_id, invoice_number: invoiceNumber,
+        date: new Date().toISOString().split('T')[0],
+        due_date: dueDate.toISOString().split('T')[0],
+        status: 'open', notes: invoice.notes,
+        intro_text: (invoice as any).intro_text, footer_text: (invoice as any).footer_text,
+        closing_text: (invoice as any).closing_text,
+        subtotal: invoice.subtotal, tax_total: invoice.tax_total, grand_total: invoice.grand_total,
+      } as any).select().single();
+      if (error) throw error;
+
+      if (items.length > 0) {
+        await supabase.from('invoice_items').insert(
+          items.map((item: any, index: number) => ({
+            invoice_id: newInvoice!.id, title: item.title, description: item.description,
+            quantity: item.quantity, unit: item.unit, unit_price: item.unit_price,
+            tax_rate: item.tax_rate, total: item.total, sort_order: index,
+          }))
+        );
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success(t.common.success);
+      navigate(`/invoices/${newInvoice!.id}`);
+    } catch {
+      toast.error(t.common.error);
+    } finally {
+      setDuplicating(false);
+    }
+  };
 
   const handlePdfExport = async () => {
     if (!invoice) return;
@@ -199,6 +241,10 @@ const InvoiceDetail = () => {
             <button onClick={handlePdfExport} disabled={generating}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <Download className="h-4 w-4" /> {generating ? t.common.generating : t.common.downloadPdf}
+            </button>
+            <button onClick={handleDuplicate} disabled={duplicating}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
+              <CopyPlus className="h-4 w-4" /> {duplicating ? t.common.loading : t.invoices.duplicateInvoice}
             </button>
           </div>
         </div>

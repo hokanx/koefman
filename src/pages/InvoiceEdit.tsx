@@ -177,7 +177,10 @@ const InvoiceEdit = () => {
         </FormSection>
 
         <FormSection title={t.invoices.items}>
-          <LineItemsEditor items={items} onChange={setItems} showTemplatePicker labels={{
+          <LineItemsEditor items={items} onChange={setItems} showTemplatePicker
+            defaultTaxRate={19}
+            defaultUnit="Pauschal"
+            labels={{
             addItem: t.invoices.addItem, itemTitle: t.invoices.itemTitle, description: t.invoices.description,
             quantity: t.invoices.quantity, unit: t.invoices.unit, unitPrice: t.invoices.unitPrice,
             taxRate: t.invoices.taxRate, total: t.invoices.total,
