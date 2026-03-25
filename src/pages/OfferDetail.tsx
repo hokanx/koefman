@@ -65,7 +65,16 @@ const OfferDetail = () => {
     enabled: !!id,
   });
 
-  const { data: acceptance } = useQuery({
+  const { data: sentEmails = [] } = useQuery({
+    queryKey: ['document-emails', 'offer', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('document_emails').select('*').eq('document_id', id!).eq('document_type', 'offer').order('sent_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!id && !!user,
+  });
+
+
     queryKey: ['offer-acceptance', id],
     queryFn: async () => {
       const { data } = await supabase
