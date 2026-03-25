@@ -271,6 +271,44 @@ const OfferDetail = () => {
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!offer || !user) return;
+    setDuplicating(true);
+    try {
+      const { count } = await supabase.from('offers').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+      const prefix = settings?.offer_number_prefix || 'ANG-';
+      const offerNumber = `${prefix}${String((count ?? 0) + 1).padStart(4, '0')}`;
+
+      const { data: newOffer, error } = await supabase.from('offers').insert({
+        user_id: user.id, customer_id: offer.customer_id, offer_number: offerNumber,
+        date: new Date().toISOString().split('T')[0], status: 'draft',
+        notes: offer.notes, internal_notes: offer.internal_notes,
+        intro_text: (offer as any).intro_text, footer_text: (offer as any).footer_text,
+        closing_text: (offer as any).closing_text,
+        subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
+      } as any).select().single();
+      if (error) throw error;
+
+      if (items.length > 0) {
+        await supabase.from('offer_items').insert(
+          items.map((item: any, index: number) => ({
+            offer_id: newOffer!.id, title: item.title, description: item.description,
+            quantity: item.quantity, unit: item.unit, unit_price: item.unit_price,
+            tax_rate: item.tax_rate, total: item.total, sort_order: index,
+          }))
+        );
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['offers'] });
+      toast.success(t.common.success);
+      navigate(`/offers/${newOffer!.id}`);
+    } catch {
+      toast.error(t.common.error);
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
   const statusActions: { status: OfferStatus; label: string; icon: React.ReactNode; className: string }[] = [];
   if (offer) {
     const s = offer.status as OfferStatus;
