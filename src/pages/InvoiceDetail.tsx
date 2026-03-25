@@ -358,6 +358,32 @@ const InvoiceDetail = () => {
             </div>
           </div>
         )}
+
+        {/* Reminder History */}
+        <div className="rounded-xl border border-border bg-card p-4 md:p-6">
+          <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+            <Clock className="h-4 w-4" /> {t.invoices.reminderHistory}
+          </h3>
+          {reminders.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t.invoices.noReminders}</p>
+          ) : (
+            <div className="space-y-2">
+              {reminders.map((r: any) => (
+                <div key={r.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-3.5 w-3.5 text-warning" />
+                    <span className="text-foreground">
+                      {t.invoices.reminderCreatedAt} {formatDateDE(r.created_at)}
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {t.invoices.reminderLevel} {r.reminder_level}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
