@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Phone, Mail, MapPin, Edit, Trash2, Car, Sparkles } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, MapPin, Edit, Trash2, Car, Sparkles, FileText, Plus } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -113,6 +113,15 @@ const CustomerDetail = () => {
                 <p className="text-foreground">{customer.notes}</p>
               </div>
             )}
+          </div>
+
+          {/* Smart suggestion: create offer */}
+          <div className="mt-4 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
+            <p className="text-sm text-muted-foreground mb-2">{t.customers.suggestCreateOffer}</p>
+            <Link to={`/offers/new?customer=${id}`}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+              <Plus className="h-4 w-4" /> {t.offers.newOffer}
+            </Link>
           </div>
         </div>
 
