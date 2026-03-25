@@ -73,7 +73,7 @@ const Leads = () => {
   });
 
   const intakeToken = (settings as any)?.intake_token;
-  const intakeLink = intakeToken ? `${window.location.origin}/intake?token=${intakeToken}` : '';
+  const intakeLink = intakeToken ? `${window.location.origin}/intake/${intakeToken}` : '';
 
   const copyLink = () => {
     if (!intakeLink) return;
