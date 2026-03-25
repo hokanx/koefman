@@ -430,8 +430,8 @@ const InvoiceDetail = () => {
               </button>
             )}
           </div>
+        </div>
 
-        {items.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
             <h3 className="mb-3 font-semibold text-foreground">{t.invoices.items}</h3>
             <div className="space-y-2">
