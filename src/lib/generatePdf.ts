@@ -560,3 +560,196 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
 export const generateConfirmationPdf = async (data: PdfData): Promise<void> => {
   return generatePdf(data);
 };
+
+// ============================================================
+// PAYMENT REMINDER PDF
+// ============================================================
+
+interface ReminderPdfData {
+  business: BusinessInfo;
+  customer: CustomerInfo;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  grandTotal: number;
+  reminderDate: string;
+  reminderLevel: number;
+  labels: {
+    page: string;
+  };
+}
+
+export const generateReminderPdf = async (data: ReminderPdfData): Promise<void> => {
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = 210;
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  const rightEdge = pageWidth - margin;
+
+  // 1. HEADER
+  const headerY = 12;
+  let logoBottomY = headerY;
+  if (data.business.logo_url) {
+    const img = await loadImage(data.business.logo_url);
+    if (img) {
+      const maxW = 50;
+      const maxH = 22;
+      const ratio = Math.min(maxW / img.width, maxH / img.height);
+      const w = img.width * ratio;
+      const h = img.height * ratio;
+      doc.addImage(img, 'PNG', rightEdge - w, headerY, w, h);
+      logoBottomY = headerY + h;
+    }
+  }
+
+  const senderParts = [
+    data.business.business_name,
+    data.business.address?.replace(/\n/g, ', '),
+  ].filter(Boolean);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  doc.text(senderParts.join(' · '), margin, headerY + 4);
+
+  const dividerY = Math.max(headerY + 8, logoBottomY + 2);
+  doc.setDrawColor(190, 190, 190);
+  doc.setLineWidth(0.3);
+  doc.line(margin, dividerY, rightEdge, dividerY);
+
+  let contactY = dividerY + 4;
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 100, 100);
+  if (data.business.phone) { doc.text(data.business.phone, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+  if (data.business.email) { doc.text(data.business.email, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+  if (data.business.tax_number) { doc.text(`St.-Nr.: ${data.business.tax_number}`, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+
+  // 2. RECEIVER
+  let y = dividerY + 8;
+  doc.setFontSize(10.5);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'bold');
+  doc.text(data.customer.name, margin, y);
+  doc.setFont('helvetica', 'normal');
+  y += 5;
+  if (data.customer.address) {
+    data.customer.address.split('\n').forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed) { doc.text(trimmed, margin, y); y += 5; }
+    });
+  }
+
+  // 3. META
+  y = Math.max(y + 10, 62);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 100, 100);
+  doc.text('Rechnungsnummer', margin, y);
+  doc.setTextColor(30, 30, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.text(data.invoiceNumber, margin, y + 4.5);
+
+  const dateX = margin + 70;
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 100, 100);
+  doc.text('Datum', dateX, y);
+  doc.setTextColor(30, 30, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.text(data.reminderDate, dateX, y + 4.5);
+  y += 14;
+
+  // 4. TITLE
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Zahlungserinnerung', margin, y);
+  y += 12;
+
+  // 5. BODY TEXT
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+
+  const bodyText = `Sehr geehrte Damen und Herren,
+
+zu unserer Rechnung ${data.invoiceNumber} vom ${data.invoiceDate} mit einem Gesamtbetrag von ${formatCurrency(data.grandTotal)} und Fälligkeitsdatum ${data.dueDate} konnten wir bisher leider keinen Zahlungseingang feststellen.
+
+Wir bitten Sie höflich, den offenen Betrag zeitnah auf das unten angegebene Konto zu überweisen.
+
+Sollte sich Ihre Zahlung mit diesem Schreiben überschnitten haben, betrachten Sie diese Erinnerung bitte als gegenstandslos.`;
+
+  const bodyLines = doc.splitTextToSize(bodyText, contentWidth);
+  doc.text(bodyLines, margin, y);
+  y += bodyLines.length * 4.5 + 8;
+
+  // 6. AMOUNT SUMMARY
+  doc.setDrawColor(60, 60, 60);
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, rightEdge, y);
+  y += 6;
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Offener Betrag', margin, y);
+  doc.text(formatCurrency(data.grandTotal), rightEdge, y, { align: 'right' });
+  y += 4;
+  doc.setDrawColor(60, 60, 60);
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, rightEdge, y);
+  y += 10;
+
+  // 7. BANK DETAILS
+  if (data.business.iban || data.business.bank_name) {
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(40, 40, 40);
+    doc.text('Bankverbindung', margin, y);
+    y += 4.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    if (data.business.account_holder) { doc.text(`Kontoinhaber: ${data.business.account_holder}`, margin, y); y += 4; }
+    if (data.business.bank_name) { doc.text(`Bank: ${data.business.bank_name}`, margin, y); y += 4; }
+    if (data.business.iban) { doc.text(`IBAN: ${formatIban(data.business.iban)}`, margin, y); y += 4; }
+    if (data.business.bic) { doc.text(`BIC: ${data.business.bic.toUpperCase()}`, margin, y); y += 4; }
+    y += 8;
+  }
+
+  // 8. CLOSING
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+  doc.text('Mit freundlichen Grüßen', margin, y);
+  y += 8;
+
+  if (data.business.business_name) {
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.business.business_name, margin, y);
+    y += 5;
+  }
+  if (data.business.owner_name) {
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Inhaber: ${data.business.owner_name}`, margin, y);
+  }
+
+  // 9. PAGE FOOTER
+  const pageFooterY = 284;
+  doc.setDrawColor(190, 190, 190);
+  doc.setLineWidth(0.2);
+  doc.line(margin, pageFooterY - 4, rightEdge, pageFooterY - 4);
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(140, 140, 140);
+  const pageFooterParts = [
+    data.business.business_name,
+    data.business.address?.replace(/\n/g, ', '),
+    data.business.tax_number ? `St.-Nr.: ${data.business.tax_number}` : '',
+  ].filter(Boolean).join(' | ');
+  doc.text(pageFooterParts, pageWidth / 2, pageFooterY, { align: 'center' });
+
+  doc.save(`Zahlungserinnerung_${data.invoiceNumber}.pdf`);
+};
