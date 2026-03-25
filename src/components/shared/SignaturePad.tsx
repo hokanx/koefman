@@ -74,21 +74,23 @@ const SignaturePad = ({ onSignatureChange, onSignatureStateChange, clearLabel, i
 
   return (
     <div className="space-y-2">
-      <p className="text-sm text-foreground/80">{instructionLabel}</p>
+      <p className="text-sm text-gray-700">{instructionLabel}</p>
       <div
         ref={containerRef}
         onPointerUpCapture={handleEnd}
-        className="relative w-full rounded-lg border border-input bg-background shadow-sm"
+        className="relative w-full rounded-lg border-2 border-dashed border-gray-300 bg-white shadow-sm"
         style={{ height: '160px', touchAction: 'none' }}
       >
         <SignatureCanvas
           ref={sigRef}
-          penColor="hsl(var(--foreground))"
+          penColor="#1a1a1a"
+          backgroundColor="rgba(255,255,255,0)"
           minWidth={1.5}
           maxWidth={3}
           onEnd={handleEnd}
           canvasProps={{
-            className: 'h-full w-full rounded-lg',
+            className: 'absolute inset-0 w-full h-full rounded-lg',
+            style: { zIndex: 2 },
           }}
         />
         {isEmpty && (
@@ -100,7 +102,7 @@ const SignaturePad = ({ onSignatureChange, onSignatureStateChange, clearLabel, i
       <button
         type="button"
         onClick={handleClear}
-        className="text-sm font-medium text-foreground underline underline-offset-2 hover:text-primary"
+        className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-blue-600"
       >
         {clearLabel}
       </button>

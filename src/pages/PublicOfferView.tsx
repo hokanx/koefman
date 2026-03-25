@@ -351,14 +351,14 @@ const PublicOfferView = () => {
         ) : (
           <div className="mt-6 space-y-4">
             {/* Accept form */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-bold text-foreground">{t.offers.acceptOfferTitle}</h3>
+                <FileText className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-bold text-gray-900">{t.offers.acceptOfferTitle}</h3>
               </div>
               <form onSubmit={handleAccept} className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-foreground">
+                  <label className="mb-1 block text-sm font-semibold text-gray-800">
                     {t.offers.signerNameLabel} *
                   </label>
                   <input
@@ -367,11 +367,11 @@ const PublicOfferView = () => {
                     onChange={(e) => setAcceptName(e.target.value)}
                     required
                     placeholder={t.offers.signerNamePlaceholder}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-foreground">
+                  <label className="mb-1 block text-sm font-semibold text-gray-800">
                     {t.offers.signature}
                   </label>
                   <SignaturePad
@@ -392,19 +392,19 @@ const PublicOfferView = () => {
                   />
                 </div>
                 {acceptMutation.isError && (
-                  <p className="text-sm font-medium text-destructive">{t.common.error}</p>
+                  <p className="text-sm font-medium text-red-600">{t.common.error}</p>
                 )}
                 {showAcceptValidation && (!acceptName.trim() || !hasValidSignature || !signatureImage) && (
-                  <p className="text-sm font-medium text-destructive">{t.offers.signatureRequired}</p>
+                  <p className="text-sm font-medium text-red-600">{t.offers.signatureRequired}</p>
                 )}
                 <button
                   type="submit"
                   disabled={acceptMutation.isPending || !acceptName.trim() || !hasValidSignature || !signatureImage}
-                  className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {acceptMutation.isPending ? t.common.loading : t.offers.acceptOfferButton}
                 </button>
-                <p className="text-center text-sm text-muted-foreground">
+                <p className="text-center text-sm text-gray-500">
                   {t.offers.acceptOfferHelper}
                 </p>
               </form>
