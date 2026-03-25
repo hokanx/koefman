@@ -372,9 +372,12 @@ const PublicOfferView = () => {
                 {acceptMutation.isError && (
                   <p className="text-sm text-red-600">Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.</p>
                 )}
+                {!signatureImage && acceptName.trim() && (
+                  <p className="text-sm text-amber-600">Bitte unterschreiben Sie, bevor Sie das Angebot annehmen.</p>
+                )}
                 <button
                   type="submit"
-                  disabled={acceptMutation.isPending || !acceptName.trim()}
+                  disabled={acceptMutation.isPending || !acceptName.trim() || !signatureImage}
                   className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {acceptMutation.isPending ? 'Wird verarbeitet...' : 'Angebot annehmen'}
