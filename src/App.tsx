@@ -59,7 +59,7 @@ const App = () => (
               <Route path="/leads" element={<Leads />} />
               <Route path="/templates" element={<Templates />} />
               </Route>
-              <Route path="/intake" element={<IntakeForm />} />
+              <Route path="/intake/:token" element={<IntakeForm />} />
               <Route path="/offer/view/:token" element={<PublicOfferView />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
@@ -8,8 +8,7 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const IntakeForm = () => {
   const { t } = useLanguage();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const { token } = useParams<{ token: string }>();
 
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState('');
