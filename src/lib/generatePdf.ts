@@ -92,57 +92,58 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   const pageWidth = 210;
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
+  const rightEdge = pageWidth - margin;
 
-  // --- HEADER: Sender line (left) + Logo (right) on same level ---
-  const headerY = 15;
+  // ============================================================
+  // 1. HEADER: Compact sender line (left) + Logo (right)
+  // ============================================================
+  const headerY = 12;
 
   // Logo on the right
-  let logoEndY = headerY;
+  let logoBottomY = headerY;
   if (data.business.logo_url) {
     const img = await loadImage(data.business.logo_url);
     if (img) {
-      const maxW = 45;
-      const maxH = 20;
+      const maxW = 40;
+      const maxH = 18;
       const ratio = Math.min(maxW / img.width, maxH / img.height);
       const w = img.width * ratio;
       const h = img.height * ratio;
-      const logoX = pageWidth - margin - w;
-      doc.addImage(img, 'PNG', logoX, headerY, w, h);
-      logoEndY = headerY + h;
+      doc.addImage(img, 'PNG', rightEdge - w, headerY, w, h);
+      logoBottomY = headerY + h;
     }
   }
 
-  // Business details on the right (below logo or at top-right if no logo)
-  const rightX = pageWidth - margin;
-  let rightY = Math.max(logoEndY + 3, headerY + 3);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 100, 100);
-  if (data.business.phone) { doc.text(data.business.phone, rightX, rightY, { align: 'right' }); rightY += 3.5; }
-  if (data.business.email) { doc.text(data.business.email, rightX, rightY, { align: 'right' }); rightY += 3.5; }
-  if (data.business.tax_number) { doc.text(`St.-Nr.: ${data.business.tax_number}`, rightX, rightY, { align: 'right' }); rightY += 3.5; }
-  if (data.business.vat_id) { doc.text(`USt-IdNr.: ${data.business.vat_id}`, rightX, rightY, { align: 'right' }); rightY += 3.5; }
-
-  // --- SENDER LINE (compact, single line above receiver) --- DIN 5008 ~27mm
-  let y = 27;
+  // Sender line on the left (same level as logo)
   const senderParts = [
     data.business.business_name,
-    data.business.address?.replace(/\n/g, ' · '),
-    data.business.phone,
-    data.business.email,
+    data.business.address?.replace(/\n/g, ', '),
   ].filter(Boolean);
-  doc.setFontSize(6.5);
-  doc.setTextColor(130, 130, 130);
-  doc.text(senderParts.join(' · '), margin, y);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  doc.text(senderParts.join(' · '), margin, headerY + 4);
 
-  // --- SENDER/RECEIVER SEPARATOR ---
-  y += 1.5;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, y, margin + 85, y);
+  // Divider below header
+  const dividerY = Math.max(headerY + 8, logoBottomY + 2);
+  doc.setDrawColor(190, 190, 190);
+  doc.setLineWidth(0.3);
+  doc.line(margin, dividerY, rightEdge, dividerY);
 
-  // --- RECEIVER ADDRESS BLOCK --- DIN 5008 ~33.5mm
-  y += 4;
-  doc.setFontSize(11);
+  // Business contact details on the right (below logo)
+  let contactY = dividerY + 4;
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 100, 100);
+  if (data.business.phone) { doc.text(data.business.phone, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+  if (data.business.email) { doc.text(data.business.email, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+  if (data.business.tax_number) { doc.text(`St.-Nr.: ${data.business.tax_number}`, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+  if (data.business.vat_id) { doc.text(`USt-IdNr.: ${data.business.vat_id}`, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+
+  // ============================================================
+  // 2. RECEIVER BLOCK — DIN 5008 window position
+  // ============================================================
+  let y = dividerY + 8;
+  doc.setFontSize(10.5);
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
   doc.text(data.customer.name, margin, y);
@@ -150,44 +151,89 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   y += 5;
   if (data.customer.address) {
     data.customer.address.split('\n').forEach((line) => {
-      doc.text(line.trim(), margin, y);
-      y += 5;
+      const trimmed = line.trim();
+      if (trimmed) {
+        doc.text(trimmed, margin, y);
+        y += 5;
+      }
     });
   }
 
-  // --- DOCUMENT TITLE --- below receiver block with clear spacing
-  y = Math.max(y + 12, 72);
-  doc.setFontSize(18);
+  // ============================================================
+  // 3. DOCUMENT META — 2-column layout
+  // ============================================================
+  y = Math.max(y + 10, 62);
+
+  const numberLabel = data.type === 'offer' ? 'Angebotsnummer' : 'Rechnungsnummer';
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 100, 100);
+
+  // Left column: document number
+  doc.text(numberLabel, margin, y);
+  doc.setTextColor(30, 30, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.text(data.documentNumber, margin, y + 4.5);
+
+  // Right column: date (and due date for invoices)
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 100, 100);
+  const dateX = margin + 70;
+  doc.text(data.labels.date, dateX, y);
+  doc.setTextColor(30, 30, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.text(data.date, dateX, y + 4.5);
+
+  // Due date column (invoices)
+  if (data.dueDate && data.labels.dueDate) {
+    const dueDateX = margin + 120;
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(data.labels.dueDate, dueDateX, y);
+    doc.setTextColor(30, 30, 30);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text(data.dueDate, dueDateX, y + 4.5);
+  }
+
+  y += 14;
+
+  // ============================================================
+  // 4. DOCUMENT TITLE
+  // ============================================================
+  doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
   doc.text(data.documentTitle, margin, y);
   y += 10;
 
-  // --- DOCUMENT META ---
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(60, 60, 60);
-  doc.text(`${data.documentTitle}: ${data.documentNumber}`, margin, y);
-  y += 5;
-  doc.text(`${data.labels.date}: ${data.date}`, margin, y);
-  y += 5;
-  if (data.dueDate && data.labels.dueDate) {
-    doc.text(`${data.labels.dueDate}: ${data.dueDate}`, margin, y);
-    y += 5;
-  }
-  y += 5;
-
-  // --- INTRO TEXT ---
+  // ============================================================
+  // 5. INTRO TEXT
+  // ============================================================
   if (data.intro_text) {
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(30, 30, 30);
     const introLines = doc.splitTextToSize(data.intro_text, contentWidth);
     doc.text(introLines, margin, y);
-    y += introLines.length * 5 + 5;
+    y += introLines.length * 4.5 + 6;
   }
 
-  // --- ITEMS TABLE ---
+  // ============================================================
+  // 6. ITEMS TABLE — minimal design
+  // ============================================================
+
+  // Strong separator above the table
+  doc.setDrawColor(60, 60, 60);
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, rightEdge, y);
+  y += 1;
+
   const tableHead = [[
     'Pos.',
     data.labels.itemTitle,
@@ -214,138 +260,175 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
     body: tableBody,
     margin: { left: margin, right: margin },
     styles: {
-      fontSize: 9,
-      cellPadding: 3,
+      fontSize: 8.5,
+      cellPadding: { top: 3, right: 2, bottom: 3, left: 2 },
       textColor: [30, 30, 30],
-      lineColor: [200, 200, 200],
-      lineWidth: 0.3,
+      lineColor: [220, 220, 220],
+      lineWidth: 0,
     },
     headStyles: {
-      fillColor: [240, 240, 240],
-      textColor: [30, 30, 30],
+      fillColor: false as any,
+      textColor: [80, 80, 80],
       fontStyle: 'bold',
+      fontSize: 8,
+    },
+    bodyStyles: {
+      lineWidth: 0,
+    },
+    alternateRowStyles: {
+      fillColor: [248, 248, 248],
     },
     columnStyles: {
-      0: { cellWidth: 12 },
+      0: { cellWidth: 12, halign: 'center' },
+      1: { cellWidth: 'auto' },
       2: { halign: 'right', cellWidth: 18 },
-      3: { cellWidth: 18 },
-      4: { halign: 'right', cellWidth: 28 },
+      3: { cellWidth: 16 },
+      4: { halign: 'right', cellWidth: 26 },
       5: { halign: 'right', cellWidth: 18 },
-      6: { halign: 'right', cellWidth: 28 },
+      6: { halign: 'right', cellWidth: 26 },
     },
-    theme: 'grid',
+    theme: 'plain',
+    tableLineColor: [60, 60, 60],
+    tableLineWidth: 0,
+    didDrawPage: () => {
+      // Bottom line after header row is drawn by autoTable with plain theme
+    },
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  y = (doc as any).lastAutoTable.finalY + 10;
+  const tableEndY = (doc as any).lastAutoTable.finalY;
 
-  // --- TOTALS ---
-  const totalsX = pageWidth - margin;
-  doc.setFontSize(10);
+  // Line below table
+  doc.setDrawColor(60, 60, 60);
+  doc.setLineWidth(0.5);
+  doc.line(margin, tableEndY + 1, rightEdge, tableEndY + 1);
+
+  y = tableEndY + 10;
+
+  // ============================================================
+  // 7. TOTALS — right-aligned
+  // ============================================================
+  const totalsLabelX = rightEdge - 55;
+
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(60, 60, 60);
-  doc.text(data.labels.subtotal, totalsX - 50, y);
-  doc.text(formatCurrency(data.subtotal), totalsX, y, { align: 'right' });
+  doc.setTextColor(80, 80, 80);
+  doc.text(data.labels.subtotal, totalsLabelX, y);
+  doc.text(formatCurrency(data.subtotal), rightEdge, y, { align: 'right' });
+  y += 5;
+
+  doc.text(data.labels.taxTotal, totalsLabelX, y);
+  doc.text(formatCurrency(data.tax_total), rightEdge, y, { align: 'right' });
   y += 6;
-  doc.text(data.labels.taxTotal, totalsX - 50, y);
-  doc.text(formatCurrency(data.tax_total), totalsX, y, { align: 'right' });
-  y += 7;
-  doc.setDrawColor(160, 160, 160);
-  doc.line(totalsX - 55, y - 2, totalsX, y - 2);
+
+  // Grand total separator
+  doc.setDrawColor(40, 40, 40);
+  doc.setLineWidth(0.4);
+  doc.line(totalsLabelX, y - 1.5, rightEdge, y - 1.5);
+
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.text(data.labels.grandTotal, totalsX - 50, y + 2);
-  doc.text(formatCurrency(data.grand_total), totalsX, y + 2, { align: 'right' });
-  y += 16;
+  doc.setFontSize(11);
+  doc.text(data.labels.grandTotal, totalsLabelX, y + 3);
+  doc.text(formatCurrency(data.grand_total), rightEdge, y + 3, { align: 'right' });
+  y += 14;
 
-  // --- NOTES ---
+  // ============================================================
+  // 8. POST-TABLE CONTENT — differentiated by type
+  // ============================================================
+
+  // Notes
   if (data.notes) {
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
     const noteLines = doc.splitTextToSize(data.notes, contentWidth);
     doc.text(noteLines, margin, y);
-    y += noteLines.length * 4 + 6;
+    y += noteLines.length * 4 + 5;
   }
 
-  // --- PAYMENT TERMS ---
-  if (data.business.payment_terms) {
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(80, 80, 80);
-    const termLines = doc.splitTextToSize(data.business.payment_terms, contentWidth);
-    doc.text(termLines, margin, y);
-    y += termLines.length * 4 + 6;
-  }
-
-  // --- BANK DETAILS (invoices only) ---
-  if (data.type === 'invoice' && (data.business.iban || data.business.bank_name)) {
-    doc.setFontSize(9);
+  // Footer text (validity for offers, payment terms intro for invoices)
+  if (data.footer_text) {
+    doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
-    const bankLines: string[] = [];
-    if (data.business.account_holder) bankLines.push(`Kontoinhaber: ${data.business.account_holder}`);
-    if (data.business.bank_name) bankLines.push(`Bank: ${data.business.bank_name}`);
-    if (data.business.iban) bankLines.push(`IBAN: ${formatIban(data.business.iban)}`);
-    if (data.business.bic) bankLines.push(`BIC: ${data.business.bic.toUpperCase()}`);
-    bankLines.forEach((line) => {
-      doc.text(line, margin, y);
-      y += 4.5;
-    });
-    y += 4;
-  }
-
-  // --- FOOTER TEXT ---
-  if (data.footer_text) {
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(80, 80, 80);
     const footerLines = doc.splitTextToSize(data.footer_text, contentWidth);
     doc.text(footerLines, margin, y);
     y += footerLines.length * 4 + 5;
   }
 
-  // --- CLOSING TEXT + Company + Owner ---
+  // Payment terms (invoices primarily)
+  if (data.business.payment_terms) {
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    const termLines = doc.splitTextToSize(data.business.payment_terms, contentWidth);
+    doc.text(termLines, margin, y);
+    y += termLines.length * 4 + 5;
+  }
+
+  // Bank details (invoices only)
+  if (data.type === 'invoice' && (data.business.iban || data.business.bank_name)) {
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(40, 40, 40);
+    doc.text('Bankverbindung', margin, y);
+    y += 4.5;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    if (data.business.account_holder) { doc.text(`Kontoinhaber: ${data.business.account_holder}`, margin, y); y += 4; }
+    if (data.business.bank_name) { doc.text(`Bank: ${data.business.bank_name}`, margin, y); y += 4; }
+    if (data.business.iban) { doc.text(`IBAN: ${formatIban(data.business.iban)}`, margin, y); y += 4; }
+    if (data.business.bic) { doc.text(`BIC: ${data.business.bic.toUpperCase()}`, margin, y); y += 4; }
+    y += 5;
+  }
+
+  // ============================================================
+  // 9. CLOSING — signature block
+  // ============================================================
   if (data.closing_text) {
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(30, 30, 30);
     doc.text(data.closing_text, margin, y);
     y += 8;
   }
 
-  // Company name in closing
   if (data.business.business_name) {
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(30, 30, 30);
     doc.text(data.business.business_name, margin, y);
     y += 5;
   }
 
-  // Owner name (Inhaber)
   if (data.business.owner_name) {
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
+    doc.setTextColor(80, 80, 80);
     doc.text(`Inhaber: ${data.business.owner_name}`, margin, y);
     y += 5;
   }
 
-  // --- PAGE FOOTER ---
-  const footerY = 282;
-  doc.setFontSize(7);
+  // ============================================================
+  // 10. PAGE FOOTER
+  // ============================================================
+  const pageFooterY = 284;
+  doc.setDrawColor(190, 190, 190);
+  doc.setLineWidth(0.2);
+  doc.line(margin, pageFooterY - 4, rightEdge, pageFooterY - 4);
+
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(140, 140, 140);
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
-  const footerText = [
+  const pageFooterParts = [
     data.business.business_name,
     data.business.address?.replace(/\n/g, ', '),
     data.business.tax_number ? `St.-Nr.: ${data.business.tax_number}` : '',
     data.business.vat_id ? `USt-IdNr.: ${data.business.vat_id}` : '',
   ].filter(Boolean).join(' | ');
-  doc.text(footerText, pageWidth / 2, footerY, { align: 'center' });
+  doc.text(pageFooterParts, pageWidth / 2, pageFooterY, { align: 'center' });
 
   doc.save(`${data.documentNumber}.pdf`);
 };
