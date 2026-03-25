@@ -419,8 +419,17 @@ const InvoiceDetail = () => {
                 <Bell className="h-4 w-4" /> {creatingReminder ? t.common.generating : t.invoices.createReminder}
               </button>
             )}
+            <button onClick={() => { setEmailType('invoice'); setEmailOpen(true); }}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+              <Mail className="h-4 w-4" /> {t.email.sendByEmail}
+            </button>
+            {(currentStatus === 'open' || isOverdue) && reminders.length > 0 && (
+              <button onClick={() => { setEmailType('reminder'); setEmailOpen(true); }}
+                className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-sm font-medium text-warning hover:bg-warning/20">
+                <Mail className="h-4 w-4" /> {t.invoices.reminderDocumentTitle}
+              </button>
+            )}
           </div>
-        </div>
 
         {items.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
