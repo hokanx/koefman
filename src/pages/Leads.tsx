@@ -144,6 +144,7 @@ const Leads = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['new-leads-count'] });
       toast.success(t.leads.convertedSuccess);
       setSelected(null);
     },
