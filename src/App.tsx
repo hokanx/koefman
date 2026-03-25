@@ -24,6 +24,7 @@ import Settings from "@/pages/Settings";
 import Leads from "@/pages/Leads";
 import Templates from "@/pages/Templates";
 import IntakeForm from "@/pages/IntakeForm";
+import PublicOfferView from "@/pages/PublicOfferView";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/templates" element={<Templates />} />
               </Route>
               <Route path="/intake" element={<IntakeForm />} />
+              <Route path="/offer/view/:token" element={<PublicOfferView />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
