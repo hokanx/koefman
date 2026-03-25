@@ -87,6 +87,8 @@ export const de = {
     todoTitle: 'Aktionen',
     pendingOffers: 'Angebote warten auf Antwort',
     statsTitle: 'Übersicht',
+    newLeads: 'Neue Anfragen',
+    viewNow: 'Jetzt ansehen',
   },
   status: {
     draft: 'Entwurf',

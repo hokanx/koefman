@@ -89,6 +89,8 @@ export const ar: Translations = {
     todoTitle: 'إجراءات',
     pendingOffers: 'عروض بانتظار الرد',
     statsTitle: 'نظرة عامة',
+    newLeads: 'طلبات جديدة',
+    viewNow: 'عرض الآن',
   },
   status: {
     draft: 'مسودة',

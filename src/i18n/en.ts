@@ -89,6 +89,8 @@ export const en: Translations = {
     todoTitle: 'Actions',
     pendingOffers: 'Offers awaiting response',
     statsTitle: 'Overview',
+    newLeads: 'New submissions',
+    viewNow: 'View now',
   },
   status: {
     draft: 'Draft',
