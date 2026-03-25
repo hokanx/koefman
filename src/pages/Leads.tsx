@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Inbox, Eye, UserPlus, Archive, Copy, Check, QrCode } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Inbox, Eye, UserPlus, Archive, Copy, Check, QrCode, FileText } from 'lucide-react';
 import QrCodeModal from '@/components/shared/QrCodeModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,6 +45,7 @@ const Leads = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<string>(searchParams.get('status') || 'all');
@@ -153,6 +154,46 @@ const Leads = () => {
     onError: () => toast.error(t.common.error),
   });
 
+  const createOfferFromLead = useMutation({
+    mutationFn: async (lead: IntakeSubmission) => {
+      let customerId = lead.converted_customer_id;
+
+      // Auto-create customer if not already linked
+      if (!customerId) {
+        const address = formatAddress({ street: lead.street || undefined, house_number: lead.house_number || undefined, postal_code: lead.postal_code || undefined, city: lead.city || undefined, country: lead.country || undefined });
+        const { data: customer, error } = await supabase.from('customers').insert({
+          user_id: user!.id,
+          name: lead.company_or_name,
+          contact_person: lead.contact_person,
+          phone: lead.phone,
+          email: lead.email,
+          street: lead.street,
+          house_number: lead.house_number,
+          postal_code: lead.postal_code,
+          city: lead.city,
+          country: lead.country,
+          notes: lead.notes,
+          address,
+        } as any).select().single();
+        if (error) throw error;
+        customerId = customer.id;
+
+        // Update lead with customer reference
+        await supabase.from('intake_submissions' as any).update({ status: 'converted', converted_customer_id: customerId } as any).eq('id', lead.id);
+      }
+
+      return customerId;
+    },
+    onSuccess: (customerId) => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['new-leads-count'] });
+      setSelected(null);
+      navigate(`/offers/new?customer=${customerId}`);
+    },
+    onError: () => toast.error(t.common.error),
+  });
+
   const filtered = leads.filter(l => {
     const matchSearch = l.company_or_name.toLowerCase().includes(search.toLowerCase()) ||
       (l.email?.toLowerCase().includes(search.toLowerCase())) ||
@@ -251,10 +292,14 @@ const Leads = () => {
               )}
               {selected.status !== 'converted' && (
                 <button onClick={() => convertToCustomer.mutate(selected)} disabled={convertToCustomer.isPending}
-                  className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                  className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/80 disabled:opacity-50">
                   <UserPlus className="h-4 w-4" /> {t.leads.convertToCustomer}
                 </button>
               )}
+              <button onClick={() => createOfferFromLead.mutate(selected)} disabled={createOfferFromLead.isPending}
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                <FileText className="h-4 w-4" /> {t.leads.createOffer}
+              </button>
               {selected.status !== 'archived' && selected.status !== 'converted' && (
                 <button onClick={() => updateStatus.mutate({ id: selected.id, status: 'archived' })}
                   className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
