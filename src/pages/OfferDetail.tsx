@@ -74,7 +74,7 @@ const OfferDetail = () => {
     enabled: !!id && !!user,
   });
 
-
+  const { data: acceptance } = useQuery({
     queryKey: ['offer-acceptance', id],
     queryFn: async () => {
       const { data } = await supabase
