@@ -3,29 +3,54 @@ import SignatureCanvas from 'react-signature-canvas';
 
 interface SignaturePadProps {
   onSignatureChange: (dataUrl: string | null) => void;
+  onSignatureStateChange?: (hasSignature: boolean) => void;
   clearLabel: string;
   instructionLabel: string;
 }
 
-const SignaturePad = ({ onSignatureChange, clearLabel, instructionLabel }: SignaturePadProps) => {
+const SignaturePad = ({ onSignatureChange, onSignatureStateChange, clearLabel, instructionLabel }: SignaturePadProps) => {
   const sigRef = useRef<SignatureCanvas>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isEmpty, setIsEmpty] = useState(true);
 
-  const handleEnd = () => {
-    if (sigRef.current && !sigRef.current.isEmpty()) {
-      setIsEmpty(false);
-      onSignatureChange(sigRef.current.getTrimmedCanvas().toDataURL('image/png'));
+  const emitEmptyState = () => {
+    setIsEmpty(true);
+    onSignatureChange(null);
+    onSignatureStateChange?.(false);
+  };
+
+  const syncSignatureState = () => {
+    if (!sigRef.current || sigRef.current.isEmpty()) {
+      emitEmptyState();
+      return;
     }
+
+    const trimmedCanvas = sigRef.current.getTrimmedCanvas();
+    if (!trimmedCanvas || trimmedCanvas.width === 0 || trimmedCanvas.height === 0) {
+      emitEmptyState();
+      return;
+    }
+
+    const dataUrl = trimmedCanvas.toDataURL('image/png');
+    if (!dataUrl || dataUrl === 'data:,' || dataUrl.length < 200) {
+      emitEmptyState();
+      return;
+    }
+
+    setIsEmpty(false);
+    onSignatureChange(dataUrl);
+    onSignatureStateChange?.(true);
+  };
+
+  const handleEnd = () => {
+    window.requestAnimationFrame(syncSignatureState);
   };
 
   const handleClear = () => {
     sigRef.current?.clear();
-    setIsEmpty(true);
-    onSignatureChange(null);
+    emitEmptyState();
   };
 
-  // Resize canvas to fit container
   useEffect(() => {
     const resize = () => {
       if (!containerRef.current || !sigRef.current) return;
@@ -39,9 +64,9 @@ const SignaturePad = ({ onSignatureChange, clearLabel, instructionLabel }: Signa
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       sigRef.current.clear();
-      setIsEmpty(true);
-      onSignatureChange(null);
+      emitEmptyState();
     };
+
     resize();
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
@@ -49,32 +74,33 @@ const SignaturePad = ({ onSignatureChange, clearLabel, instructionLabel }: Signa
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-gray-500">{instructionLabel}</p>
+      <p className="text-sm text-foreground/80">{instructionLabel}</p>
       <div
         ref={containerRef}
-        className="relative w-full rounded-lg border-2 border-dashed border-gray-300 bg-white"
+        onPointerUpCapture={handleEnd}
+        className="relative w-full rounded-lg border border-input bg-background shadow-sm"
         style={{ height: '160px', touchAction: 'none' }}
       >
         <SignatureCanvas
           ref={sigRef}
-          penColor="#1a1a2e"
+          penColor="hsl(var(--foreground))"
           minWidth={1.5}
           maxWidth={3}
           onEnd={handleEnd}
           canvasProps={{
-            className: 'w-full h-full rounded-lg',
+            className: 'h-full w-full rounded-lg',
           }}
         />
         {isEmpty && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <span className="text-sm text-gray-300 select-none">✍️</span>
+            <span className="select-none text-sm text-muted-foreground/60">✍️</span>
           </div>
         )}
       </div>
       <button
         type="button"
         onClick={handleClear}
-        className="text-xs text-gray-500 hover:text-gray-700 underline"
+        className="text-sm font-medium text-foreground underline underline-offset-2 hover:text-primary"
       >
         {clearLabel}
       </button>

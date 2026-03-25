@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatAddress } from '@/types';
 import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const formatCurrency = (value: number): string => {
   return value.toFixed(2).replace('.', ',') + ' €';
@@ -12,9 +13,12 @@ const formatCurrency = (value: number): string => {
 
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [acceptName, setAcceptName] = useState('');
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
+  const [hasValidSignature, setHasValidSignature] = useState(false);
+  const [showAcceptValidation, setShowAcceptValidation] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [rejected, setRejected] = useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
@@ -77,10 +81,14 @@ const PublicOfferView = () => {
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
+      if (!signatureImage || !hasValidSignature) {
+        throw new Error('missing_signature');
+      }
+
       const { error: acceptError } = await supabase.from('offer_acceptances').insert({
         offer_id: offer!.id,
         accepted_by_name: acceptName,
-        signature_image: signatureImage || null,
+        signature_image: signatureImage,
       } as any);
       if (acceptError) throw acceptError;
 
@@ -92,6 +100,7 @@ const PublicOfferView = () => {
     },
     onSuccess: () => {
       setAccepted(true);
+      setShowAcceptValidation(false);
       queryClient.invalidateQueries({ queryKey: ['public-offer', token] });
       queryClient.invalidateQueries({ queryKey: ['public-offer-acceptance', offer?.id] });
     },
@@ -118,7 +127,9 @@ const PublicOfferView = () => {
 
   const handleAccept = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!acceptName.trim() || !signatureImage) return;
+    const isValid = !!acceptName.trim() && !!signatureImage && hasValidSignature;
+    setShowAcceptValidation(!isValid);
+    if (!isValid) return;
     acceptMutation.mutate();
   };
 
@@ -340,50 +351,61 @@ const PublicOfferView = () => {
         ) : (
           <div className="mt-6 space-y-4">
             {/* Accept form */}
-            <div className="rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-bold text-gray-900">Angebot annehmen</h3>
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-bold text-foreground">{t.offers.acceptOfferTitle}</h3>
               </div>
               <form onSubmit={handleAccept} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ihr Name *
+                  <label className="mb-1 block text-sm font-semibold text-foreground">
+                    {t.offers.signerNameLabel} *
                   </label>
                   <input
                     type="text"
                     value={acceptName}
                     onChange={(e) => setAcceptName(e.target.value)}
                     required
-                    placeholder="Vor- und Nachname"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder={t.offers.signerNamePlaceholder}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unterschrift
+                  <label className="mb-1 block text-sm font-semibold text-foreground">
+                    {t.offers.signature}
                   </label>
                   <SignaturePad
-                    onSignatureChange={setSignatureImage}
-                    clearLabel="Unterschrift löschen"
-                    instructionLabel="Bitte unterschreiben Sie hier mit dem Finger oder der Maus."
+                    onSignatureChange={(dataUrl) => {
+                      setSignatureImage(dataUrl);
+                      if (dataUrl) {
+                        setShowAcceptValidation(false);
+                      }
+                    }}
+                    onSignatureStateChange={(hasSignature) => {
+                      setHasValidSignature(hasSignature);
+                      if (hasSignature) {
+                        setShowAcceptValidation(false);
+                      }
+                    }}
+                    clearLabel={t.offers.signatureClear}
+                    instructionLabel={t.offers.signatureInstruction}
                   />
                 </div>
                 {acceptMutation.isError && (
-                  <p className="text-sm text-red-600">Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.</p>
+                  <p className="text-sm font-medium text-destructive">{t.common.error}</p>
                 )}
-                {!signatureImage && acceptName.trim() && (
-                  <p className="text-sm text-amber-600">Bitte unterschreiben Sie, bevor Sie das Angebot annehmen.</p>
+                {showAcceptValidation && (!acceptName.trim() || !hasValidSignature || !signatureImage) && (
+                  <p className="text-sm font-medium text-destructive">{t.offers.signatureRequired}</p>
                 )}
                 <button
                   type="submit"
-                  disabled={acceptMutation.isPending || !acceptName.trim() || !signatureImage}
-                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                  disabled={acceptMutation.isPending || !acceptName.trim() || !hasValidSignature || !signatureImage}
+                  className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
-                  {acceptMutation.isPending ? 'Wird verarbeitet...' : 'Angebot annehmen'}
+                  {acceptMutation.isPending ? t.common.loading : t.offers.acceptOfferButton}
                 </button>
-                <p className="text-xs text-gray-400 text-center">
-                  Mit dem Klick auf "Angebot annehmen" erteilen Sie den Auftrag zu den oben genannten Konditionen.
+                <p className="text-center text-sm text-muted-foreground">
+                  {t.offers.acceptOfferHelper}
                 </p>
               </form>
             </div>
