@@ -74,8 +74,7 @@ const CustomerDetail = () => {
   }
 
   const addr = formatAddress(customer);
-  const offerStatusLabels: Record<string, string> = { draft: t.offers.draft, sent: t.offers.sent, accepted: t.offers.accepted, rejected: t.offers.rejected };
-  const invoiceStatusLabels: Record<string, string> = { open: t.invoices.open, paid: t.invoices.paid, overdue: t.invoices.overdue, cancelled: t.invoices.cancelled };
+  const statusLabels = t.status as Record<string, string>;
 
   return (
     <div className="animate-fade-in p-4 md:p-6">
