@@ -154,7 +154,46 @@ const Leads = () => {
     onError: () => toast.error(t.common.error),
   });
 
-  const filtered = leads.filter(l => {
+  const createOfferFromLead = useMutation({
+    mutationFn: async (lead: IntakeSubmission) => {
+      let customerId = lead.converted_customer_id;
+
+      // Auto-create customer if not already linked
+      if (!customerId) {
+        const address = formatAddress({ street: lead.street || undefined, house_number: lead.house_number || undefined, postal_code: lead.postal_code || undefined, city: lead.city || undefined, country: lead.country || undefined });
+        const { data: customer, error } = await supabase.from('customers').insert({
+          user_id: user!.id,
+          name: lead.company_or_name,
+          contact_person: lead.contact_person,
+          phone: lead.phone,
+          email: lead.email,
+          street: lead.street,
+          house_number: lead.house_number,
+          postal_code: lead.postal_code,
+          city: lead.city,
+          country: lead.country,
+          notes: lead.notes,
+          address,
+        } as any).select().single();
+        if (error) throw error;
+        customerId = customer.id;
+
+        // Update lead with customer reference
+        await supabase.from('intake_submissions' as any).update({ status: 'converted', converted_customer_id: customerId } as any).eq('id', lead.id);
+      }
+
+      return customerId;
+    },
+    onSuccess: (customerId) => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['new-leads-count'] });
+      setSelected(null);
+      navigate(`/offers/new?customer=${customerId}`);
+    },
+    onError: () => toast.error(t.common.error),
+  });
+
     const matchSearch = l.company_or_name.toLowerCase().includes(search.toLowerCase()) ||
       (l.email?.toLowerCase().includes(search.toLowerCase())) ||
       (l.phone?.includes(search));
