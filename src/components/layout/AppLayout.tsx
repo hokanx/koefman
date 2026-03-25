@@ -45,9 +45,9 @@ const AppLayout = () => {
   ];
 
   const secondaryNavItems = [
-    { to: '/leads', icon: Inbox, label: t.nav.leads },
-    { to: '/templates', icon: FileStack, label: t.nav.templates },
-    { to: '/settings', icon: Settings, label: t.nav.settings },
+    { to: '/leads', icon: Inbox, label: t.nav.leads, badge: newLeadsCount },
+    { to: '/templates', icon: FileStack, label: t.nav.templates, badge: 0 },
+    { to: '/settings', icon: Settings, label: t.nav.settings, badge: 0 },
   ];
 
   const allNavItems = [...primaryNavItems, ...secondaryNavItems];
