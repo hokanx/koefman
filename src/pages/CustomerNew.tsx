@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Link2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Link2, Copy, Check, QrCode } from 'lucide-react';
+import QrCodeModal from '@/components/shared/QrCodeModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -27,6 +28,7 @@ const CustomerNew = () => {
   });
 
   const [linkCopied, setLinkCopied] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
   const { data: settings } = useQuery({
     queryKey: ['business-settings'],
