@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatAddress } from '@/types';
+import { formatDateDE } from '@/lib/generatePdf';
 import type { Customer } from '@/types';
 
 const CustomerDetail = () => {
@@ -150,7 +151,7 @@ const CustomerDetail = () => {
                 <Link key={o.id} to={`/offers/${o.id}`} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm hover:bg-muted/50">
                   <div>
                     <span className="font-medium text-foreground">{o.offer_number}</span>
-                    <span className="ml-2 text-muted-foreground">{new Date(o.date).toLocaleDateString()}</span>
+                    <span className="ml-2 text-muted-foreground">{formatDateDE(o.date)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">{t.common.currency}{o.grand_total.toFixed(2)}</span>
@@ -170,7 +171,7 @@ const CustomerDetail = () => {
                 <Link key={inv.id} to={`/invoices/${inv.id}`} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm hover:bg-muted/50">
                   <div>
                     <span className="font-medium text-foreground">{inv.invoice_number}</span>
-                    <span className="ml-2 text-muted-foreground">{new Date(inv.date).toLocaleDateString()}</span>
+                    <span className="ml-2 text-muted-foreground">{formatDateDE(inv.date)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">{t.common.currency}{inv.grand_total.toFixed(2)}</span>

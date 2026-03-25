@@ -10,6 +10,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { formatAddress } from '@/types';
+import { formatDateDE } from '@/lib/generatePdf';
 
 interface IntakeSubmission {
   id: string;
@@ -284,7 +285,7 @@ const Leads = () => {
                 {lead.phone && <span>{lead.phone}</span>}
                 {lead.service_type && <span className="text-xs rounded-full bg-muted px-2 py-0.5">{lead.service_type}</span>}
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">{new Date(lead.created_at).toLocaleDateString()}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{formatDateDE(lead.created_at)}</div>
             </button>
           ))}
         </div>

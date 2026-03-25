@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import SearchBar from '@/components/shared/SearchBar';
 import EmptyState from '@/components/shared/EmptyState';
 import StatusBadge from '@/components/shared/StatusBadge';
+import { formatDateDE } from '@/lib/generatePdf';
 import type { Invoice, InvoiceStatus } from '@/types';
 
 const statusFilters: (InvoiceStatus | 'all')[] = ['all', 'draft', 'open', 'paid', 'overdue', 'cancelled'];
