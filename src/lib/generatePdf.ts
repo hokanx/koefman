@@ -83,6 +83,14 @@ const formatCurrency = (value: number): string => {
   return `${formatted} €`;
 };
 
+export const formatDateDE = (date: Date | string): string => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+};
+
 const formatIban = (iban: string): string => {
   const clean = iban.replace(/\s/g, '').toUpperCase();
   return clean.replace(/(.{4})/g, '$1 ').trim();
@@ -118,8 +126,8 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   if (data.business.logo_url) {
     const img = await loadImage(data.business.logo_url);
     if (img) {
-      const maxW = 40;
-      const maxH = 18;
+      const maxW = 50;
+      const maxH = 22;
       const ratio = Math.min(maxW / img.width, maxH / img.height);
       const w = img.width * ratio;
       const h = img.height * ratio;

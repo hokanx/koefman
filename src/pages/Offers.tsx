@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import SearchBar from '@/components/shared/SearchBar';
 import EmptyState from '@/components/shared/EmptyState';
 import StatusBadge from '@/components/shared/StatusBadge';
+import { formatDateDE } from '@/lib/generatePdf';
 import type { Offer, OfferStatus } from '@/types';
 
 const statusFilters: (OfferStatus | 'all')[] = ['all', 'draft', 'sent', 'accepted', 'rejected'];
@@ -105,7 +106,7 @@ const Offers = () => {
                 <StatusBadge status={offer.status} label={statusLabels[offer.status]} />
               </div>
               <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-                <span>{new Date(offer.date).toLocaleDateString()}</span>
+                <span>{formatDateDE(offer.date)}</span>
                 <span className="font-medium text-foreground">{t.common.currency}{offer.grand_total.toFixed(2)}</span>
               </div>
             </Link>
