@@ -283,6 +283,18 @@ export const ar: Translations = {
     invalidLink: 'رابط غير صالح',
     invalidLinkDesc: 'هذا الرابط غير صالح أو منتهي الصلاحية. يرجى التواصل مع مقدم الخدمة.',
   },
+  templates: {
+    title: 'القوالب',
+    newTemplate: 'قالب جديد',
+    editTemplate: 'تعديل القالب',
+    templateName: 'اسم القالب',
+    description: 'الوصف',
+    noTemplates: 'لا توجد قوالب بعد',
+    noTemplatesDesc: 'أنشئ أول قالب للخدمات المتكررة.',
+    addTemplate: 'إضافة قالب',
+    selectTemplate: 'اختر قالب',
+    useTemplate: 'استخدام',
+  },
   leads: {
     title: 'الطلبات الواردة',
     noLeads: 'لا توجد طلبات بعد',

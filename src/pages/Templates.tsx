@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronUp, Pencil, FileStack } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -190,7 +190,7 @@ const Templates = () => {
       )}
 
       {!showForm && templates.length === 0 && !isLoading && (
-        <EmptyState title={t.templates.noTemplates} description={t.templates.noTemplatesDesc} />
+        <EmptyState icon={FileStack} title={t.templates.noTemplates} description={t.templates.noTemplatesDesc} />
       )}
 
       {!showForm && templates.length > 0 && (

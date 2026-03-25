@@ -283,6 +283,18 @@ export const en: Translations = {
     invalidLink: 'Invalid link',
     invalidLinkDesc: 'This link is invalid or expired. Please contact the provider.',
   },
+  templates: {
+    title: 'Templates',
+    newTemplate: 'New template',
+    editTemplate: 'Edit template',
+    templateName: 'Template name',
+    description: 'Description',
+    noTemplates: 'No templates yet',
+    noTemplatesDesc: 'Create your first template for recurring services.',
+    addTemplate: 'Add template',
+    selectTemplate: 'Select template',
+    useTemplate: 'Use',
+  },
   leads: {
     title: 'Leads',
     noLeads: 'No leads yet',

@@ -22,6 +22,7 @@ import InvoiceDetail from "@/pages/InvoiceDetail";
 import InvoiceEdit from "@/pages/InvoiceEdit";
 import Settings from "@/pages/Settings";
 import Leads from "@/pages/Leads";
+import Templates from "@/pages/Templates";
 import IntakeForm from "@/pages/IntakeForm";
 import NotFound from "@/pages/NotFound";
 
@@ -53,6 +54,7 @@ const App = () => (
                 <Route path="/invoices/:id/edit" element={<InvoiceEdit />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/leads" element={<Leads />} />
+              <Route path="/templates" element={<Templates />} />
               </Route>
               <Route path="/intake" element={<IntakeForm />} />
               <Route path="*" element={<NotFound />} />

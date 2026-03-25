@@ -281,6 +281,18 @@ export const de = {
     invalidLink: 'Ungültiger Link',
     invalidLinkDesc: 'Dieser Link ist ungültig oder abgelaufen. Bitte kontaktieren Sie den Anbieter.',
   },
+  templates: {
+    title: 'Vorlagen',
+    newTemplate: 'Neue Vorlage',
+    editTemplate: 'Vorlage bearbeiten',
+    templateName: 'Vorlagenname',
+    description: 'Beschreibung',
+    noTemplates: 'Noch keine Vorlagen',
+    noTemplatesDesc: 'Erstellen Sie Ihre erste Vorlage für wiederkehrende Leistungen.',
+    addTemplate: 'Vorlage einfügen',
+    selectTemplate: 'Vorlage auswählen',
+    useTemplate: 'Verwenden',
+  },
   leads: {
     title: 'Anfragen',
     noLeads: 'Noch keine Anfragen',
