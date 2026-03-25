@@ -163,7 +163,7 @@ const CustomerDetail = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">{t.common.currency}{o.grand_total.toFixed(2)}</span>
-                    <StatusBadge status={o.status} label={offerStatusLabels[o.status] || o.status} />
+                    <StatusBadge status={o.status} label={statusLabels[o.status] || o.status} />
                   </div>
                 </Link>
               ))}
@@ -183,7 +183,7 @@ const CustomerDetail = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">{t.common.currency}{inv.grand_total.toFixed(2)}</span>
-                    <StatusBadge status={inv.status} label={invoiceStatusLabels[inv.status] || inv.status} />
+                    <StatusBadge status={inv.status} label={statusLabels[inv.status] || inv.status} />
                   </div>
                 </Link>
               ))}
