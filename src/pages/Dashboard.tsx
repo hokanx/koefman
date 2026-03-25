@@ -1,4 +1,4 @@
-import { Users, FileText, Receipt, AlertCircle, CheckCircle, Clock, Plus, ArrowRight } from 'lucide-react';
+import { Users, FileText, Receipt, Plus, ArrowRight, Inbox } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -69,6 +69,19 @@ const Dashboard = () => {
     enabled: !!user,
   });
 
+  const { data: newLeadsCount = 0 } = useQuery({
+    queryKey: ['new-leads-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('intake_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('owner_id', user!.id)
+        .eq('status', 'new');
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+
   const { data: recentOffers = [] } = useQuery({
     queryKey: ['recent-offers'],
     queryFn: async () => {
@@ -126,6 +139,29 @@ const Dashboard = () => {
 
   return (
     <div className="animate-fade-in p-4 md:p-6 space-y-6">
+      {/* New Leads Alert */}
+      {newLeadsCount > 0 && (
+        <button
+          onClick={() => navigate('/leads?status=new')}
+          className="w-full flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+              <Inbox className="h-5 w-5 text-primary" />
+            </div>
+            <div className="text-start">
+              <p className="text-sm font-semibold text-foreground">
+                {newLeadsCount} {t.dashboard.newLeads}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-sm font-medium text-primary">
+            {t.dashboard.viewNow}
+            <ArrowRight className="h-4 w-4" />
+          </div>
+        </button>
+      )}
+
       {/* Quick Actions */}
       <div>
         <h2 className="mb-3 text-lg font-semibold text-foreground">{t.dashboard.quickActions}</h2>
