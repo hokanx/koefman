@@ -104,6 +104,11 @@ const AppLayout = () => {
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
+                {'badge' in item && (item as any).badge > 0 && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {(item as any).badge}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -176,6 +181,11 @@ const AppLayout = () => {
               >
                 <item.icon className="h-5 w-5" />
                 {item.label}
+                {item.badge > 0 && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             ))}
 
