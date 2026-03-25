@@ -51,6 +51,12 @@ const InvoiceNew = () => {
       setFooterText((settings as any).default_invoice_footer_text || '');
       setClosingText((settings as any).default_closing_text || '');
       setPaymentTerms(settings.payment_terms || '');
+      // Auto-calculate due date (14 days from today)
+      if (!dueDate) {
+        const due = new Date();
+        due.setDate(due.getDate() + 14);
+        setDueDate(due.toISOString().split('T')[0]);
+      }
     }
   }, [settings]);
 
@@ -151,7 +157,10 @@ const InvoiceNew = () => {
         </FormSection>
 
         <FormSection title={t.invoices.items}>
-          <LineItemsEditor items={items} onChange={setItems} showTemplatePicker labels={{
+          <LineItemsEditor items={items} onChange={setItems} showTemplatePicker
+            defaultTaxRate={settings?.default_tax_rate ?? 19}
+            defaultUnit="Pauschal"
+            labels={{
             addItem: t.invoices.addItem, itemTitle: t.invoices.itemTitle, description: t.invoices.description,
             quantity: t.invoices.quantity, unit: t.invoices.unit, unitPrice: t.invoices.unitPrice,
             taxRate: t.invoices.taxRate, total: t.invoices.total,

@@ -143,7 +143,10 @@ const OfferNew = () => {
         </FormSection>
 
         <FormSection title={t.offers.items}>
-          <LineItemsEditor items={items} onChange={setItems} showTemplatePicker labels={{
+          <LineItemsEditor items={items} onChange={setItems} showTemplatePicker
+            defaultTaxRate={settings?.default_tax_rate ?? 19}
+            defaultUnit="Pauschal"
+            labels={{
             addItem: t.offers.addItem, itemTitle: t.offers.itemTitle, description: t.offers.description,
             quantity: t.offers.quantity, unit: t.offers.unit, unitPrice: t.offers.unitPrice,
             taxRate: t.offers.taxRate, total: t.offers.total,
