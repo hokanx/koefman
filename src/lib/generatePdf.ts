@@ -409,15 +409,11 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
       y += legalLines.length * 4 + 4;
     }
 
-    if (data.validity_days) {
+    if (data.validityDate) {
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 60, 60);
-      let validityText = `Dieses Angebot ist ${data.validity_days} Tage gültig`;
-      if (data.validityDate) {
-        validityText += ` (bis ${data.validityDate})`;
-      }
-      validityText += '.';
+      const validityText = `Dieses Angebot ist gültig bis: ${data.validityDate}`;
       doc.text(validityText, margin, y);
       y += 8;
     }

@@ -195,7 +195,18 @@ const InvoiceDetail = () => {
             <p className={isOverdue ? 'text-destructive font-medium' : ''}>
               {t.invoices.dueDate}: {formatDateDE(invoice.due_date)}
             </p>
+            {settings?.payment_terms && (
+              <p>{t.invoices.paymentTerms}: {settings.payment_terms}</p>
+            )}
           </div>
+
+          {/* Overdue warning */}
+          {isOverdue && (
+            <div className="mt-3 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm">
+              <p className="font-medium text-destructive">{t.invoices.overdueWarning}</p>
+            </div>
+          )}
+
           {invoice.notes && <p className="mt-2 text-sm text-foreground">{invoice.notes}</p>}
           {invoice.source_offer_id && (
             <p className="mt-2 text-sm text-muted-foreground">
