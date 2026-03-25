@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Inbox, Eye, UserPlus, Archive, Copy, Check, QrCode } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Inbox, Eye, UserPlus, Archive, Copy, Check, QrCode, FileText } from 'lucide-react';
 import QrCodeModal from '@/components/shared/QrCodeModal';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
