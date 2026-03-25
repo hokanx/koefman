@@ -10,7 +10,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import StatusBadge from '@/components/shared/StatusBadge';
 import type { Invoice, InvoiceStatus } from '@/types';
 
-const statusFilters: (InvoiceStatus | 'all')[] = ['all', 'open', 'paid', 'overdue', 'cancelled'];
+const statusFilters: (InvoiceStatus | 'all')[] = ['all', 'draft', 'open', 'paid', 'overdue', 'cancelled'];
 
 const Invoices = () => {
   const { t } = useLanguage();
@@ -19,10 +19,7 @@ const Invoices = () => {
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'all'>('all');
 
   const statusLabels: Record<InvoiceStatus, string> = {
-    open: t.invoices.open,
-    paid: t.invoices.paid,
-    overdue: t.invoices.overdue,
-    cancelled: t.invoices.cancelled,
+    draft: t.invoices.draft, open: t.invoices.open, paid: t.invoices.paid, overdue: t.invoices.overdue, cancelled: t.invoices.cancelled,
   };
 
   const { data: invoices = [], isLoading } = useQuery({
@@ -40,7 +37,10 @@ const Invoices = () => {
   });
 
   const filtered = invoices.filter((inv) => {
-    if (statusFilter !== 'all' && inv.status !== statusFilter) return false;
+    // Auto-detect overdue for filtering
+    const isOverdue = inv.status === 'open' && inv.due_date && new Date(inv.due_date) < new Date();
+    const effectiveStatus = isOverdue ? 'overdue' : inv.status;
+    if (statusFilter !== 'all' && effectiveStatus !== statusFilter) return false;
     if (search && !inv.invoice_number.toLowerCase().includes(search.toLowerCase()) &&
       !inv.customer?.name?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -91,25 +91,34 @@ const Invoices = () => {
         />
       ) : (
         <div className="space-y-2">
-          {filtered.map((invoice) => (
-            <Link
-              key={invoice.id}
-              to={`/invoices/${invoice.id}`}
-              className="card-hover block rounded-xl border border-border bg-card p-4"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-medium text-foreground">{invoice.invoice_number}</h3>
-                  <p className="text-sm text-muted-foreground">{invoice.customer?.name}</p>
+          {filtered.map((invoice) => {
+            const isOverdue = invoice.status === 'open' && invoice.due_date && new Date(invoice.due_date) < new Date();
+            const displayStatus = isOverdue ? 'overdue' : invoice.status;
+            return (
+              <Link
+                key={invoice.id}
+                to={`/invoices/${invoice.id}`}
+                className="card-hover block rounded-xl border border-border bg-card p-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-medium text-foreground">{invoice.invoice_number}</h3>
+                    <p className="text-sm text-muted-foreground">{invoice.customer?.name}</p>
+                  </div>
+                  <StatusBadge status={displayStatus as any} label={statusLabels[displayStatus as InvoiceStatus]} />
                 </div>
-                <StatusBadge status={invoice.status} label={statusLabels[invoice.status]} />
-              </div>
-              <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-                <span>{new Date(invoice.date).toLocaleDateString()}</span>
-                <span className="font-medium text-foreground">{t.common.currency}{invoice.grand_total.toFixed(2)}</span>
-              </div>
-            </Link>
-          ))}
+                <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+                  <div>
+                    <span>{new Date(invoice.date).toLocaleDateString()}</span>
+                    <span className={`ml-2 ${isOverdue ? 'text-destructive font-medium' : ''}`}>
+                      → {new Date(invoice.due_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <span className="font-medium text-foreground">{t.common.currency}{invoice.grand_total.toFixed(2)}</span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 export type CustomerType = 'private' | 'business';
 export type OfferStatus = 'draft' | 'sent' | 'accepted' | 'rejected';
-export type InvoiceStatus = 'open' | 'paid' | 'overdue' | 'cancelled';
+export type InvoiceStatus = 'draft' | 'open' | 'paid' | 'overdue' | 'cancelled';
 export type Language = 'de' | 'en' | 'ar';
 export type BusinessCategory = 'garage' | 'cleaning' | 'general';
 

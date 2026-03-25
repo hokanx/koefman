@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Download, Edit } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -20,7 +20,7 @@ const InvoiceDetail = () => {
   const [generating, setGenerating] = useState(false);
 
   const statusLabels: Record<InvoiceStatus, string> = {
-    open: t.invoices.open, paid: t.invoices.paid, overdue: t.invoices.overdue, cancelled: t.invoices.cancelled,
+    draft: t.invoices.draft, open: t.invoices.open, paid: t.invoices.paid, overdue: t.invoices.overdue, cancelled: t.invoices.cancelled,
   };
 
   const { data: invoice, isLoading } = useQuery({
@@ -51,18 +51,22 @@ const InvoiceDetail = () => {
     enabled: !!user,
   });
 
-  const markPaidMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from('invoices').update({ status: 'paid' }).eq('id', id!);
+  const statusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
+      const { error } = await supabase.from('invoices').update({ status: newStatus }).eq('id', id!);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoice', id] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoice-counts'] });
-      toast.success(t.common.success);
+      toast.success(t.invoices.statusUpdated);
     },
   });
+
+  // Auto-detect overdue
+  const currentStatus = invoice?.status as InvoiceStatus;
+  const isOverdue = currentStatus === 'open' && invoice?.due_date && new Date(invoice.due_date) < new Date();
 
   const handlePdfExport = async () => {
     if (!invoice) return;
@@ -125,6 +129,8 @@ const InvoiceDetail = () => {
     return <div className="p-6 text-center text-muted-foreground">{t.common.noResults}</div>;
   }
 
+  const displayStatus = isOverdue ? 'overdue' : currentStatus;
+
   return (
     <div className="animate-fade-in p-4 md:p-6">
       <button onClick={() => navigate('/invoices')} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -138,11 +144,13 @@ const InvoiceDetail = () => {
               <h2 className="text-xl font-bold text-foreground">{invoice.invoice_number}</h2>
               <p className="text-sm text-muted-foreground">{(invoice as any).customer?.name}</p>
             </div>
-            <StatusBadge status={invoice.status as any} label={statusLabels[invoice.status as InvoiceStatus]} />
+            <StatusBadge status={displayStatus as any} label={statusLabels[displayStatus as InvoiceStatus]} />
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>{t.invoices.date}: {new Date(invoice.date).toLocaleDateString()}</p>
-            <p>{t.invoices.dueDate}: {new Date(invoice.due_date).toLocaleDateString()}</p>
+            <p className={isOverdue ? 'text-destructive font-medium' : ''}>
+              {t.invoices.dueDate}: {new Date(invoice.due_date).toLocaleDateString()}
+            </p>
           </div>
           {invoice.notes && <p className="mt-2 text-sm text-foreground">{invoice.notes}</p>}
           {invoice.source_offer_id && (
@@ -150,6 +158,35 @@ const InvoiceDetail = () => {
               {t.invoices.fromOffer}: <Link to={`/offers/${invoice.source_offer_id}`} className="font-medium text-primary hover:underline">{invoice.source_offer_id.slice(0, 8)}…</Link>
             </p>
           )}
+
+          {/* Status change actions */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">{t.invoices.changeStatus}:</span>
+            {(currentStatus === 'open' || currentStatus === 'draft' || isOverdue) && (
+              <button onClick={() => statusMutation.mutate('paid')} disabled={statusMutation.isPending}
+                className="flex items-center gap-2 rounded-lg bg-success px-3 py-2 text-sm font-semibold text-success-foreground hover:bg-success/90 disabled:opacity-50">
+                <CheckCircle className="h-4 w-4" /> {t.invoices.markAsPaid}
+              </button>
+            )}
+            {currentStatus === 'draft' && (
+              <button onClick={() => statusMutation.mutate('open')} disabled={statusMutation.isPending}
+                className="flex items-center gap-2 rounded-lg bg-info px-3 py-2 text-sm font-semibold text-info-foreground hover:bg-info/90 disabled:opacity-50">
+                <RotateCcw className="h-4 w-4" /> {t.invoices.markAsOpen}
+              </button>
+            )}
+            {(currentStatus === 'open' || currentStatus === 'draft') && (
+              <button onClick={() => statusMutation.mutate('cancelled')} disabled={statusMutation.isPending}
+                className="flex items-center gap-2 rounded-lg bg-destructive px-3 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50">
+                <XCircle className="h-4 w-4" /> {t.invoices.markAsCancelled}
+              </button>
+            )}
+            {currentStatus === 'cancelled' && (
+              <button onClick={() => statusMutation.mutate('draft')} disabled={statusMutation.isPending}
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
+                <RotateCcw className="h-4 w-4" /> {t.invoices.draft}
+              </button>
+            )}
+          </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Link to={`/invoices/${id}/edit`}
@@ -160,12 +197,6 @@ const InvoiceDetail = () => {
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <Download className="h-4 w-4" /> {generating ? t.common.generating : t.common.downloadPdf}
             </button>
-            {invoice.status === 'open' && (
-              <button onClick={() => markPaidMutation.mutate()} disabled={markPaidMutation.isPending}
-                className="flex items-center gap-2 rounded-lg bg-success px-3 py-2 text-sm font-semibold text-success-foreground hover:bg-success/90 disabled:opacity-50">
-                <CheckCircle className="h-4 w-4" /> {t.invoices.markAsPaid}
-              </button>
-            )}
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Edit } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Edit, Send, Check, X } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -60,6 +60,18 @@ const OfferDetail = () => {
       return data || [];
     },
     enabled: !!id,
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async (newStatus: OfferStatus) => {
+      const { error } = await supabase.from('offers').update({ status: newStatus }).eq('id', id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['offer', id] });
+      queryClient.invalidateQueries({ queryKey: ['offers'] });
+      toast.success(t.offers.statusUpdated);
+    },
   });
 
   const handlePdfExport = async () => {
@@ -158,6 +170,17 @@ const OfferDetail = () => {
     }
   };
 
+  const statusActions: { status: OfferStatus; label: string; icon: React.ReactNode; className: string }[] = [];
+  if (offer) {
+    const s = offer.status as OfferStatus;
+    if (s === 'draft') statusActions.push({ status: 'sent', label: t.offers.markAsSent, icon: <Send className="h-4 w-4" />, className: 'bg-info text-info-foreground hover:bg-info/90' });
+    if (s === 'sent') {
+      statusActions.push({ status: 'accepted', label: t.offers.markAsAccepted, icon: <Check className="h-4 w-4" />, className: 'bg-success text-success-foreground hover:bg-success/90' });
+      statusActions.push({ status: 'rejected', label: t.offers.markAsRejected, icon: <X className="h-4 w-4" />, className: 'bg-destructive text-destructive-foreground hover:bg-destructive/90' });
+    }
+    if (s === 'rejected') statusActions.push({ status: 'draft', label: t.offers.draft, icon: <Edit className="h-4 w-4" />, className: 'border border-border text-foreground hover:bg-accent' });
+  }
+
   if (isLoading) {
     return <div className="flex justify-center p-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   }
@@ -184,9 +207,29 @@ const OfferDetail = () => {
           {offer.notes && <p className="mt-2 text-sm text-foreground">{offer.notes}</p>}
 
           {linkedInvoices.length > 0 && (
-            <div className="mt-3 rounded-lg bg-muted/50 p-2 text-sm text-muted-foreground">
-              {t.invoices.fromOffer}: {linkedInvoices.map((inv) => (
-                <Link key={inv.id} to={`/invoices/${inv.id}`} className="font-medium text-primary hover:underline ml-1">{inv.invoice_number}</Link>
+            <div className="mt-3 rounded-lg bg-success/10 border border-success/20 p-3 text-sm">
+              <p className="font-medium text-success">{t.common.alreadyConverted}</p>
+              <div className="mt-1 text-muted-foreground">
+                {linkedInvoices.map((inv) => (
+                  <Link key={inv.id} to={`/invoices/${inv.id}`} className="font-medium text-primary hover:underline mr-2">{inv.invoice_number}</Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Status change actions */}
+          {statusActions.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="text-xs font-medium text-muted-foreground self-center mr-1">{t.offers.changeStatus}:</span>
+              {statusActions.map((action) => (
+                <button
+                  key={action.status}
+                  onClick={() => statusMutation.mutate(action.status)}
+                  disabled={statusMutation.isPending}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50 ${action.className}`}
+                >
+                  {action.icon} {action.label}
+                </button>
               ))}
             </div>
           )}
@@ -200,7 +243,7 @@ const OfferDetail = () => {
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <Download className="h-4 w-4" /> {generating ? t.common.generating : t.common.downloadPdf}
             </button>
-            {offer.status === 'accepted' && (
+            {(offer.status === 'accepted' || offer.status === 'sent') && (
               <button onClick={handleConvertToInvoice} disabled={converting}
                 className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                 <FileText className="h-4 w-4" /> {converting ? t.common.loading : t.offers.convertToInvoice}
