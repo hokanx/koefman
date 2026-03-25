@@ -121,6 +121,8 @@ const OfferDetail = () => {
       const validityDays = (offer as any).validity_days || 14;
       const validityDate = getValidityDate();
 
+      const isSmallBiz = !!(settings as any)?.small_business_regulation;
+
       await generatePdf({
         type: 'offer',
         documentTitle: customTitle,
@@ -128,7 +130,8 @@ const OfferDetail = () => {
         date: new Date(offer.date).toLocaleDateString(),
         validityDate: validityDate || undefined,
         validity_days: validityDays,
-        legal_note: 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.',
+        small_business_regulation: isSmallBiz,
+        legal_note: isSmallBiz ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.' : undefined,
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
@@ -181,6 +184,7 @@ const OfferDetail = () => {
         accepted_by_name: (acceptance as any).accepted_by_name,
         accepted_at: new Date((acceptance as any).accepted_at).toLocaleDateString(),
         signature_text: (acceptance as any).signature_text || undefined,
+        signature_image: (acceptance as any).signature_image || undefined,
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
@@ -315,7 +319,9 @@ const OfferDetail = () => {
               <div className="mt-1 space-y-0.5 text-muted-foreground">
                 <p>{t.offers.acceptedBy}: {(acceptance as any).accepted_by_name}</p>
                 <p>{t.offers.acceptedAt}: {new Date((acceptance as any).accepted_at).toLocaleDateString()}</p>
-                {(acceptance as any).signature_text && <p>{t.offers.signature}: {(acceptance as any).signature_text}</p>}
+                {(acceptance as any).signature_image && (
+                  <img src={(acceptance as any).signature_image} alt="Signature" className="mt-2 h-12 w-auto border border-border rounded bg-white p-1" />
+                )}
               </div>
             </div>
           )}
