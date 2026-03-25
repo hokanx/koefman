@@ -243,7 +243,87 @@ const InvoiceDetail = () => {
     }
   };
 
-  if (isLoading) {
+  const getInvoicePdfBase64 = async (): Promise<string> => {
+    const customer = (invoice as any)?.customer;
+    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customerAddress = customer ? formatAddress(customer) : '';
+    const isSmallBiz = !!(settings as any)?.small_business_regulation;
+    const result = await generatePdf({
+      type: 'invoice',
+      small_business_regulation: isSmallBiz,
+      documentTitle: t.invoices.documentTitle,
+      documentNumber: invoice!.invoice_number,
+      date: formatDateDE(invoice!.date),
+      dueDate: formatDateDE(invoice!.due_date),
+      business: {
+        business_name: settings?.business_name || '',
+        address: businessAddress || undefined,
+        email: settings?.email || undefined,
+        phone: settings?.phone || undefined,
+        tax_number: settings?.tax_number || undefined,
+        vat_id: settings?.vat_id || undefined,
+        logo_url: settings?.logo_url || undefined,
+        payment_terms: settings?.payment_terms || undefined,
+        account_holder: (settings as any)?.account_holder || undefined,
+        bank_name: (settings as any)?.bank_name || undefined,
+        iban: (settings as any)?.iban || undefined,
+        bic: (settings as any)?.bic || undefined,
+        owner_name: (settings as any)?.owner_name || undefined,
+      },
+      customer: { name: customer?.name || '', address: customerAddress || undefined },
+      items: items.map((i: any) => ({
+        title: i.title, description: i.description, quantity: i.quantity,
+        unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
+      })),
+      subtotal: invoice!.subtotal, tax_total: invoice!.tax_total, grand_total: invoice!.grand_total,
+      intro_text: (invoice as any).intro_text || undefined,
+      footer_text: (invoice as any).footer_text || undefined,
+      closing_text: (invoice as any).closing_text || undefined,
+      notes: invoice!.notes || undefined,
+      labels: {
+        date: t.invoices.date, dueDate: t.invoices.dueDate, quantity: t.invoices.quantity,
+        unit: t.invoices.unit, unitPrice: t.invoices.unitPrice, taxRate: t.invoices.taxRate,
+        total: t.invoices.total, subtotal: t.invoices.subtotal, taxTotal: t.invoices.taxTotal,
+        grandTotal: t.invoices.grandTotal, description: t.invoices.description,
+        itemTitle: t.invoices.itemTitle, page: 'Seite',
+      },
+    }, true);
+    return result as string;
+  };
+
+  const getReminderPdfBase64 = async (): Promise<string> => {
+    const customer = (invoice as any)?.customer;
+    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customerAddress = customer ? formatAddress(customer) : '';
+    const result = await generateReminderPdf({
+      business: {
+        business_name: settings?.business_name || '',
+        address: businessAddress || undefined,
+        email: settings?.email || undefined,
+        phone: settings?.phone || undefined,
+        tax_number: settings?.tax_number || undefined,
+        vat_id: settings?.vat_id || undefined,
+        logo_url: settings?.logo_url || undefined,
+        payment_terms: settings?.payment_terms || undefined,
+        account_holder: (settings as any)?.account_holder || undefined,
+        bank_name: (settings as any)?.bank_name || undefined,
+        iban: (settings as any)?.iban || undefined,
+        bic: (settings as any)?.bic || undefined,
+        owner_name: (settings as any)?.owner_name || undefined,
+      },
+      customer: { name: customer?.name || '', address: customerAddress || undefined },
+      invoiceNumber: invoice!.invoice_number,
+      invoiceDate: formatDateDE(invoice!.date),
+      dueDate: formatDateDE(invoice!.due_date),
+      grandTotal: invoice!.grand_total,
+      reminderDate: formatDateDE(new Date()),
+      reminderLevel: reminders.length + 1,
+      labels: { page: 'Seite' },
+    }, true);
+    return result as string;
+  };
+
+
     return <div className="flex justify-center p-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   }
   if (!invoice) {
