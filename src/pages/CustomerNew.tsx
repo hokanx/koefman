@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Link2, Copy, Check } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -26,16 +26,28 @@ const CustomerNew = () => {
     business_category: 'general',
   });
 
+  const [linkCopied, setLinkCopied] = useState(false);
+
   const { data: settings } = useQuery({
     queryKey: ['business-settings'],
     queryFn: async () => {
-      const { data } = await supabase.from('business_settings').select('business_category').eq('user_id', user!.id).maybeSingle();
+      const { data } = await supabase.from('business_settings').select('business_category, intake_token').eq('user_id', user!.id).maybeSingle();
       return data;
     },
     enabled: !!user,
   });
 
   const category = settings?.business_category || 'general';
+  const intakeToken = settings?.intake_token;
+
+  const handleCopyLink = () => {
+    if (!intakeToken) return;
+    const url = `${window.location.origin}/intake/${intakeToken}`;
+    navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    toast.success(t.leads.linkCopied);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -81,7 +93,23 @@ const CustomerNew = () => {
       <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> {t.common.back}
       </button>
-      <h2 className="mb-6 text-xl font-bold text-foreground">{t.customers.newCustomer}</h2>
+      <h2 className="mb-4 text-xl font-bold text-foreground">{t.customers.newCustomer}</h2>
+
+      {intakeToken && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-border bg-muted/50 px-4 py-3">
+          <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="flex-1 text-sm text-muted-foreground">{t.customers.letClientFillIn}</span>
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+          >
+            {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            {linkCopied ? t.leads.copied : t.leads.copyLink}
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
         <FormSection title={t.customers.customerDetails}>
           <div>
