@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
-import { generatePdf } from '@/lib/generatePdf';
+import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { InvoiceStatus } from '@/types';
 
@@ -82,8 +82,8 @@ const InvoiceDetail = () => {
         small_business_regulation: isSmallBiz,
         documentTitle: t.invoices.documentTitle,
         documentNumber: invoice.invoice_number,
-        date: new Date(invoice.date).toLocaleDateString(),
-        dueDate: new Date(invoice.due_date).toLocaleDateString(),
+        date: formatDateDE(invoice.date),
+        dueDate: formatDateDE(invoice.due_date),
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
@@ -150,9 +150,9 @@ const InvoiceDetail = () => {
             <StatusBadge status={displayStatus as any} label={statusLabels[displayStatus as InvoiceStatus]} />
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>{t.invoices.date}: {new Date(invoice.date).toLocaleDateString()}</p>
+            <p>{t.invoices.date}: {formatDateDE(invoice.date)}</p>
             <p className={isOverdue ? 'text-destructive font-medium' : ''}>
-              {t.invoices.dueDate}: {new Date(invoice.due_date).toLocaleDateString()}
+              {t.invoices.dueDate}: {formatDateDE(invoice.due_date)}
             </p>
           </div>
           {invoice.notes && <p className="mt-2 text-sm text-foreground">{invoice.notes}</p>}

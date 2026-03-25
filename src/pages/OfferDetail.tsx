@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
-import { generatePdf } from '@/lib/generatePdf';
+import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { OfferStatus } from '@/types';
 
@@ -107,7 +107,7 @@ const OfferDetail = () => {
     const days = (offer as any).validity_days || 14;
     const offerDate = new Date(offer.date);
     offerDate.setDate(offerDate.getDate() + days);
-    return offerDate.toLocaleDateString();
+    return formatDateDE(offerDate);
   };
 
   const handlePdfExport = async () => {
@@ -127,7 +127,7 @@ const OfferDetail = () => {
         type: 'offer',
         documentTitle: customTitle,
         documentNumber: offer.offer_number,
-        date: new Date(offer.date).toLocaleDateString(),
+        date: formatDateDE(offer.date),
         validityDate: validityDate || undefined,
         validity_days: validityDays,
         small_business_regulation: isSmallBiz,
@@ -181,11 +181,11 @@ const OfferDetail = () => {
         type: 'confirmation',
         documentTitle: t.offers.orderConfirmation,
         documentNumber: `AB-${offer.offer_number}`,
-        date: new Date().toLocaleDateString(),
+        date: formatDateDE(new Date()),
         reference_offer_number: offer.offer_number,
-        reference_offer_date: new Date(offer.date).toLocaleDateString(),
+        reference_offer_date: formatDateDE(offer.date),
         accepted_by_name: (acceptance as any).accepted_by_name,
-        accepted_at: acceptedAtDate.toLocaleDateString(),
+        accepted_at: formatDateDE(acceptedAtDate),
         accepted_at_time: acceptedAtDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         signature_text: (acceptance as any).signature_text || undefined,
         signature_image: (acceptance as any).signature_image || undefined,
@@ -304,7 +304,7 @@ const OfferDetail = () => {
             <StatusBadge status={offer.status as any} label={statusLabels[offer.status as OfferStatus]} />
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>{t.offers.date}: {new Date(offer.date).toLocaleDateString()}</p>
+            <p>{t.offers.date}: {formatDateDE(offer.date)}</p>
             <p>{t.offers.validUntil}: {getValidityDate()}</p>
           </div>
           {offer.notes && <p className="mt-2 text-sm text-foreground">{offer.notes}</p>}
@@ -326,7 +326,7 @@ const OfferDetail = () => {
               <p className="font-medium text-success">{t.offers.acceptedDigitally}</p>
               <div className="mt-1 space-y-0.5 text-muted-foreground">
                 <p>{t.offers.acceptedBy}: {(acceptance as any).accepted_by_name}</p>
-                <p>{t.offers.acceptedAt}: {new Date((acceptance as any).accepted_at).toLocaleDateString()}</p>
+                <p>{t.offers.acceptedAt}: {formatDateDE((acceptance as any).accepted_at)}</p>
                 {(acceptance as any).signature_image && (
                   <img src={(acceptance as any).signature_image} alt="Signature" className="mt-2 h-12 w-auto border border-border rounded bg-white p-1" />
                 )}
@@ -340,7 +340,7 @@ const OfferDetail = () => {
               <p className="font-medium text-destructive">{t.offers.rejectedStatus}</p>
               <div className="mt-1 space-y-0.5 text-muted-foreground">
                 {(offer as any).rejected_at && (
-                  <p>{t.offers.rejectedAt}: {new Date((offer as any).rejected_at).toLocaleDateString()}</p>
+                  <p>{t.offers.rejectedAt}: {formatDateDE((offer as any).rejected_at)}</p>
                 )}
                 {(offer as any).rejected_reason && (
                   <p>{t.offers.rejectedReason}: {(offer as any).rejected_reason}</p>

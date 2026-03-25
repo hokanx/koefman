@@ -109,9 +109,9 @@ const Invoices = () => {
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
                   <div>
-                    <span>{new Date(invoice.date).toLocaleDateString()}</span>
+                    <span>{formatDateDE(invoice.date)}</span>
                     <span className={`ml-2 ${isOverdue ? 'text-destructive font-medium' : ''}`}>
-                      → {new Date(invoice.due_date).toLocaleDateString()}
+                      → {formatDateDE(invoice.due_date)}
                     </span>
                   </div>
                   <span className="font-medium text-foreground">{t.common.currency}{invoice.grand_total.toFixed(2)}</span>

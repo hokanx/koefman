@@ -105,7 +105,7 @@ const Offers = () => {
                 <StatusBadge status={offer.status} label={statusLabels[offer.status]} />
               </div>
               <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-                <span>{new Date(offer.date).toLocaleDateString()}</span>
+                <span>{formatDateDE(offer.date)}</span>
                 <span className="font-medium text-foreground">{t.common.currency}{offer.grand_total.toFixed(2)}</span>
               </div>
             </Link>
