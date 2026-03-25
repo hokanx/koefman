@@ -222,14 +222,33 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   y += 10;
 
   // ============================================================
-  // 5. CONFIRMATION-SPECIFIC: Reference info
+  // 5. CONFIRMATION-SPECIFIC: Reference info + formal text
   // ============================================================
-  if (data.type === 'confirmation' && data.reference_offer_number) {
+  if (data.type === 'confirmation') {
     doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(30, 30, 30);
-    doc.text(`Bezug: ${data.reference_offer_number}`, margin, y);
-    y += 6;
+
+    const refParts = [`Bezugnehmend auf das Angebot ${data.reference_offer_number || data.documentNumber}`];
+    if (data.reference_offer_date) {
+      refParts.push(`vom ${data.reference_offer_date}`);
+    }
+    refParts.push('bestätigen wir hiermit die Annahme des Angebots durch den Kunden.');
+    const refText = refParts.join(' ');
+    const refLines = doc.splitTextToSize(refText, contentWidth);
+    doc.text(refLines, margin, y);
+    y += refLines.length * 4.5 + 4;
+
+    if (data.accepted_by_name) {
+      doc.text(`Name des Unterzeichners: ${data.accepted_by_name}`, margin, y);
+      y += 5;
+    }
+    if (data.accepted_at) {
+      const timeStr = data.accepted_at_time ? ` um ${data.accepted_at_time} Uhr` : '';
+      doc.text(`Angenommen am: ${data.accepted_at}${timeStr}`, margin, y);
+      y += 5;
+    }
+    y += 4;
   }
 
   // ============================================================
@@ -247,7 +266,7 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   // ============================================================
   // 7. ITEMS TABLE (offers & invoices only)
   // ============================================================
-  if (data.type !== 'confirmation' && data.items.length > 0) {
+  if (data.items.length > 0) {
     doc.setDrawColor(60, 60, 60);
     doc.setLineWidth(0.5);
     doc.line(margin, y, rightEdge, y);
