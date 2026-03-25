@@ -406,6 +406,7 @@ export const de = {
     showQr: 'QR-Code anzeigen',
     qrTitle: 'QR-Code für Kunden',
     qrDescription: 'Kunde scannt den Code und kann seine Daten direkt eingeben.',
+    createOffer: 'Angebot erstellen',
   },
 };
 
