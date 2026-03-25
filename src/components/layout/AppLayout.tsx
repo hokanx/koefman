@@ -149,11 +149,18 @@ const AppLayout = () => {
         <button
           onClick={() => setMoreOpen(true)}
           className={cn(
-            'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+            'relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
             isSecondaryActive ? 'text-primary' : 'text-muted-foreground'
           )}
         >
-          <MoreHorizontal className="h-5 w-5" />
+          <div className="relative">
+            <MoreHorizontal className="h-5 w-5" />
+            {newLeadsCount > 0 && (
+              <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                {newLeadsCount}
+              </span>
+            )}
+          </div>
           {t.nav.more}
         </button>
       </nav>
