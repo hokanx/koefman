@@ -74,8 +74,7 @@ const CustomerDetail = () => {
   }
 
   const addr = formatAddress(customer);
-  const offerStatusLabels: Record<string, string> = { draft: t.offers.draft, sent: t.offers.sent, accepted: t.offers.accepted, rejected: t.offers.rejected };
-  const invoiceStatusLabels: Record<string, string> = { open: t.invoices.open, paid: t.invoices.paid, overdue: t.invoices.overdue, cancelled: t.invoices.cancelled };
+  const statusLabels = t.status as Record<string, string>;
 
   return (
     <div className="animate-fade-in p-4 md:p-6">
@@ -164,7 +163,7 @@ const CustomerDetail = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">{t.common.currency}{o.grand_total.toFixed(2)}</span>
-                    <StatusBadge status={o.status} label={offerStatusLabels[o.status] || o.status} />
+                    <StatusBadge status={o.status} label={statusLabels[o.status] || o.status} />
                   </div>
                 </Link>
               ))}
@@ -184,7 +183,7 @@ const CustomerDetail = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">{t.common.currency}{inv.grand_total.toFixed(2)}</span>
-                    <StatusBadge status={inv.status} label={invoiceStatusLabels[inv.status] || inv.status} />
+                    <StatusBadge status={inv.status} label={statusLabels[inv.status] || inv.status} />
                   </div>
                 </Link>
               ))}

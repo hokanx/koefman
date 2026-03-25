@@ -201,7 +201,7 @@ const Leads = () => {
             onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-foreground">{selected.company_or_name}</h3>
-              <StatusBadge status={selected.status as any} />
+              <StatusBadge status={selected.status as any} label={(t.status as any)[selected.status] || selected.status} />
             </div>
 
             <div className="space-y-3 text-sm">
@@ -278,7 +278,7 @@ const Leads = () => {
                   <h3 className="font-medium text-foreground truncate">{lead.company_or_name}</h3>
                   {lead.contact_person && <p className="text-sm text-muted-foreground">{lead.contact_person}</p>}
                 </div>
-                <StatusBadge status={lead.status as any} />
+                <StatusBadge status={lead.status as any} label={(t.status as any)[lead.status] || lead.status} />
               </div>
               <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
                 {lead.email && <span>{lead.email}</span>}

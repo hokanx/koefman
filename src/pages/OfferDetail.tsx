@@ -22,9 +22,7 @@ const OfferDetail = () => {
   const [generatingConfirmation, setGeneratingConfirmation] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
 
-  const statusLabels: Record<OfferStatus, string> = {
-    draft: t.offers.draft, sent: t.offers.sent, accepted: t.offers.accepted, rejected: t.offers.rejected,
-  };
+  const statusLabels = t.status as Record<string, string>;
 
   const { data: offer, isLoading } = useQuery({
     queryKey: ['offer', id],
