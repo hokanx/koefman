@@ -4,6 +4,8 @@ import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, Fil
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import LanguageSwitcher from './LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import {
@@ -15,11 +17,25 @@ import {
 
 const AppLayout = () => {
   const { t } = useLanguage();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  const { data: newLeadsCount = 0 } = useQuery({
+    queryKey: ['new-leads-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('intake_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('owner_id', user!.id)
+        .eq('status', 'new');
+      return count || 0;
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
 
   const primaryNavItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: t.nav.dashboard },
