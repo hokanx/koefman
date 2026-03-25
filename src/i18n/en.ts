@@ -261,6 +261,7 @@ export const en: Translations = {
     footerText: 'Footer text',
     closingText: 'Closing text',
     paymentTerms: 'Payment terms',
+    overdueWarning: 'This invoice is overdue. Please check for payment receipt.',
     documentTexts: 'Document texts',
   },
   settings: {

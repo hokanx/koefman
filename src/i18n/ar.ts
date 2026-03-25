@@ -261,6 +261,7 @@ export const ar: Translations = {
     footerText: 'نص ختامي',
     closingText: 'تحية ختامية',
     paymentTerms: 'شروط الدفع',
+    overdueWarning: 'هذه الفاتورة متأخرة. يرجى التحقق من استلام الدفع.',
     documentTexts: 'نصوص المستند',
   },
   settings: {

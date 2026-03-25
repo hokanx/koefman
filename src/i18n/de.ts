@@ -259,6 +259,7 @@ export const de = {
     footerText: 'Schlusstext',
     closingText: 'Grußformel',
     paymentTerms: 'Zahlungsbedingungen',
+    overdueWarning: 'Diese Rechnung ist überfällig. Bitte prüfen Sie den Zahlungseingang.',
     documentTexts: 'Dokumenttexte',
   },
   settings: {
