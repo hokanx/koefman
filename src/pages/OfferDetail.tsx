@@ -319,6 +319,53 @@ const OfferDetail = () => {
     }
   };
 
+  const getOfferPdfBase64 = async (): Promise<string> => {
+    const customer = (offer as any)?.customer;
+    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customerAddress = customer ? formatAddress(customer) : '';
+    const customTitle = (settings as any)?.default_offer_title || t.offers.documentTitle;
+    const validityDays = (offer as any)?.validity_days || 14;
+    const validityDate = getValidityDate();
+    const isSmallBiz = !!(settings as any)?.small_business_regulation;
+    const result = await generatePdf({
+      type: 'offer',
+      documentTitle: customTitle,
+      documentNumber: offer!.offer_number,
+      date: formatDateDE(offer!.date),
+      validityDate: validityDate || undefined,
+      validity_days: validityDays,
+      small_business_regulation: isSmallBiz,
+      legal_note: isSmallBiz ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.' : undefined,
+      business: {
+        business_name: settings?.business_name || '',
+        address: businessAddress || undefined,
+        email: settings?.email || undefined,
+        phone: settings?.phone || undefined,
+        tax_number: settings?.tax_number || undefined,
+        vat_id: settings?.vat_id || undefined,
+        logo_url: settings?.logo_url || undefined,
+        owner_name: (settings as any)?.owner_name || undefined,
+      },
+      customer: { name: customer?.name || '', address: customerAddress || undefined },
+      items: items.map((i: any) => ({
+        title: i.title, description: i.description, quantity: i.quantity,
+        unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
+      })),
+      subtotal: offer!.subtotal, tax_total: offer!.tax_total, grand_total: offer!.grand_total,
+      intro_text: (offer as any).intro_text || undefined,
+      footer_text: (offer as any).footer_text || undefined,
+      closing_text: (offer as any).closing_text || undefined,
+      notes: offer!.notes || undefined,
+      labels: {
+        date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
+        unitPrice: t.offers.unitPrice, taxRate: t.offers.taxRate, total: t.offers.total,
+        subtotal: t.offers.subtotal, taxTotal: t.offers.taxTotal, grandTotal: t.offers.grandTotal,
+        description: t.offers.description, itemTitle: t.offers.itemTitle, page: 'Seite',
+      },
+    }, true);
+    return result as string;
+  };
+
   const statusActions: { status: OfferStatus; label: string; icon: React.ReactNode; className: string }[] = [];
   if (offer) {
     const s = offer.status as OfferStatus;
