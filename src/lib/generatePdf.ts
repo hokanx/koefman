@@ -51,17 +51,16 @@ interface PdfData {
   footer_text?: string;
   closing_text?: string;
   notes?: string;
-  // Offer-specific
   validity_days?: number;
   legal_note?: string;
   small_business_regulation?: boolean;
-  // Invoice-specific (payment_terms is on business)
-  // Confirmation-specific
   accepted_by_name?: string;
   accepted_at?: string;
+  accepted_at_time?: string;
   signature_text?: string;
   signature_image?: string;
   reference_offer_number?: string;
+  reference_offer_date?: string;
   labels: {
     date: string;
     dueDate?: string;
@@ -223,14 +222,33 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   y += 10;
 
   // ============================================================
-  // 5. CONFIRMATION-SPECIFIC: Reference info
+  // 5. CONFIRMATION-SPECIFIC: Reference info + formal text
   // ============================================================
-  if (data.type === 'confirmation' && data.reference_offer_number) {
+  if (data.type === 'confirmation') {
     doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(30, 30, 30);
-    doc.text(`Bezug: ${data.reference_offer_number}`, margin, y);
-    y += 6;
+
+    const refParts = [`Bezugnehmend auf das Angebot ${data.reference_offer_number || data.documentNumber}`];
+    if (data.reference_offer_date) {
+      refParts.push(`vom ${data.reference_offer_date}`);
+    }
+    refParts.push('bestätigen wir hiermit die Annahme des Angebots durch den Kunden.');
+    const refText = refParts.join(' ');
+    const refLines = doc.splitTextToSize(refText, contentWidth);
+    doc.text(refLines, margin, y);
+    y += refLines.length * 4.5 + 4;
+
+    if (data.accepted_by_name) {
+      doc.text(`Name des Unterzeichners: ${data.accepted_by_name}`, margin, y);
+      y += 5;
+    }
+    if (data.accepted_at) {
+      const timeStr = data.accepted_at_time ? ` um ${data.accepted_at_time} Uhr` : '';
+      doc.text(`Angenommen am: ${data.accepted_at}${timeStr}`, margin, y);
+      y += 5;
+    }
+    y += 4;
   }
 
   // ============================================================
@@ -248,7 +266,7 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   // ============================================================
   // 7. ITEMS TABLE (offers & invoices only)
   // ============================================================
-  if (data.type !== 'confirmation' && data.items.length > 0) {
+  if (data.items.length > 0) {
     doc.setDrawColor(60, 60, 60);
     doc.setLineWidth(0.5);
     doc.line(margin, y, rightEdge, y);
@@ -444,49 +462,43 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   }
 
   // ============================================================
-  // 10. CONFIRMATION-SPECIFIC: acceptance details
+  // 10. CONFIRMATION-SPECIFIC: signature section
   // ============================================================
   if (data.type === 'confirmation') {
-    doc.setFontSize(9.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(30, 30, 30);
-
-    const confirmText = `Hiermit bestätigen wir den Eingang Ihrer Auftragserteilung zum Angebot ${data.reference_offer_number || data.documentNumber}.`;
-    const confirmLines = doc.splitTextToSize(confirmText, contentWidth);
-    doc.text(confirmLines, margin, y);
-    y += confirmLines.length * 4.5 + 6;
-
-    if (data.accepted_by_name) {
-      doc.text(`Angenommen von: ${data.accepted_by_name}`, margin, y);
-      y += 5;
-    }
-    if (data.accepted_at) {
-      doc.text(`Datum der Annahme: ${data.accepted_at}`, margin, y);
-      y += 5;
-    }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(40, 40, 40);
+    doc.text('Unterschrift des Auftraggebers', margin, y);
+    y += 6;
 
     // Handwritten signature image
     if (data.signature_image) {
-      y += 4;
       try {
         const sigImg = await loadImage(data.signature_image);
         if (sigImg) {
-          const maxSigW = 60;
-          const maxSigH = 25;
+          const maxSigW = 70;
+          const maxSigH = 30;
           const sigRatio = Math.min(maxSigW / sigImg.width, maxSigH / sigImg.height);
           const sigW = sigImg.width * sigRatio;
           const sigH = sigImg.height * sigRatio;
           doc.addImage(sigImg, 'PNG', margin, y, sigW, sigH);
-          y += sigH + 3;
+          y += sigH + 2;
         }
       } catch {
         // signature image failed to load, skip
       }
-    } else if (data.signature_text) {
-      doc.text(`Unterschrift: ${data.signature_text}`, margin, y);
-      y += 5;
     }
-    y += 8;
+
+    // Signature line
+    doc.setDrawColor(120, 120, 120);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + 70, y);
+    y += 4;
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(data.accepted_by_name || '', margin, y);
+    y += 10;
   }
 
   // ============================================================
