@@ -585,6 +585,83 @@ export type Database = {
         }
         Relationships: []
       }
+      service_template_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          quantity: number
+          sort_order: number
+          tax_rate: number
+          template_id: string
+          title: string
+          total: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          quantity?: number
+          sort_order?: number
+          tax_rate?: number
+          template_id: string
+          title: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          quantity?: number
+          sort_order?: number
+          tax_rate?: number
+          template_id?: string
+          title?: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "service_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          template_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          template_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          template_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
