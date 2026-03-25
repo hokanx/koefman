@@ -292,10 +292,14 @@ const Leads = () => {
               )}
               {selected.status !== 'converted' && (
                 <button onClick={() => convertToCustomer.mutate(selected)} disabled={convertToCustomer.isPending}
-                  className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                  className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/80 disabled:opacity-50">
                   <UserPlus className="h-4 w-4" /> {t.leads.convertToCustomer}
                 </button>
               )}
+              <button onClick={() => createOfferFromLead.mutate(selected)} disabled={createOfferFromLead.isPending}
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                <FileText className="h-4 w-4" /> {t.leads.createOffer}
+              </button>
               {selected.status !== 'archived' && selected.status !== 'converted' && (
                 <button onClick={() => updateStatus.mutate({ id: selected.id, status: 'archived' })}
                   className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
