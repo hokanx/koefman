@@ -326,6 +326,21 @@ const OfferDetail = () => {
             </div>
           )}
 
+          {/* Rejection details */}
+          {offer.status === 'rejected' && !acceptance && (
+            <div className="mt-3 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm">
+              <p className="font-medium text-destructive">{t.offers.rejectedStatus}</p>
+              <div className="mt-1 space-y-0.5 text-muted-foreground">
+                {(offer as any).rejected_at && (
+                  <p>{t.offers.rejectedAt}: {new Date((offer as any).rejected_at).toLocaleDateString()}</p>
+                )}
+                {(offer as any).rejected_reason && (
+                  <p>{t.offers.rejectedReason}: {(offer as any).rejected_reason}</p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Status change actions */}
           {statusActions.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -373,7 +388,7 @@ const OfferDetail = () => {
                 <ClipboardCheck className="h-4 w-4" /> {generatingConfirmation ? t.common.generating : t.offers.downloadConfirmation}
               </button>
             )}
-            {(offer.status === 'accepted' || offer.status === 'sent') && (
+            {offer.status === 'accepted' && (
               <button onClick={handleConvertToInvoice} disabled={converting}
                 className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                 <FileText className="h-4 w-4" /> {converting ? t.common.loading : t.offers.convertToInvoice}

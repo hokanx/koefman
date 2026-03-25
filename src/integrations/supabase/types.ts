@@ -566,6 +566,8 @@ export type Database = {
           notes: string | null
           offer_number: string
           public_token: string | null
+          rejected_at: string | null
+          rejected_reason: string | null
           status: string
           subtotal: number
           tax_total: number
@@ -586,6 +588,8 @@ export type Database = {
           notes?: string | null
           offer_number: string
           public_token?: string | null
+          rejected_at?: string | null
+          rejected_reason?: string | null
           status?: string
           subtotal?: number
           tax_total?: number
@@ -606,6 +610,8 @@ export type Database = {
           notes?: string | null
           offer_number?: string
           public_token?: string | null
+          rejected_at?: string | null
+          rejected_reason?: string | null
           status?: string
           subtotal?: number
           tax_total?: number

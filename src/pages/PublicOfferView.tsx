@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatAddress } from '@/types';
-import { CheckCircle, FileText } from 'lucide-react';
+import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
 
 const formatCurrency = (value: number): string => {
@@ -12,9 +12,13 @@ const formatCurrency = (value: number): string => {
 
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
+  const queryClient = useQueryClient();
   const [acceptName, setAcceptName] = useState('');
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
+  const [rejected, setRejected] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   const { data: offer, isLoading } = useQuery({
     queryKey: ['public-offer', token],
@@ -86,7 +90,30 @@ const PublicOfferView = () => {
         .eq('id', offer!.id);
       if (updateError) throw updateError;
     },
-    onSuccess: () => setAccepted(true),
+    onSuccess: () => {
+      setAccepted(true);
+      queryClient.invalidateQueries({ queryKey: ['public-offer', token] });
+      queryClient.invalidateQueries({ queryKey: ['public-offer-acceptance', offer?.id] });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('offers')
+        .update({
+          status: 'rejected',
+          rejected_at: new Date().toISOString(),
+          rejected_reason: rejectReason.trim() || null,
+        } as any)
+        .eq('id', offer!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setRejected(true);
+      setShowRejectConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['public-offer', token] });
+    },
   });
 
   const handleAccept = (e: React.FormEvent) => {
@@ -96,6 +123,7 @@ const PublicOfferView = () => {
   };
 
   const isAlreadyAccepted = offer?.status === 'accepted' || !!existingAcceptance || accepted;
+  const isAlreadyRejected = offer?.status === 'rejected' || rejected;
 
   const getValidityDate = (): string | null => {
     if (!offer) return null;
@@ -280,7 +308,7 @@ const PublicOfferView = () => {
           )}
         </div>
 
-        {/* Acceptance section */}
+        {/* Acceptance / Rejection section */}
         {isAlreadyAccepted ? (
           <div className="mt-6 rounded-xl bg-green-50 border border-green-200 p-6 text-center">
             <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-3" />
@@ -294,58 +322,120 @@ const PublicOfferView = () => {
               }
             </p>
           </div>
+        ) : isAlreadyRejected ? (
+          <div className="mt-6 rounded-xl bg-red-50 border border-red-200 p-6 text-center">
+            <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
+            <h3 className="text-lg font-bold text-red-800">Angebot abgelehnt</h3>
+            <p className="mt-1 text-sm text-red-600">
+              {(offer as any).rejected_reason
+                ? `Grund: ${(offer as any).rejected_reason}`
+                : 'Dieses Angebot wurde abgelehnt.'
+              }
+            </p>
+          </div>
         ) : expired ? (
           <div className="mt-6 rounded-xl bg-red-50 border border-red-200 p-6 text-center">
             <p className="text-red-700 font-medium">Dieses Angebot ist abgelaufen und kann nicht mehr angenommen werden.</p>
           </div>
-        ) : offer.status === 'rejected' ? (
-          <div className="mt-6 rounded-xl bg-gray-50 border border-gray-200 p-6 text-center">
-            <p className="text-gray-500 font-medium">Dieses Angebot wurde abgelehnt.</p>
-          </div>
         ) : (
-          <div className="mt-6 rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-bold text-gray-900">Angebot annehmen</h3>
+          <div className="mt-6 space-y-4">
+            {/* Accept form */}
+            <div className="rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-bold text-gray-900">Angebot annehmen</h3>
+              </div>
+              <form onSubmit={handleAccept} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ihr Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={acceptName}
+                    onChange={(e) => setAcceptName(e.target.value)}
+                    required
+                    placeholder="Vor- und Nachname"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Unterschrift
+                  </label>
+                  <SignaturePad
+                    onSignatureChange={setSignatureImage}
+                    clearLabel="Unterschrift löschen"
+                    instructionLabel="Bitte unterschreiben Sie hier mit dem Finger oder der Maus."
+                  />
+                </div>
+                {acceptMutation.isError && (
+                  <p className="text-sm text-red-600">Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={acceptMutation.isPending || !acceptName.trim()}
+                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {acceptMutation.isPending ? 'Wird verarbeitet...' : 'Angebot annehmen'}
+                </button>
+                <p className="text-xs text-gray-400 text-center">
+                  Mit dem Klick auf "Angebot annehmen" erteilen Sie den Auftrag zu den oben genannten Konditionen.
+                </p>
+              </form>
             </div>
-            <form onSubmit={handleAccept} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ihr Name *
-                </label>
-                <input
-                  type="text"
-                  value={acceptName}
-                  onChange={(e) => setAcceptName(e.target.value)}
-                  required
-                  placeholder="Vor- und Nachname"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Unterschrift
-                </label>
-                <SignaturePad
-                  onSignatureChange={setSignatureImage}
-                  clearLabel="Unterschrift löschen"
-                  instructionLabel="Bitte unterschreiben Sie hier mit dem Finger oder der Maus."
-                />
-              </div>
-              {acceptMutation.isError && (
-                <p className="text-sm text-red-600">Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.</p>
+
+            {/* Reject section */}
+            <div className="rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
+              {!showRejectConfirm ? (
+                <button
+                  onClick={() => setShowRejectConfirm(true)}
+                  className="w-full rounded-lg border border-red-300 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
+                >
+                  Angebot ablehnen
+                </button>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <XCircle className="h-5 w-5 text-red-500" />
+                    <h3 className="text-lg font-bold text-gray-900">Angebot ablehnen</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Sind Sie sicher, dass Sie dieses Angebot ablehnen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Grund der Ablehnung (optional)
+                    </label>
+                    <textarea
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      placeholder="z.B. Preis zu hoch, anderer Anbieter gewählt..."
+                      rows={3}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    />
+                  </div>
+                  {rejectMutation.isError && (
+                    <p className="text-sm text-red-600">Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.</p>
+                  )}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowRejectConfirm(false)}
+                      className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      onClick={() => rejectMutation.mutate()}
+                      disabled={rejectMutation.isPending}
+                      className="flex-1 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {rejectMutation.isPending ? 'Wird verarbeitet...' : 'Endgültig ablehnen'}
+                    </button>
+                  </div>
+                </div>
               )}
-              <button
-                type="submit"
-                disabled={acceptMutation.isPending || !acceptName.trim()}
-                className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {acceptMutation.isPending ? 'Wird verarbeitet...' : 'Angebot annehmen'}
-              </button>
-              <p className="text-xs text-gray-400 text-center">
-                Mit dem Klick auf "Angebot annehmen" erteilen Sie den Auftrag zu den oben genannten Konditionen.
-              </p>
-            </form>
+            </div>
           </div>
         )}
       </div>
