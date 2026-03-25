@@ -177,6 +177,7 @@ export const de = {
     rejectFinal: 'Endgültig ablehnen',
     offerAlreadyAccepted: 'Dieses Angebot wurde bereits angenommen.',
     offerAlreadyRejected: 'Dieses Angebot wurde abgelehnt.',
+  },
   invoices: {
     title: 'Rechnungen',
     newInvoice: 'Neue Rechnung',

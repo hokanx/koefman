@@ -179,6 +179,7 @@ export const ar: Translations = {
     rejectFinal: 'رفض نهائياً',
     offerAlreadyAccepted: 'تم قبول هذا العرض بالفعل.',
     offerAlreadyRejected: 'تم رفض هذا العرض.',
+  },
   invoices: {
     title: 'الفواتير',
     newInvoice: 'فاتورة جديدة',

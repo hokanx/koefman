@@ -179,6 +179,7 @@ export const en: Translations = {
     rejectFinal: 'Reject permanently',
     offerAlreadyAccepted: 'This offer has already been accepted.',
     offerAlreadyRejected: 'This offer has been rejected.',
+  },
   invoices: {
     title: 'Invoices',
     newInvoice: 'New invoice',
