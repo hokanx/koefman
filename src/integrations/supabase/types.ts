@@ -31,6 +31,7 @@ export type Database = {
           default_invoice_intro_text: string | null
           default_offer_footer_text: string | null
           default_offer_intro_text: string | null
+          default_offer_title: string | null
           default_tax_rate: number
           email: string | null
           house_number: string | null
@@ -41,6 +42,7 @@ export type Database = {
           language: string
           logo_url: string | null
           offer_number_prefix: string
+          owner_name: string | null
           payment_terms: string | null
           phone: string | null
           postal_code: string | null
@@ -66,6 +68,7 @@ export type Database = {
           default_invoice_intro_text?: string | null
           default_offer_footer_text?: string | null
           default_offer_intro_text?: string | null
+          default_offer_title?: string | null
           default_tax_rate?: number
           email?: string | null
           house_number?: string | null
@@ -76,6 +79,7 @@ export type Database = {
           language?: string
           logo_url?: string | null
           offer_number_prefix?: string
+          owner_name?: string | null
           payment_terms?: string | null
           phone?: string | null
           postal_code?: string | null
@@ -101,6 +105,7 @@ export type Database = {
           default_invoice_intro_text?: string | null
           default_offer_footer_text?: string | null
           default_offer_intro_text?: string | null
+          default_offer_title?: string | null
           default_tax_rate?: number
           email?: string | null
           house_number?: string | null
@@ -111,6 +116,7 @@ export type Database = {
           language?: string
           logo_url?: string | null
           offer_number_prefix?: string
+          owner_name?: string | null
           payment_terms?: string | null
           phone?: string | null
           postal_code?: string | null
