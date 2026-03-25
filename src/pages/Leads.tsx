@@ -277,7 +277,12 @@ const Leads = () => {
       ) : (
         <div className="space-y-2">
           {filtered.map(lead => (
-            <button key={lead.id} onClick={() => setSelected(lead)}
+            <button key={lead.id} onClick={() => {
+                setSelected(lead);
+                if (lead.status === 'new') {
+                  updateStatus.mutate({ id: lead.id, status: 'reviewed' });
+                }
+              }}
               className="card-hover block w-full text-start rounded-xl border border-border bg-card p-4">
               <div className="flex items-start justify-between">
                 <div className="min-w-0 flex-1">
