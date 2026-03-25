@@ -95,6 +95,7 @@ const InvoiceDetail = () => {
           bank_name: (settings as any)?.bank_name || undefined,
           iban: (settings as any)?.iban || undefined,
           bic: (settings as any)?.bic || undefined,
+          owner_name: (settings as any)?.owner_name || undefined,
         },
         customer: {
           name: customer?.name || '',

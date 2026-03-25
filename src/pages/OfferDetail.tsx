@@ -82,9 +82,11 @@ const OfferDetail = () => {
       const businessAddress = settings ? formatAddress(settings as any) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
 
+      const customTitle = (settings as any)?.default_offer_title || t.offers.documentTitle;
+
       await generatePdf({
         type: 'offer',
-        documentTitle: t.offers.documentTitle,
+        documentTitle: customTitle,
         documentNumber: offer.offer_number,
         date: new Date(offer.date).toLocaleDateString(),
         business: {
@@ -96,6 +98,7 @@ const OfferDetail = () => {
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
           payment_terms: settings?.payment_terms || undefined,
+          owner_name: (settings as any)?.owner_name || undefined,
         },
         customer: {
           name: customer?.name || '',
