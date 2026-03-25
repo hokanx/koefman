@@ -49,6 +49,7 @@ export const de = {
     offers: 'Angebote',
     invoices: 'Rechnungen',
     leads: 'Anfragen',
+    templates: 'Vorlagen',
     settings: 'Einstellungen',
     logout: 'Abmelden',
   },

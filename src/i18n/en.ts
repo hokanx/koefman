@@ -51,6 +51,7 @@ export const en: Translations = {
     offers: 'Offers',
     invoices: 'Invoices',
     leads: 'Leads',
+    templates: 'Templates',
     settings: 'Settings',
     logout: 'Logout',
   },

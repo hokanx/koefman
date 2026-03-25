@@ -51,6 +51,7 @@ export const ar: Translations = {
     offers: 'العروض',
     invoices: 'الفواتير',
     leads: 'الطلبات',
+    templates: 'القوالب',
     settings: 'الإعدادات',
     logout: 'تسجيل الخروج',
   },
