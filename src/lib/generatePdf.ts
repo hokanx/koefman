@@ -315,18 +315,22 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
     y = tableEndY + 10;
 
     // ============================================================
-    // 8. TOTALS
+    // 8. TOTALS — adaptive for small business regulation
     // ============================================================
     const totalsLabelX = rightEdge - 55;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(80, 80, 80);
-    doc.text(data.labels.subtotal, totalsLabelX, y);
-    doc.text(formatCurrency(data.subtotal), rightEdge, y, { align: 'right' });
-    y += 5;
-    doc.text(data.labels.taxTotal, totalsLabelX, y);
-    doc.text(formatCurrency(data.tax_total), rightEdge, y, { align: 'right' });
-    y += 6;
+    const isSmallBiz = !!data.small_business_regulation;
+
+    if (!isSmallBiz) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(data.labels.subtotal, totalsLabelX, y);
+      doc.text(formatCurrency(data.subtotal), rightEdge, y, { align: 'right' });
+      y += 5;
+      doc.text(data.labels.taxTotal, totalsLabelX, y);
+      doc.text(formatCurrency(data.tax_total), rightEdge, y, { align: 'right' });
+      y += 6;
+    }
 
     doc.setDrawColor(40, 40, 40);
     doc.setLineWidth(0.4);
@@ -337,7 +341,17 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
     doc.setFontSize(11);
     doc.text(data.labels.grandTotal, totalsLabelX, y + 3);
     doc.text(formatCurrency(data.grand_total), rightEdge, y + 3, { align: 'right' });
-    y += 14;
+    y += 10;
+
+    if (isSmallBiz) {
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(80, 80, 80);
+      doc.text('Gemäß §19 UStG wird keine Umsatzsteuer berechnet.', totalsLabelX, y);
+      y += 8;
+    } else {
+      y += 4;
+    }
   }
 
   // ============================================================
@@ -356,7 +370,8 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
 
   // --- OFFER-SPECIFIC: legal note + validity ---
   if (data.type === 'offer') {
-    if (data.legal_note) {
+    // Only show legal note if small business regulation is active
+    if (data.small_business_regulation && data.legal_note) {
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(80, 80, 80);
@@ -449,7 +464,25 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
       doc.text(`Datum der Annahme: ${data.accepted_at}`, margin, y);
       y += 5;
     }
-    if (data.signature_text) {
+
+    // Handwritten signature image
+    if (data.signature_image) {
+      y += 4;
+      try {
+        const sigImg = await loadImage(data.signature_image);
+        if (sigImg) {
+          const maxSigW = 60;
+          const maxSigH = 25;
+          const sigRatio = Math.min(maxSigW / sigImg.width, maxSigH / sigImg.height);
+          const sigW = sigImg.width * sigRatio;
+          const sigH = sigImg.height * sigRatio;
+          doc.addImage(sigImg, 'PNG', margin, y, sigW, sigH);
+          y += sigH + 3;
+        }
+      } catch {
+        // signature image failed to load, skip
+      }
+    } else if (data.signature_text) {
       doc.text(`Unterschrift: ${data.signature_text}`, margin, y);
       y += 5;
     }
