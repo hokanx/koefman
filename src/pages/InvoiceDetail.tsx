@@ -76,8 +76,10 @@ const InvoiceDetail = () => {
       const businessAddress = settings ? formatAddress(settings as any) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
 
+      const isSmallBiz = !!(settings as any)?.small_business_regulation;
       await generatePdf({
         type: 'invoice',
+        small_business_regulation: isSmallBiz,
         documentTitle: t.invoices.documentTitle,
         documentNumber: invoice.invoice_number,
         date: new Date(invoice.date).toLocaleDateString(),
