@@ -73,7 +73,7 @@ const InvoiceDetail = () => {
     enabled: !!id && !!user,
   });
 
-
+  const statusMutation = useMutation({
     mutationFn: async (newStatus: string) => {
       const { error } = await supabase.from('invoices').update({ status: newStatus }).eq('id', id!);
       if (error) throw error;
