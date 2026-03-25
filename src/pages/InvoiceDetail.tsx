@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus, Bell, Clock } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { generateDocumentNumber } from '@/lib/documentUtils';
-import { generatePdf, formatDateDE } from '@/lib/generatePdf';
+import { generatePdf, formatDateDE, generateReminderPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { InvoiceStatus } from '@/types';
 
