@@ -462,49 +462,43 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   }
 
   // ============================================================
-  // 10. CONFIRMATION-SPECIFIC: acceptance details
+  // 10. CONFIRMATION-SPECIFIC: signature section
   // ============================================================
   if (data.type === 'confirmation') {
-    doc.setFontSize(9.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(30, 30, 30);
-
-    const confirmText = `Hiermit bestätigen wir den Eingang Ihrer Auftragserteilung zum Angebot ${data.reference_offer_number || data.documentNumber}.`;
-    const confirmLines = doc.splitTextToSize(confirmText, contentWidth);
-    doc.text(confirmLines, margin, y);
-    y += confirmLines.length * 4.5 + 6;
-
-    if (data.accepted_by_name) {
-      doc.text(`Angenommen von: ${data.accepted_by_name}`, margin, y);
-      y += 5;
-    }
-    if (data.accepted_at) {
-      doc.text(`Datum der Annahme: ${data.accepted_at}`, margin, y);
-      y += 5;
-    }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(40, 40, 40);
+    doc.text('Unterschrift des Auftraggebers', margin, y);
+    y += 6;
 
     // Handwritten signature image
     if (data.signature_image) {
-      y += 4;
       try {
         const sigImg = await loadImage(data.signature_image);
         if (sigImg) {
-          const maxSigW = 60;
-          const maxSigH = 25;
+          const maxSigW = 70;
+          const maxSigH = 30;
           const sigRatio = Math.min(maxSigW / sigImg.width, maxSigH / sigImg.height);
           const sigW = sigImg.width * sigRatio;
           const sigH = sigImg.height * sigRatio;
           doc.addImage(sigImg, 'PNG', margin, y, sigW, sigH);
-          y += sigH + 3;
+          y += sigH + 2;
         }
       } catch {
         // signature image failed to load, skip
       }
-    } else if (data.signature_text) {
-      doc.text(`Unterschrift: ${data.signature_text}`, margin, y);
-      y += 5;
     }
-    y += 8;
+
+    // Signature line
+    doc.setDrawColor(120, 120, 120);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + 70, y);
+    y += 4;
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(data.accepted_by_name || '', margin, y);
+    y += 10;
   }
 
   // ============================================================
