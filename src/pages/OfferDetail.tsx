@@ -502,6 +502,10 @@ const OfferDetail = () => {
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <CopyPlus className="h-4 w-4" /> {duplicating ? t.common.loading : t.offers.duplicateOffer}
             </button>
+            <button onClick={() => setEmailOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+              <Mail className="h-4 w-4" /> {t.email.sendByEmail}
+            </button>
           </div>
         </div>
 
@@ -533,7 +537,37 @@ const OfferDetail = () => {
             </div>
           </div>
         )}
+
+        {/* Email History */}
+        {sentEmails.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4 md:p-6">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+              <Mail className="h-4 w-4" /> {t.email.emailHistory}
+            </h3>
+            <div className="space-y-2">
+              {sentEmails.map((e: any) => (
+                <div key={e.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
+                  <span className="text-foreground">{t.email.sentAt} {formatDateDE(e.sent_at)}</span>
+                  <span className="text-xs text-muted-foreground">{e.recipient_email}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      <EmailModal
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        recipientEmail={(offer as any)?.customer?.email || ''}
+        defaultSubject={t.email.offerSubject.replace('{company}', settings?.business_name || '')}
+        defaultBody={t.email.offerBody.replace(/{number}/g, offer?.offer_number || '')}
+        pdfGenerator={getOfferPdfBase64}
+        pdfFilename={`${offer?.offer_number}.pdf`}
+        documentType="offer"
+        documentId={id!}
+        onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'offer', id] })}
+      />
     </div>
   );
 };
