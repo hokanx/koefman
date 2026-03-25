@@ -415,6 +415,25 @@ export const de = {
     qrDescription: 'Kunde scannt den Code und kann seine Daten direkt eingeben.',
     createOffer: 'Angebot erstellen',
   },
+  email: {
+    sendByEmail: 'Per E-Mail senden',
+    recipient: 'Empfänger',
+    recipientPlaceholder: 'E-Mail-Adresse eingeben',
+    subject: 'Betreff',
+    message: 'Nachricht',
+    send: 'Senden',
+    sending: 'Wird gesendet...',
+    sent: 'E-Mail erfolgreich gesendet',
+    sendError: 'E-Mail konnte nicht gesendet werden',
+    sentAt: 'Gesendet am',
+    emailHistory: 'E-Mail-Verlauf',
+    offerSubject: 'Ihr Angebot von {company}',
+    offerBody: 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie das Angebot {number} als PDF-Dokument.\n\nBei Fragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen',
+    invoiceSubject: 'Ihre Rechnung {number}',
+    invoiceBody: 'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung {number} als PDF-Dokument.\n\nBitte überweisen Sie den Betrag innerhalb der angegebenen Zahlungsfrist.\n\nMit freundlichen Grüßen',
+    reminderSubject: 'Zahlungserinnerung zu Ihrer Rechnung {number}',
+    reminderBody: 'Sehr geehrte Damen und Herren,\n\nzu unserer Rechnung {number} konnten wir bisher keinen Zahlungseingang feststellen.\n\nWir bitten Sie höflich, den offenen Betrag zeitnah zu überweisen.\n\nMit freundlichen Grüßen',
+  },
 };
 
 export type Translations = typeof de;

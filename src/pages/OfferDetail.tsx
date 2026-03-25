@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck, CopyPlus } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck, CopyPlus, Mail } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { generateDocumentNumber } from '@/lib/documentUtils';
 import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { OfferStatus } from '@/types';
+import EmailModal from '@/components/shared/EmailModal';
 
 const OfferDetail = () => {
   const { t } = useLanguage();
@@ -22,6 +23,7 @@ const OfferDetail = () => {
   const [converting, setConverting] = useState(false);
   const [generatingConfirmation, setGeneratingConfirmation] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   const statusLabels = t.status as Record<string, string>;
 
@@ -61,6 +63,15 @@ const OfferDetail = () => {
       return data || [];
     },
     enabled: !!id,
+  });
+
+  const { data: sentEmails = [] } = useQuery({
+    queryKey: ['document-emails', 'offer', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('document_emails').select('*').eq('document_id', id!).eq('document_type', 'offer').order('sent_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!id && !!user,
   });
 
   const { data: acceptance } = useQuery({
@@ -308,6 +319,53 @@ const OfferDetail = () => {
     }
   };
 
+  const getOfferPdfBase64 = async (): Promise<string> => {
+    const customer = (offer as any)?.customer;
+    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customerAddress = customer ? formatAddress(customer) : '';
+    const customTitle = (settings as any)?.default_offer_title || t.offers.documentTitle;
+    const validityDays = (offer as any)?.validity_days || 14;
+    const validityDate = getValidityDate();
+    const isSmallBiz = !!(settings as any)?.small_business_regulation;
+    const result = await generatePdf({
+      type: 'offer',
+      documentTitle: customTitle,
+      documentNumber: offer!.offer_number,
+      date: formatDateDE(offer!.date),
+      validityDate: validityDate || undefined,
+      validity_days: validityDays,
+      small_business_regulation: isSmallBiz,
+      legal_note: isSmallBiz ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.' : undefined,
+      business: {
+        business_name: settings?.business_name || '',
+        address: businessAddress || undefined,
+        email: settings?.email || undefined,
+        phone: settings?.phone || undefined,
+        tax_number: settings?.tax_number || undefined,
+        vat_id: settings?.vat_id || undefined,
+        logo_url: settings?.logo_url || undefined,
+        owner_name: (settings as any)?.owner_name || undefined,
+      },
+      customer: { name: customer?.name || '', address: customerAddress || undefined },
+      items: items.map((i: any) => ({
+        title: i.title, description: i.description, quantity: i.quantity,
+        unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
+      })),
+      subtotal: offer!.subtotal, tax_total: offer!.tax_total, grand_total: offer!.grand_total,
+      intro_text: (offer as any).intro_text || undefined,
+      footer_text: (offer as any).footer_text || undefined,
+      closing_text: (offer as any).closing_text || undefined,
+      notes: offer!.notes || undefined,
+      labels: {
+        date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
+        unitPrice: t.offers.unitPrice, taxRate: t.offers.taxRate, total: t.offers.total,
+        subtotal: t.offers.subtotal, taxTotal: t.offers.taxTotal, grandTotal: t.offers.grandTotal,
+        description: t.offers.description, itemTitle: t.offers.itemTitle, page: 'Seite',
+      },
+    }, true);
+    return result as string;
+  };
+
   const statusActions: { status: OfferStatus; label: string; icon: React.ReactNode; className: string }[] = [];
   if (offer) {
     const s = offer.status as OfferStatus;
@@ -444,6 +502,10 @@ const OfferDetail = () => {
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <CopyPlus className="h-4 w-4" /> {duplicating ? t.common.loading : t.offers.duplicateOffer}
             </button>
+            <button onClick={() => setEmailOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+              <Mail className="h-4 w-4" /> {t.email.sendByEmail}
+            </button>
           </div>
         </div>
 
@@ -475,7 +537,37 @@ const OfferDetail = () => {
             </div>
           </div>
         )}
+
+        {/* Email History */}
+        {sentEmails.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4 md:p-6">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+              <Mail className="h-4 w-4" /> {t.email.emailHistory}
+            </h3>
+            <div className="space-y-2">
+              {sentEmails.map((e: any) => (
+                <div key={e.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
+                  <span className="text-foreground">{t.email.sentAt} {formatDateDE(e.sent_at)}</span>
+                  <span className="text-xs text-muted-foreground">{e.recipient_email}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      <EmailModal
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        recipientEmail={(offer as any)?.customer?.email || ''}
+        defaultSubject={t.email.offerSubject.replace('{company}', settings?.business_name || '')}
+        defaultBody={t.email.offerBody.replace(/{number}/g, offer?.offer_number || '')}
+        pdfGenerator={getOfferPdfBase64}
+        pdfFilename={`${offer?.offer_number}.pdf`}
+        documentType="offer"
+        documentId={id!}
+        onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'offer', id] })}
+      />
     </div>
   );
 };

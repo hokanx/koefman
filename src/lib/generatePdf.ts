@@ -109,7 +109,7 @@ const loadImage = (url: string): Promise<HTMLImageElement | null> => {
   });
 };
 
-export const generatePdf = async (data: PdfData): Promise<void> => {
+export const generatePdf = async (data: PdfData, returnBase64 = false): Promise<string | void> => {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = 210;
   const margin = 20;
@@ -554,11 +554,14 @@ export const generatePdf = async (data: PdfData): Promise<void> => {
   ].filter(Boolean).join(' | ');
   doc.text(pageFooterParts, pageWidth / 2, pageFooterY, { align: 'center' });
 
+  if (returnBase64) {
+    return doc.output('datauristring').split(',')[1];
+  }
   doc.save(`${data.documentNumber}.pdf`);
 };
 
-export const generateConfirmationPdf = async (data: PdfData): Promise<void> => {
-  return generatePdf(data);
+export const generateConfirmationPdf = async (data: PdfData, returnBase64 = false): Promise<string | void> => {
+  return generatePdf(data, returnBase64);
 };
 
 // ============================================================
@@ -579,7 +582,7 @@ interface ReminderPdfData {
   };
 }
 
-export const generateReminderPdf = async (data: ReminderPdfData): Promise<void> => {
+export const generateReminderPdf = async (data: ReminderPdfData, returnBase64 = false): Promise<string | void> => {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = 210;
   const margin = 20;
@@ -751,5 +754,8 @@ Sollte sich Ihre Zahlung mit diesem Schreiben überschnitten haben, betrachten S
   ].filter(Boolean).join(' | ');
   doc.text(pageFooterParts, pageWidth / 2, pageFooterY, { align: 'center' });
 
+  if (returnBase64) {
+    return doc.output('datauristring').split(',')[1];
+  }
   doc.save(`Zahlungserinnerung_${data.invoiceNumber}.pdf`);
 };

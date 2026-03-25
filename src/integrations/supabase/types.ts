@@ -244,6 +244,36 @@ export type Database = {
         }
         Relationships: []
       }
+      document_emails: {
+        Row: {
+          document_id: string
+          document_type: string
+          id: string
+          recipient_email: string
+          sent_at: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          document_id: string
+          document_type: string
+          id?: string
+          recipient_email: string
+          sent_at?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          document_id?: string
+          document_type?: string
+          id?: string
+          recipient_email?: string
+          sent_at?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       intake_submissions: {
         Row: {
           business_category: string | null

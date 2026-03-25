@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus, Bell, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus, Bell, Clock, Mail } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { generateDocumentNumber } from '@/lib/documentUtils';
 import { generatePdf, formatDateDE, generateReminderPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { InvoiceStatus } from '@/types';
+import EmailModal from '@/components/shared/EmailModal';
 
 const InvoiceDetail = () => {
   const { t } = useLanguage();
@@ -21,6 +22,8 @@ const InvoiceDetail = () => {
   const [generating, setGenerating] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [creatingReminder, setCreatingReminder] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailType, setEmailType] = useState<'invoice' | 'reminder'>('invoice');
 
   const statusLabels = t.status as Record<string, string>;
 
@@ -56,6 +59,15 @@ const InvoiceDetail = () => {
     queryKey: ['invoice-reminders', id],
     queryFn: async () => {
       const { data } = await supabase.from('invoice_reminders').select('*').eq('invoice_id', id!).order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!id && !!user,
+  });
+
+  const { data: sentEmails = [] } = useQuery({
+    queryKey: ['document-emails', 'invoice', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('document_emails').select('*').eq('document_id', id!).eq('document_type', 'invoice').order('sent_at', { ascending: false });
       return data || [];
     },
     enabled: !!id && !!user,
@@ -231,6 +243,86 @@ const InvoiceDetail = () => {
     }
   };
 
+  const getInvoicePdfBase64 = async (): Promise<string> => {
+    const customer = (invoice as any)?.customer;
+    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customerAddress = customer ? formatAddress(customer) : '';
+    const isSmallBiz = !!(settings as any)?.small_business_regulation;
+    const result = await generatePdf({
+      type: 'invoice',
+      small_business_regulation: isSmallBiz,
+      documentTitle: t.invoices.documentTitle,
+      documentNumber: invoice!.invoice_number,
+      date: formatDateDE(invoice!.date),
+      dueDate: formatDateDE(invoice!.due_date),
+      business: {
+        business_name: settings?.business_name || '',
+        address: businessAddress || undefined,
+        email: settings?.email || undefined,
+        phone: settings?.phone || undefined,
+        tax_number: settings?.tax_number || undefined,
+        vat_id: settings?.vat_id || undefined,
+        logo_url: settings?.logo_url || undefined,
+        payment_terms: settings?.payment_terms || undefined,
+        account_holder: (settings as any)?.account_holder || undefined,
+        bank_name: (settings as any)?.bank_name || undefined,
+        iban: (settings as any)?.iban || undefined,
+        bic: (settings as any)?.bic || undefined,
+        owner_name: (settings as any)?.owner_name || undefined,
+      },
+      customer: { name: customer?.name || '', address: customerAddress || undefined },
+      items: items.map((i: any) => ({
+        title: i.title, description: i.description, quantity: i.quantity,
+        unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
+      })),
+      subtotal: invoice!.subtotal, tax_total: invoice!.tax_total, grand_total: invoice!.grand_total,
+      intro_text: (invoice as any).intro_text || undefined,
+      footer_text: (invoice as any).footer_text || undefined,
+      closing_text: (invoice as any).closing_text || undefined,
+      notes: invoice!.notes || undefined,
+      labels: {
+        date: t.invoices.date, dueDate: t.invoices.dueDate, quantity: t.invoices.quantity,
+        unit: t.invoices.unit, unitPrice: t.invoices.unitPrice, taxRate: t.invoices.taxRate,
+        total: t.invoices.total, subtotal: t.invoices.subtotal, taxTotal: t.invoices.taxTotal,
+        grandTotal: t.invoices.grandTotal, description: t.invoices.description,
+        itemTitle: t.invoices.itemTitle, page: 'Seite',
+      },
+    }, true);
+    return result as string;
+  };
+
+  const getReminderPdfBase64 = async (): Promise<string> => {
+    const customer = (invoice as any)?.customer;
+    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customerAddress = customer ? formatAddress(customer) : '';
+    const result = await generateReminderPdf({
+      business: {
+        business_name: settings?.business_name || '',
+        address: businessAddress || undefined,
+        email: settings?.email || undefined,
+        phone: settings?.phone || undefined,
+        tax_number: settings?.tax_number || undefined,
+        vat_id: settings?.vat_id || undefined,
+        logo_url: settings?.logo_url || undefined,
+        payment_terms: settings?.payment_terms || undefined,
+        account_holder: (settings as any)?.account_holder || undefined,
+        bank_name: (settings as any)?.bank_name || undefined,
+        iban: (settings as any)?.iban || undefined,
+        bic: (settings as any)?.bic || undefined,
+        owner_name: (settings as any)?.owner_name || undefined,
+      },
+      customer: { name: customer?.name || '', address: customerAddress || undefined },
+      invoiceNumber: invoice!.invoice_number,
+      invoiceDate: formatDateDE(invoice!.date),
+      dueDate: formatDateDE(invoice!.due_date),
+      grandTotal: invoice!.grand_total,
+      reminderDate: formatDateDE(new Date()),
+      reminderLevel: reminders.length + 1,
+      labels: { page: 'Seite' },
+    }, true);
+    return result as string;
+  };
+
   if (isLoading) {
     return <div className="flex justify-center p-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   }
@@ -327,6 +419,16 @@ const InvoiceDetail = () => {
                 <Bell className="h-4 w-4" /> {creatingReminder ? t.common.generating : t.invoices.createReminder}
               </button>
             )}
+            <button onClick={() => { setEmailType('invoice'); setEmailOpen(true); }}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+              <Mail className="h-4 w-4" /> {t.email.sendByEmail}
+            </button>
+            {(currentStatus === 'open' || isOverdue) && reminders.length > 0 && (
+              <button onClick={() => { setEmailType('reminder'); setEmailOpen(true); }}
+                className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-sm font-medium text-warning hover:bg-warning/20">
+                <Mail className="h-4 w-4" /> {t.invoices.reminderDocumentTitle}
+              </button>
+            )}
           </div>
         </div>
 
@@ -384,7 +486,43 @@ const InvoiceDetail = () => {
             </div>
           )}
         </div>
+
+        {/* Email History */}
+        {sentEmails.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4 md:p-6">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+              <Mail className="h-4 w-4" /> {t.email.emailHistory}
+            </h3>
+            <div className="space-y-2">
+              {sentEmails.map((e: any) => (
+                <div key={e.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
+                  <span className="text-foreground">{t.email.sentAt} {formatDateDE(e.sent_at)}</span>
+                  <span className="text-xs text-muted-foreground">{e.recipient_email}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      <EmailModal
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        recipientEmail={(invoice as any)?.customer?.email || ''}
+        defaultSubject={emailType === 'reminder'
+          ? t.email.reminderSubject.replace('{number}', invoice?.invoice_number || '')
+          : t.email.invoiceSubject.replace('{number}', invoice?.invoice_number || '')}
+        defaultBody={emailType === 'reminder'
+          ? t.email.reminderBody.replace(/{number}/g, invoice?.invoice_number || '')
+          : t.email.invoiceBody.replace(/{number}/g, invoice?.invoice_number || '')}
+        pdfGenerator={emailType === 'reminder' ? getReminderPdfBase64 : getInvoicePdfBase64}
+        pdfFilename={emailType === 'reminder'
+          ? `Zahlungserinnerung_${invoice?.invoice_number}.pdf`
+          : `${invoice?.invoice_number}.pdf`}
+        documentType={emailType === 'reminder' ? 'reminder' : 'invoice'}
+        documentId={id!}
+        onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'invoice', id] })}
+      />
     </div>
   );
 };
