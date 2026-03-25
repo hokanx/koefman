@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck, CopyPlus } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck, CopyPlus, Mail } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { generateDocumentNumber } from '@/lib/documentUtils';
 import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { OfferStatus } from '@/types';
+import EmailModal from '@/components/shared/EmailModal';
 
 const OfferDetail = () => {
   const { t } = useLanguage();
@@ -22,6 +23,7 @@ const OfferDetail = () => {
   const [converting, setConverting] = useState(false);
   const [generatingConfirmation, setGeneratingConfirmation] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   const statusLabels = t.status as Record<string, string>;
 
