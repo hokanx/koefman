@@ -118,6 +118,7 @@ export const ar: Translations = {
     saveCustomer: 'حفظ العميل',
     deleteConfirm: 'هل أنت متأكد من حذف هذا العميل؟',
     letClientFillIn: 'هل تريد أن يملأ العميل بياناته بنفسه؟',
+    suggestCreateOffer: 'إنشاء عرض لهذا العميل؟',
   },
   offers: {
     title: 'العروض',
@@ -226,6 +227,7 @@ export const ar: Translations = {
     noInvoicesDesc: 'أنشئ فاتورتك الأولى.',
     editInvoice: 'تعديل الفاتورة',
     deleteInvoice: 'حذف الفاتورة',
+    duplicateInvoice: 'تكرار الفاتورة',
     invoiceDetails: 'تفاصيل الفاتورة',
     fromOffer: 'تم إنشاؤها من عرض',
     selectCustomer: 'اختر العميل',

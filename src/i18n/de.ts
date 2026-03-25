@@ -116,6 +116,7 @@ export const de = {
     saveCustomer: 'Kunde speichern',
     deleteConfirm: 'Möchten Sie diesen Kunden wirklich löschen?',
     letClientFillIn: 'Kunde selbst Daten eingeben lassen?',
+    suggestCreateOffer: 'Direkt ein Angebot für diesen Kunden erstellen?',
   },
   offers: {
     title: 'Angebote',
@@ -224,6 +225,7 @@ export const de = {
     noInvoicesDesc: 'Erstellen Sie Ihre erste Rechnung.',
     editInvoice: 'Rechnung bearbeiten',
     deleteInvoice: 'Rechnung löschen',
+    duplicateInvoice: 'Rechnung duplizieren',
     invoiceDetails: 'Rechnungsdetails',
     fromOffer: 'Aus Angebot erstellt',
     selectCustomer: 'Kunde auswählen',
