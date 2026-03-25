@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus, Bell, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus, Bell, Clock, Mail } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { generateDocumentNumber } from '@/lib/documentUtils';
 import { generatePdf, formatDateDE, generateReminderPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { InvoiceStatus } from '@/types';
+import EmailModal from '@/components/shared/EmailModal';
 
 const InvoiceDetail = () => {
   const { t } = useLanguage();
@@ -21,6 +22,8 @@ const InvoiceDetail = () => {
   const [generating, setGenerating] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [creatingReminder, setCreatingReminder] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailType, setEmailType] = useState<'invoice' | 'reminder'>('invoice');
 
   const statusLabels = t.status as Record<string, string>;
 
