@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -421,6 +422,10 @@ const Settings = () => {
             <label className="mb-1 block text-sm text-muted-foreground">{t.settings.bic}</label>
             <input type="text" value={form.bic} onChange={(e) => update('bic', e.target.value)} className={inputClass} />
           </div>
+        </FormSection>
+
+        <FormSection title={t.settings.appearance}>
+          <ThemeToggle />
         </FormSection>
 
         <FormSection title={t.settings.languageSettings}>
