@@ -109,8 +109,18 @@ const CustomerNew = () => {
             {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {linkCopied ? t.leads.copied : t.leads.copyLink}
           </button>
+          <button
+            type="button"
+            onClick={() => setQrOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+          >
+            <QrCode className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">QR</span>
+          </button>
         </div>
       )}
+
+      <QrCodeModal link={`${window.location.origin}/intake/${intakeToken}`} open={qrOpen} onClose={() => setQrOpen(false)} />
 
       <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
         <FormSection title={t.customers.customerDetails}>
