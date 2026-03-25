@@ -265,6 +265,13 @@ export const en: Translations = {
     paymentTerms: 'Payment terms',
     overdueWarning: 'This invoice is overdue. Please check for payment receipt.',
     documentTexts: 'Document texts',
+    createReminder: 'Create payment reminder',
+    reminderHistory: 'Reminder history',
+    reminderCreated: 'Payment reminder created',
+    reminderCreatedAt: 'Payment reminder created on',
+    reminderDocumentTitle: 'Payment Reminder',
+    reminderLevel: 'Level',
+    noReminders: 'No reminders yet',
   },
   settings: {
     title: 'Settings',

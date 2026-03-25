@@ -265,6 +265,13 @@ export const ar: Translations = {
     paymentTerms: 'شروط الدفع',
     overdueWarning: 'هذه الفاتورة متأخرة. يرجى التحقق من استلام الدفع.',
     documentTexts: 'نصوص المستند',
+    createReminder: 'إنشاء تذكير بالدفع',
+    reminderHistory: 'سجل التذكيرات',
+    reminderCreated: 'تم إنشاء تذكير بالدفع',
+    reminderCreatedAt: 'تم إنشاء تذكير بالدفع في',
+    reminderDocumentTitle: 'تذكير بالدفع',
+    reminderLevel: 'المستوى',
+    noReminders: 'لا توجد تذكيرات بعد',
   },
   settings: {
     title: 'الإعدادات',

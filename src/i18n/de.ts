@@ -263,6 +263,13 @@ export const de = {
     paymentTerms: 'Zahlungsbedingungen',
     overdueWarning: 'Diese Rechnung ist überfällig. Bitte prüfen Sie den Zahlungseingang.',
     documentTexts: 'Dokumenttexte',
+    createReminder: 'Zahlungserinnerung erstellen',
+    reminderHistory: 'Erinnerungsverlauf',
+    reminderCreated: 'Zahlungserinnerung erstellt',
+    reminderCreatedAt: 'Zahlungserinnerung erstellt am',
+    reminderDocumentTitle: 'Zahlungserinnerung',
+    reminderLevel: 'Stufe',
+    noReminders: 'Noch keine Erinnerungen',
   },
   settings: {
     title: 'Einstellungen',
