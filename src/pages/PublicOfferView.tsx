@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatAddress } from '@/types';
 import { CheckCircle, FileText } from 'lucide-react';
+import SignaturePad from '@/components/shared/SignaturePad';
 
 const formatCurrency = (value: number): string => {
   return value.toFixed(2).replace('.', ',') + ' €';
@@ -12,7 +13,7 @@ const formatCurrency = (value: number): string => {
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
   const [acceptName, setAcceptName] = useState('');
-  const [signatureText, setSignatureText] = useState('');
+  const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
 
   const { data: offer, isLoading } = useQuery({
@@ -72,15 +73,13 @@ const PublicOfferView = () => {
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      // Insert acceptance record
       const { error: acceptError } = await supabase.from('offer_acceptances').insert({
         offer_id: offer!.id,
         accepted_by_name: acceptName,
-        signature_text: signatureText || null,
+        signature_image: signatureImage || null,
       } as any);
       if (acceptError) throw acceptError;
 
-      // Update offer status
       const { error: updateError } = await supabase
         .from('offers')
         .update({ status: 'accepted' })
@@ -98,7 +97,6 @@ const PublicOfferView = () => {
 
   const isAlreadyAccepted = offer?.status === 'accepted' || !!existingAcceptance || accepted;
 
-  // Validity calculation
   const getValidityDate = (): string | null => {
     if (!offer) return null;
     const days = (offer as any).validity_days || 14;
@@ -137,6 +135,7 @@ const PublicOfferView = () => {
   const customer = (offer as any).customer;
   const validityDate = getValidityDate();
   const expired = isExpired();
+  const isSmallBusiness = !!(settings as any)?.small_business_regulation;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -151,8 +150,8 @@ const PublicOfferView = () => {
               {settings && (
                 <p className="mt-1 text-sm text-gray-500">
                   {[
-                    settings.street && settings.house_number
-                      ? `${settings.street} ${settings.house_number}`
+                    settings.street && (settings as any).house_number
+                      ? `${settings.street} ${(settings as any).house_number}`
                       : settings.street,
                     settings.postal_code && settings.city
                       ? `${settings.postal_code} ${settings.city}`
@@ -240,18 +239,27 @@ const PublicOfferView = () => {
 
               {/* Totals */}
               <div className="mt-4 space-y-1 border-t-2 border-gray-200 pt-3">
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Zwischensumme</span>
-                  <span>{formatCurrency(offer.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>MwSt.</span>
-                  <span>{formatCurrency(offer.tax_total)}</span>
-                </div>
-                <div className="flex justify-between text-base font-bold text-gray-900 pt-1 border-t border-gray-200">
+                {!isSmallBusiness && (
+                  <>
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Zwischensumme</span>
+                      <span>{formatCurrency(offer.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>MwSt.</span>
+                      <span>{formatCurrency(offer.tax_total)}</span>
+                    </div>
+                  </>
+                )}
+                <div className={`flex justify-between text-base font-bold text-gray-900 ${!isSmallBusiness ? 'pt-1 border-t border-gray-200' : ''}`}>
                   <span>Gesamtbetrag</span>
                   <span>{formatCurrency(offer.grand_total)}</span>
                 </div>
+                {isSmallBusiness && (
+                  <p className="text-xs text-gray-500 italic">
+                    Gemäß §19 UStG wird keine Umsatzsteuer berechnet.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -316,14 +324,12 @@ const PublicOfferView = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Unterschrift (optional)
+                  Unterschrift
                 </label>
-                <input
-                  type="text"
-                  value={signatureText}
-                  onChange={(e) => setSignatureText(e.target.value)}
-                  placeholder="Digitale Unterschrift eingeben"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm italic focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                <SignaturePad
+                  onSignatureChange={setSignatureImage}
+                  clearLabel="Unterschrift löschen"
+                  instructionLabel="Bitte unterschreiben Sie hier mit dem Finger oder der Maus."
                 />
               </div>
               {acceptMutation.isError && (

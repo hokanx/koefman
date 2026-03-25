@@ -265,6 +265,10 @@ export const de = {
     bankName: 'Bank',
     iban: 'IBAN',
     bic: 'BIC',
+    smallBusinessRegulation: 'Kleinunternehmerregelung (§19 UStG)',
+    smallBusinessRegulationDescription: 'Wenn aktiv, wird keine Umsatzsteuer auf Ihren Dokumenten ausgewiesen und der §19-Hinweis erscheint automatisch.',
+    signatureInstruction: 'Bitte unterschreiben Sie hier mit dem Finger oder der Maus.',
+    clearSignature: 'Unterschrift löschen',
   },
   garage: {
     vehiclePlate: 'Kennzeichen',

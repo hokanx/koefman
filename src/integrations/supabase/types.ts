@@ -46,6 +46,7 @@ export type Database = {
           payment_terms: string | null
           phone: string | null
           postal_code: string | null
+          small_business_regulation: boolean
           street: string | null
           tax_number: string | null
           updated_at: string
@@ -83,6 +84,7 @@ export type Database = {
           payment_terms?: string | null
           phone?: string | null
           postal_code?: string | null
+          small_business_regulation?: boolean
           street?: string | null
           tax_number?: string | null
           updated_at?: string
@@ -120,6 +122,7 @@ export type Database = {
           payment_terms?: string | null
           phone?: string | null
           postal_code?: string | null
+          small_business_regulation?: boolean
           street?: string | null
           tax_number?: string | null
           updated_at?: string
@@ -466,6 +469,7 @@ export type Database = {
           id: string
           ip_address: string | null
           offer_id: string
+          signature_image: string | null
           signature_text: string | null
         }
         Insert: {
@@ -475,6 +479,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           offer_id: string
+          signature_image?: string | null
           signature_text?: string | null
         }
         Update: {
@@ -484,6 +489,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           offer_id?: string
+          signature_image?: string | null
           signature_text?: string | null
         }
         Relationships: [

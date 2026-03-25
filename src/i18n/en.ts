@@ -267,6 +267,10 @@ export const en: Translations = {
     bankName: 'Bank name',
     iban: 'IBAN',
     bic: 'BIC',
+    smallBusinessRegulation: 'Small business regulation (§19 UStG)',
+    smallBusinessRegulationDescription: 'When enabled, no VAT will be shown on your documents and the §19 UStG notice will appear automatically.',
+    signatureInstruction: 'Please sign here using your finger or mouse.',
+    clearSignature: 'Clear signature',
   },
   garage: {
     vehiclePlate: 'License plate',

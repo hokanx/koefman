@@ -69,6 +69,7 @@ const Settings = () => {
     bank_name: '',
     iban: '',
     bic: '',
+    small_business_regulation: false,
   });
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -119,6 +120,7 @@ const Settings = () => {
         bank_name: (settings as any).bank_name || '',
         iban: (settings as any).iban || '',
         bic: (settings as any).bic || '',
+        small_business_regulation: !!(settings as any).small_business_regulation,
       });
       setLogoUrl(settings.logo_url || null);
     } else {
@@ -340,6 +342,25 @@ const Settings = () => {
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultTaxRate}</label>
               <input type="number" value={form.default_tax_rate} onChange={(e) => update('default_tax_rate', parseFloat(e.target.value) || 0)} className={inputClass} />
+            </div>
+          </div>
+
+          {/* Small business regulation toggle */}
+          <div className="rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 pr-4">
+                <label className="text-sm font-medium text-foreground">{t.settings.smallBusinessRegulation}</label>
+                <p className="text-xs text-muted-foreground mt-0.5">{t.settings.smallBusinessRegulationDescription}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.small_business_regulation}
+                onClick={() => setForm((prev) => ({ ...prev, small_business_regulation: !prev.small_business_regulation }))}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${form.small_business_regulation ? 'bg-primary' : 'bg-input'}`}
+              >
+                <span className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${form.small_business_regulation ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
             </div>
           </div>
         </FormSection>
