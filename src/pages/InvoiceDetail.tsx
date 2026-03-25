@@ -64,7 +64,16 @@ const InvoiceDetail = () => {
     enabled: !!id && !!user,
   });
 
-  const statusMutation = useMutation({
+  const { data: sentEmails = [] } = useQuery({
+    queryKey: ['document-emails', 'invoice', id],
+    queryFn: async () => {
+      const { data } = await supabase.from('document_emails').select('*').eq('document_id', id!).eq('document_type', 'invoice').order('sent_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!id && !!user,
+  });
+
+
     mutationFn: async (newStatus: string) => {
       const { error } = await supabase.from('invoices').update({ status: newStatus }).eq('id', id!);
       if (error) throw error;
