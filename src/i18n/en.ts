@@ -54,6 +54,9 @@ export const en: Translations = {
     templates: 'Templates',
     settings: 'Settings',
     logout: 'Logout',
+    more: 'More',
+    lightMode: 'Light mode',
+    darkMode: 'Dark mode',
   },
   auth: {
     login: 'Login',

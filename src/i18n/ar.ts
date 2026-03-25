@@ -54,6 +54,9 @@ export const ar: Translations = {
     templates: 'القوالب',
     settings: 'الإعدادات',
     logout: 'تسجيل الخروج',
+    more: 'المزيد',
+    lightMode: 'الوضع الفاتح',
+    darkMode: 'الوضع الداكن',
   },
   auth: {
     login: 'تسجيل الدخول',
