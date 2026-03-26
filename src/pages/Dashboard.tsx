@@ -276,6 +276,25 @@ const Dashboard = () => {
         )}
       </div>
 
+      {/* Upcoming recurring */}
+      {nextRecurring && (
+        <button
+          onClick={() => navigate('/recurring-invoices')}
+          className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/50"
+        >
+          <RepeatIcon className="h-5 w-5 text-primary shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">
+              {(t as any).recurring.upcomingRecurring}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {(nextRecurring as any).customer?.name} – {formatDateDE((nextRecurring as any).next_run_date)}
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
+      )}
+
       {/* Stats (secondary) */}
       <div>
         <h2 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.dashboard.statsTitle}</h2>
