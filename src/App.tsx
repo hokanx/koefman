@@ -61,6 +61,7 @@ const App = () => (
               <Route path="/leads" element={<Leads />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/recurring-invoices" element={<RecurringInvoices />} />
+              <Route path="/contracts" element={<Contracts />} />
               </Route>
               <Route path="/intake/:token" element={<IntakeForm />} />
               <Route path="/offer/view/:token" element={<PublicOfferView />} />
