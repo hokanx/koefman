@@ -22,10 +22,10 @@ const PublicContractView = () => {
   const { data: contract, isLoading } = useQuery({
     queryKey: ['public-contract', token],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('contracts')
         .select('*, customer:customers(*)')
-        .eq('public_token' as any, token!)
+        .eq('public_token', token!)
         .single();
       if (error) throw error;
       return data;
