@@ -1,4 +1,4 @@
-import { Users, FileText, Receipt, Plus, ArrowRight, Inbox } from 'lucide-react';
+import { Users, FileText, Receipt, Plus, ArrowRight, Inbox, RepeatIcon } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
