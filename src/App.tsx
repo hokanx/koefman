@@ -28,6 +28,7 @@ import IntakeForm from "@/pages/IntakeForm";
 import PublicOfferView from "@/pages/PublicOfferView";
 import RecurringInvoices from "@/pages/RecurringInvoices";
 import Contracts from "@/pages/Contracts";
+import Finances from "@/pages/Finances";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/templates" element={<Templates />} />
               <Route path="/recurring-invoices" element={<RecurringInvoices />} />
               <Route path="/contracts" element={<Contracts />} />
+              <Route path="/finances" element={<Finances />} />
               </Route>
               <Route path="/intake/:token" element={<IntakeForm />} />
               <Route path="/offer/view/:token" element={<PublicOfferView />} />
