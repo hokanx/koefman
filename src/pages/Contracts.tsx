@@ -1,0 +1,329 @@
+import { useState } from 'react';
+import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import StatusBadge from '@/components/shared/StatusBadge';
+import { formatDateDE, generateContractPdf } from '@/lib/generatePdf';
+import { formatAddress } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Pause, Play, XCircle, FileText, Download, RepeatIcon } from 'lucide-react';
+import RecurringSetupModal from '@/components/shared/RecurringSetupModal';
+
+const frequencyLabels: Record<string, Record<string, string>> = {
+  weekly: { de: 'Wöchentlich', en: 'Weekly', ar: 'أسبوعياً' },
+  every_2_weeks: { de: 'Alle 2 Wochen', en: 'Every 2 weeks', ar: 'كل أسبوعين' },
+  monthly: { de: 'Monatlich', en: 'Monthly', ar: 'شهرياً' },
+  quarterly: { de: 'Vierteljährlich', en: 'Quarterly', ar: 'ربع سنوي' },
+};
+
+const Contracts = () => {
+  const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const ct = (t as any).contracts;
+
+  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [detailOpen, setDetailOpen] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
+
+  const { data: contracts = [], isLoading } = useQuery({
+    queryKey: ['contracts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('*, customer:customers(name), source_offer:offers(offer_number)')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from('contracts').update({ status } as any).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      toast.success(ct.updated);
+    },
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ['business-settings'],
+    queryFn: async () => {
+      const { data } = await supabase.from('business_settings').select('*').eq('user_id', user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const handleDownloadPdf = async (contract: any) => {
+    setGeneratingPdf(contract.id);
+    try {
+      const { data: contractItems } = await supabase
+        .from('contract_items')
+        .select('*')
+        .eq('contract_id', contract.id)
+        .order('sort_order');
+
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', contract.customer_id)
+        .single();
+
+      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customerAddress = customer ? formatAddress(customer) : '';
+      const isSmallBiz = !!(settings as any)?.small_business_regulation;
+
+      await generateContractPdf({
+        contractNumber: contract.contract_number,
+        title: contract.title,
+        date: formatDateDE(contract.created_at),
+        startDate: formatDateDE(contract.start_date),
+        endDate: contract.end_date ? formatDateDE(contract.end_date) : null,
+        frequency: frequencyLabels[contract.frequency]?.[language] || contract.frequency,
+        sourceOfferNumber: contract.source_offer?.offer_number || '',
+        business: {
+          business_name: settings?.business_name || '',
+          address: businessAddress || undefined,
+          email: settings?.email || undefined,
+          phone: settings?.phone || undefined,
+          tax_number: settings?.tax_number || undefined,
+          vat_id: settings?.vat_id || undefined,
+          logo_url: settings?.logo_url || undefined,
+          owner_name: (settings as any)?.owner_name || undefined,
+        },
+        customer: {
+          name: customer?.name || '',
+          address: customerAddress || undefined,
+        },
+        items: (contractItems || []).map((i: any) => ({
+          title: i.title,
+          description: i.description,
+          quantity: i.quantity,
+          unit: i.unit,
+          unit_price: i.unit_price,
+          tax_rate: i.tax_rate,
+          total: i.total,
+        })),
+        subtotal: contract.subtotal,
+        tax_total: contract.tax_total,
+        grand_total: contract.grand_total,
+        small_business_regulation: isSmallBiz,
+        labels: {
+          date: t.offers.date,
+          quantity: t.offers.quantity,
+          unit: t.offers.unit,
+          unitPrice: t.offers.unitPrice,
+          taxRate: t.offers.taxRate,
+          total: t.offers.total,
+          subtotal: t.offers.subtotal,
+          taxTotal: t.offers.taxTotal,
+          grandTotal: t.offers.grandTotal,
+          description: t.offers.description,
+          itemTitle: t.offers.itemTitle,
+          page: 'Seite',
+          frequencyLabel: ct.pdfFrequencyLabel,
+          startLabel: ct.pdfStartLabel,
+          endLabel: ct.pdfEndLabel,
+          durationOpen: ct.pdfDurationOpen,
+          refOffer: ct.pdfRefOffer,
+        },
+        closing_text: (settings as any)?.default_closing_text || 'Mit freundlichen Grüßen',
+      });
+    } catch {
+      toast.error(t.common.error);
+    } finally {
+      setGeneratingPdf(null);
+    }
+  };
+
+  const handleActivateRecurring = async (contract: any) => {
+    if (!user) return;
+    try {
+      // First create an invoice from the contract to serve as source
+      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+      const prefix = settings?.invoice_number_prefix || 'RE-';
+      const { data: contractItems } = await supabase.from('contract_items').select('*').eq('contract_id', contract.id).order('sort_order');
+
+      const invoiceNumber = `${prefix}${new Date().getFullYear()}-${String((count || 0) + 1).padStart(3, '0')}`;
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 14);
+
+      const { data: invoice, error: invoiceError } = await supabase.from('invoices').insert({
+        user_id: user.id,
+        customer_id: contract.customer_id,
+        invoice_number: invoiceNumber,
+        date: new Date().toISOString().split('T')[0],
+        due_date: dueDate.toISOString().split('T')[0],
+        status: 'open',
+        subtotal: contract.subtotal,
+        tax_total: contract.tax_total,
+        grand_total: contract.grand_total,
+        intro_text: (settings as any)?.default_invoice_intro_text || '',
+        footer_text: (settings as any)?.default_invoice_footer_text || '',
+        closing_text: (settings as any)?.default_closing_text || '',
+      } as any).select().single();
+      if (invoiceError) throw invoiceError;
+
+      if (contractItems && contractItems.length > 0) {
+        await supabase.from('invoice_items').insert(
+          contractItems.map((item: any, i: number) => ({
+            invoice_id: invoice!.id,
+            title: item.title,
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unit_price: item.unit_price,
+            tax_rate: item.tax_rate,
+            total: item.total,
+            sort_order: i,
+          }))
+        );
+      }
+
+      // Create recurring invoice linked to this contract
+      const calcNextRun = (freq: string): string => {
+        const d = new Date();
+        switch (freq) {
+          case 'weekly': d.setDate(d.getDate() + 7); break;
+          case 'every_2_weeks': d.setDate(d.getDate() + 14); break;
+          case 'monthly': d.setMonth(d.getMonth() + 1); break;
+          case 'quarterly': d.setMonth(d.getMonth() + 3); break;
+        }
+        return d.toISOString().split('T')[0];
+      };
+
+      await supabase.from('recurring_invoices').insert({
+        user_id: user.id,
+        source_invoice_id: invoice!.id,
+        customer_id: contract.customer_id,
+        frequency: contract.frequency,
+        start_date: contract.start_date,
+        next_run_date: calcNextRun(contract.frequency),
+        end_date: contract.end_date || null,
+        status: 'active',
+        auto_generate: true,
+        source_contract_id: contract.id,
+      } as any);
+
+      queryClient.invalidateQueries({ queryKey: ['recurring-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success(ct.recurringActivated);
+    } catch {
+      toast.error(t.common.error);
+    }
+  };
+
+  const statusMap: Record<string, string> = {
+    active: 'paid',
+    paused: 'draft',
+    ended: 'cancelled',
+  };
+  const statusLabel: Record<string, string> = {
+    active: ct.active,
+    paused: ct.paused,
+    ended: ct.ended,
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center p-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
+  }
+
+  return (
+    <div className="animate-fade-in p-4 md:p-6 space-y-4">
+      <h1 className="text-xl font-bold text-foreground">{ct.title}</h1>
+
+      {contracts.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card p-8 text-center">
+          <p className="text-muted-foreground">{ct.noContracts}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {contracts.map((c: any) => (
+            <div key={c.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold text-foreground">{c.contract_number}</p>
+                  <p className="text-sm text-muted-foreground">{c.customer?.name}</p>
+                  <p className="text-xs text-muted-foreground">{c.title}</p>
+                </div>
+                <StatusBadge
+                  status={statusMap[c.status] as any}
+                  label={statusLabel[c.status] || c.status}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                <div>
+                  <span className="text-xs font-medium">{ct.frequency}</span>
+                  <p className="text-foreground">{frequencyLabels[c.frequency]?.[language] || c.frequency}</p>
+                </div>
+                <div>
+                  <span className="text-xs font-medium">{ct.startDate}</span>
+                  <p className="text-foreground">{formatDateDE(c.start_date)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                <div>
+                  <span className="text-xs font-medium">{ct.sourceOffer}</span>
+                  <button
+                    onClick={() => navigate(`/offers/${c.source_offer_id}`)}
+                    className="block text-primary hover:underline"
+                  >
+                    {c.source_offer?.offer_number || '–'}
+                  </button>
+                </div>
+                <div>
+                  <span className="text-xs font-medium">{t.offers.grandTotal}</span>
+                  <p className="text-foreground font-medium">{t.common.currency}{c.grand_total.toFixed(2)}</p>
+                </div>
+              </div>
+
+              {c.end_date && (
+                <p className="text-xs text-muted-foreground">{ct.endDate}: {formatDateDE(c.end_date)}</p>
+              )}
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button size="sm" variant="outline" onClick={() => handleDownloadPdf(c)} disabled={generatingPdf === c.id}>
+                  <Download className="h-3.5 w-3.5 mr-1" /> {generatingPdf === c.id ? t.common.generating : ct.downloadPdf}
+                </Button>
+                {c.status === 'active' && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => handleActivateRecurring(c)}>
+                      <RepeatIcon className="h-3.5 w-3.5 mr-1" /> {ct.activateRecurring}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'paused' })}>
+                      <Pause className="h-3.5 w-3.5 mr-1" /> {ct.pause}
+                    </Button>
+                  </>
+                )}
+                {c.status === 'paused' && (
+                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'active' })}>
+                    <Play className="h-3.5 w-3.5 mr-1" /> {ct.resume}
+                  </Button>
+                )}
+                {c.status !== 'ended' && (
+                  <Button size="sm" variant="outline" className="text-destructive" onClick={() => updateStatus.mutate({ id: c.id, status: 'ended' })}>
+                    <XCircle className="h-3.5 w-3.5 mr-1" /> {ct.end}
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Contracts;

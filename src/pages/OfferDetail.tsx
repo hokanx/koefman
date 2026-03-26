@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck, CopyPlus, Mail } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck, CopyPlus, Mail, ScrollText } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { OfferStatus } from '@/types';
 import EmailModal from '@/components/shared/EmailModal';
+import ContractSetupModal from '@/components/shared/ContractSetupModal';
 
 const OfferDetail = () => {
   const { t } = useLanguage();
@@ -24,6 +25,7 @@ const OfferDetail = () => {
   const [generatingConfirmation, setGeneratingConfirmation] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
 
   const statusLabels = t.status as Record<string, string>;
 
@@ -498,6 +500,12 @@ const OfferDetail = () => {
                 <FileText className="h-4 w-4" /> {converting ? t.common.loading : t.offers.convertToInvoice}
               </button>
             )}
+            {offer.status === 'accepted' && (
+              <button onClick={() => setContractOpen(true)}
+                className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10">
+                <ScrollText className="h-4 w-4" /> {(t as any).contracts.createFromOffer}
+              </button>
+            )}
             <button onClick={handleDuplicate} disabled={duplicating}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <CopyPlus className="h-4 w-4" /> {duplicating ? t.common.loading : t.offers.duplicateOffer}
@@ -568,6 +576,20 @@ const OfferDetail = () => {
         documentId={id!}
         onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'offer', id] })}
       />
+
+      {offer && (
+        <ContractSetupModal
+          open={contractOpen}
+          onClose={() => setContractOpen(false)}
+          offerId={id!}
+          customerId={offer.customer_id}
+          offerNumber={offer.offer_number}
+          items={items}
+          subtotal={offer.subtotal}
+          taxTotal={offer.tax_total}
+          grandTotal={offer.grand_total}
+        />
+      )}
     </div>
   );
 };
