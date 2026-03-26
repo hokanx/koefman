@@ -44,7 +44,7 @@ const Login = () => {
         </div>
 
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">KÖFMAN</h1>
+          <img src="/logo-koefman.jpeg" alt="KÖFMAN" className="mx-auto h-12 w-auto" />
           <p className="mt-2 text-sm text-muted-foreground">{t.auth.subtitle}</p>
         </div>
 
