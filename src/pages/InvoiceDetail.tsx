@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus, Bell, Clock, Mail } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Download, Edit, XCircle, RotateCcw, CopyPlus, Bell, Clock, Mail, RepeatIcon } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
