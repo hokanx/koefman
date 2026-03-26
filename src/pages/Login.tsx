@@ -39,13 +39,9 @@ const Login = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm space-y-6">
-        <div className="flex justify-end">
-          <LanguageSwitcher />
-        </div>
-
         <div className="text-center">
-          <img src="/logo-koefman.jpeg" alt="KÖFMAN" className="mx-auto h-12 w-auto" />
-          <p className="mt-2 text-sm text-muted-foreground">{t.auth.subtitle}</p>
+          <img src="/logo-koefman.jpeg" alt="KÖFMAN" className="mx-auto h-20 w-auto" />
+          <p className="mt-3 text-sm text-muted-foreground">{t.auth.subtitle}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-border bg-card p-6">
