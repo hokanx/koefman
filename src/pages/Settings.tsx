@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import FormSection from '@/components/shared/FormSection';
-import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+
 import { toast } from 'sonner';
 
 const DEFAULT_TEXTS = {
@@ -501,7 +501,6 @@ const Settings = () => {
           <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionLanguageDesc}</p>
 
           <div className="space-y-3">
-            <LanguageSwitcher />
 
             {/* Theme toggle */}
             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4">

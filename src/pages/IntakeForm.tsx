@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
-import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+
 import FormSection from '@/components/shared/FormSection';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -117,7 +117,6 @@ const IntakeForm = () => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4">
         <h1 className="text-lg font-bold tracking-tight text-primary">KÖFMAN</h1>
-        <LanguageSwitcher />
       </header>
 
       <div className="mx-auto max-w-lg p-4">
