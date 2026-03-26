@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+
 
 const Login = () => {
   const { t } = useLanguage();
