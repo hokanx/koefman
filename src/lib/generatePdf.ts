@@ -1200,3 +1200,201 @@ export const generateContractPdf = async (data: ContractPdfData, returnBase64 = 
   }
   doc.save(`${data.contractNumber}.pdf`);
 };
+
+// ============================================================
+// CONTRACT CONFIRMATION PDF (Vertragsbestätigung)
+// ============================================================
+interface ContractConfirmationPdfData {
+  contractNumber: string;
+  title: string;
+  date: string;
+  signedByName: string;
+  signedAt: string;
+  signatureImage?: string | null;
+  business: BusinessInfo;
+  customer: CustomerInfo;
+  items: DocumentItem[];
+  subtotal: number;
+  tax_total: number;
+  grand_total: number;
+  frequency: string;
+  startDate: string;
+  endDate: string | null;
+  small_business_regulation?: boolean;
+}
+
+export const generateContractConfirmationPdf = async (data: ContractConfirmationPdfData): Promise<void> => {
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = 210;
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  const rightEdge = pageWidth - margin;
+
+  // Header
+  let y = 12;
+  if (data.business.logo_url) {
+    const img = await loadImage(data.business.logo_url);
+    if (img) {
+      const maxW = 50; const maxH = 22;
+      const ratio = Math.min(maxW / img.width, maxH / img.height);
+      doc.addImage(img, 'PNG', rightEdge - img.width * ratio, y, img.width * ratio, img.height * ratio);
+    }
+  }
+
+  const senderParts = [data.business.business_name, data.business.address?.replace(/\n/g, ', ')].filter(Boolean);
+  doc.setFontSize(7);
+  doc.setTextColor(120, 120, 120);
+  doc.text(senderParts.join(' · '), margin, y + 4);
+  y += 12;
+  doc.setDrawColor(190, 190, 190);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, rightEdge, y);
+  y += 10;
+
+  // Title
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Vertragsbestätigung', margin, y);
+  y += 8;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Vertrag: ${data.contractNumber}  ·  ${data.title}`, margin, y);
+  y += 5;
+  doc.text(`Datum: ${data.date}`, margin, y);
+  y += 10;
+
+  // Confirmation text
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  const confirmText = `Hiermit wird bestätigt, dass der Vertrag ${data.contractNumber} („${data.title}") zwischen`;
+  const lines = doc.splitTextToSize(confirmText, contentWidth);
+  doc.text(lines, margin, y);
+  y += lines.length * 5 + 4;
+
+  // Parties
+  doc.setFont('helvetica', 'bold');
+  doc.text(data.business.business_name, margin, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(80, 80, 80);
+  doc.text('(Auftragnehmer)', margin, y);
+  y += 6;
+
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  doc.text('und', margin, y);
+  y += 6;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text(data.customer.name, margin, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(80, 80, 80);
+  doc.text('(Auftraggeber)', margin, y);
+  y += 8;
+
+  doc.setFontSize(10);
+  doc.setTextColor(30, 30, 30);
+  doc.text('am folgenden Datum digital unterzeichnet wurde:', margin, y);
+  y += 8;
+
+  // Signature details
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Unterzeichnet von: ${data.signedByName}`, margin, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Datum/Uhrzeit: ${data.signedAt}`, margin, y);
+  y += 10;
+
+  // Signature image
+  if (data.signatureImage) {
+    try {
+      const sigImg = new Image();
+      sigImg.src = data.signatureImage;
+      await new Promise<void>((resolve) => { sigImg.onload = () => resolve(); sigImg.onerror = () => resolve(); });
+      if (sigImg.width > 0) {
+        const sigW = 60;
+        const sigH = (sigImg.height / sigImg.width) * sigW;
+        doc.addImage(data.signatureImage, 'PNG', margin, y, sigW, Math.min(sigH, 25));
+        y += Math.min(sigH, 25) + 3;
+      }
+    } catch { /* skip */ }
+  }
+
+  doc.setDrawColor(120, 120, 120);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, margin + 70, y);
+  y += 4;
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  doc.text('Digitale Unterschrift des Auftraggebers', margin, y);
+  y += 12;
+
+  // Contract summary
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Vertragszusammenfassung', margin, y);
+  y += 6;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+  doc.text(`Abrechnungszyklus: ${data.frequency}`, margin, y); y += 5;
+  doc.text(`Vertragsbeginn: ${data.startDate}`, margin, y); y += 5;
+  doc.text(`Vertragsende: ${data.endDate || 'Unbefristet'}`, margin, y); y += 5;
+  doc.text(`Betrag pro Zyklus: ${formatCurrency(data.grand_total)}`, margin, y); y += 10;
+
+  // Items table
+  const isSmallBiz = data.small_business_regulation;
+  const tableColumns = isSmallBiz
+    ? ['Pos.', 'Bezeichnung', 'Menge', 'Einheit', 'Einzelpreis', 'Gesamt']
+    : ['Pos.', 'Bezeichnung', 'Menge', 'Einheit', 'Einzelpreis', 'MwSt.', 'Gesamt'];
+
+  const tableRows = data.items.map((item, i) => {
+    const row = [String(i + 1), item.description ? `${item.title}\n${item.description}` : item.title, item.quantity.toFixed(2).replace('.', ','), item.unit, formatCurrency(item.unit_price)];
+    if (!isSmallBiz) row.push(`${item.tax_rate} %`);
+    row.push(formatCurrency(item.total));
+    return row;
+  });
+
+  autoTable(doc, {
+    startY: y,
+    head: [tableColumns],
+    body: tableRows,
+    theme: 'plain',
+    margin: { left: margin, right: margin },
+    styles: { fontSize: 8.5, cellPadding: { top: 3, bottom: 3, left: 2, right: 2 }, textColor: [30, 30, 30] },
+    headStyles: { fillColor: false as any, textColor: [80, 80, 80], fontStyle: 'bold', fontSize: 8 },
+    alternateRowStyles: { fillColor: [248, 248, 248] },
+  });
+
+  y = (doc as any).lastAutoTable.finalY + 6;
+
+  // Totals
+  const totalsX = rightEdge - 55;
+  if (!isSmallBiz) {
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    doc.text('Zwischensumme', totalsX, y); doc.text(formatCurrency(data.subtotal), rightEdge, y, { align: 'right' }); y += 5;
+    doc.text('MwSt.', totalsX, y); doc.text(formatCurrency(data.tax_total), rightEdge, y, { align: 'right' }); y += 5;
+  }
+  doc.setDrawColor(40, 40, 40); doc.setLineWidth(0.4); doc.line(totalsX, y, rightEdge, y); y += 4;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
+  doc.text('Gesamtbetrag', totalsX, y); doc.text(formatCurrency(data.grand_total), rightEdge, y, { align: 'right' });
+
+  // Footer
+  const pageFooterY = 284;
+  doc.setDrawColor(190, 190, 190); doc.setLineWidth(0.2); doc.line(margin, pageFooterY - 4, rightEdge, pageFooterY - 4);
+  doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(140, 140, 140);
+  const footerParts = [data.business.business_name, data.business.address?.replace(/\n/g, ', ')].filter(Boolean).join(' | ');
+  doc.text(footerParts, pageWidth / 2, pageFooterY, { align: 'center' });
+
+  doc.save(`Vertragsbestätigung_${data.contractNumber}.pdf`);
+};
