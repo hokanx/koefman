@@ -3,10 +3,12 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download } from 'lucide-react';
+import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download, FileArchive } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatEUR } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { generateTaxExportZip } from '@/lib/taxExport';
+import { toast } from 'sonner';
 
 type DateRange = 'month' | 'quarter' | 'year';
 
