@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { formatEUR } from '@/lib/utils';
 import TemplatePicker from './TemplatePicker';
 import type { LineItem } from '@/types';
 
@@ -139,7 +140,7 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
             </div>
           </div>
           <div className="text-end text-sm font-medium text-foreground">
-            {labels.total}: {t.common.currency}{item.total.toFixed(2)}
+            {labels.total}: {formatEUR(item.total)}
           </div>
         </div>
       ))}
@@ -162,15 +163,15 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
         <div className="space-y-1 rounded-lg bg-muted/50 p-3 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>{t.offers.subtotal}</span>
-            <span>{t.common.currency}{subtotal.toFixed(2)}</span>
+            <span>{formatEUR(subtotal)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>{t.offers.taxTotal}</span>
-            <span>{t.common.currency}{taxTotal.toFixed(2)}</span>
+            <span>{formatEUR(taxTotal)}</span>
           </div>
           <div className="flex justify-between border-t border-border pt-1 font-semibold text-foreground">
             <span>{t.offers.grandTotal}</span>
-            <span>{t.common.currency}{grandTotal.toFixed(2)}</span>
+            <span>{formatEUR(grandTotal)}</span>
           </div>
         </div>
       )}

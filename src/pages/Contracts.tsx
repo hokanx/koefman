@@ -10,6 +10,7 @@ import { formatDateDE, generateContractPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Pause, Play, XCircle, FileText, Download, RepeatIcon } from 'lucide-react';
+import { formatEUR } from '@/lib/utils';
 import RecurringSetupModal from '@/components/shared/RecurringSetupModal';
 
 const frequencyLabels: Record<string, Record<string, string>> = {
@@ -305,7 +306,7 @@ const Contracts = () => {
                 </div>
                 <div>
                   <span className="text-xs font-medium">{t.offers.grandTotal}</span>
-                  <p className="text-foreground font-medium">{t.common.currency}{c.grand_total.toFixed(2)}</p>
+                  <p className="text-foreground font-medium">{formatEUR(c.grand_total)}</p>
                 </div>
               </div>
 

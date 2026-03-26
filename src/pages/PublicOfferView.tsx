@@ -6,10 +6,7 @@ import { formatAddress } from '@/types';
 import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
 import { useLanguage } from '@/i18n/LanguageContext';
-
-const formatCurrency = (value: number): string => {
-  return value.toFixed(2).replace('.', ',') + ' €';
-};
+import { formatEUR } from '@/lib/utils';
 
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
@@ -318,10 +315,10 @@ const PublicOfferView = () => {
                         </td>
                         <td className="py-2 pr-2 text-gray-700">{item.unit}</td>
                         <td className="py-2 pr-2 text-right text-gray-700">
-                          {formatCurrency(item.unit_price)}
+                          {formatEUR(item.unit_price)}
                         </td>
                         <td className="py-2 text-right font-medium text-gray-900">
-                          {formatCurrency(item.total)}
+                          {formatEUR(item.total)}
                         </td>
                       </tr>
                     ))}
@@ -335,17 +332,17 @@ const PublicOfferView = () => {
                   <>
                     <div className="flex justify-between text-sm text-gray-500">
                       <span>Zwischensumme</span>
-                      <span>{formatCurrency(offer.subtotal)}</span>
+                      <span>{formatEUR(offer.subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-gray-500">
                       <span>MwSt.</span>
-                      <span>{formatCurrency(offer.tax_total)}</span>
+                      <span>{formatEUR(offer.tax_total)}</span>
                     </div>
                   </>
                 )}
                 <div className={`flex justify-between text-base font-bold text-gray-900 ${!isSmallBusiness ? 'pt-1 border-t border-gray-200' : ''}`}>
                   <span>Gesamtbetrag</span>
-                  <span>{formatCurrency(offer.grand_total)}</span>
+                  <span>{formatEUR(offer.grand_total)}</span>
                 </div>
                 {isSmallBusiness && (
                   <p className="text-xs text-gray-500 italic">

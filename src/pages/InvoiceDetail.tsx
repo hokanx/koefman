@@ -11,6 +11,7 @@ import { generateDocumentNumber } from '@/lib/documentUtils';
 import { generatePdf, formatDateDE, generateReminderPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { InvoiceStatus } from '@/types';
+import { formatEUR } from '@/lib/utils';
 import EmailModal from '@/components/shared/EmailModal';
 import RecurringSetupModal from '@/components/shared/RecurringSetupModal';
 
@@ -447,21 +448,21 @@ const InvoiceDetail = () => {
                   <div>
                     <p className="font-medium text-foreground">{item.title}</p>
                     {item.description && <p className="text-muted-foreground">{item.description}</p>}
-                    <p className="text-muted-foreground">{item.quantity} × {t.common.currency}{item.unit_price.toFixed(2)}</p>
+                    <p className="text-muted-foreground">{item.quantity} × {formatEUR(item.unit_price)}</p>
                   </div>
-                  <p className="font-medium text-foreground">{t.common.currency}{item.total.toFixed(2)}</p>
+                  <p className="font-medium text-foreground">{formatEUR(item.total)}</p>
                 </div>
               ))}
             </div>
             <div className="mt-3 space-y-1 border-t border-border pt-3 text-sm">
               <div className="flex justify-between text-muted-foreground">
-                <span>{t.invoices.subtotal}</span><span>{t.common.currency}{invoice.subtotal.toFixed(2)}</span>
+                <span>{t.invoices.subtotal}</span><span>{formatEUR(invoice.subtotal)}</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
-                <span>{t.invoices.taxTotal}</span><span>{t.common.currency}{invoice.tax_total.toFixed(2)}</span>
+                <span>{t.invoices.taxTotal}</span><span>{formatEUR(invoice.tax_total)}</span>
               </div>
               <div className="flex justify-between font-semibold text-foreground">
-                <span>{t.invoices.grandTotal}</span><span>{t.common.currency}{invoice.grand_total.toFixed(2)}</span>
+                <span>{t.invoices.grandTotal}</span><span>{formatEUR(invoice.grand_total)}</span>
               </div>
             </div>
           </div>

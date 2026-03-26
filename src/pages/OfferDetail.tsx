@@ -11,6 +11,7 @@ import { generateDocumentNumber } from '@/lib/documentUtils';
 import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { OfferStatus } from '@/types';
+import { formatEUR } from '@/lib/utils';
 import EmailModal from '@/components/shared/EmailModal';
 import ContractSetupModal from '@/components/shared/ContractSetupModal';
 
@@ -526,21 +527,21 @@ const OfferDetail = () => {
                   <div>
                     <p className="font-medium text-foreground">{item.title}</p>
                     {item.description && <p className="text-muted-foreground">{item.description}</p>}
-                    <p className="text-muted-foreground">{item.quantity} × {t.common.currency}{item.unit_price.toFixed(2)}</p>
+                    <p className="text-muted-foreground">{item.quantity} × {formatEUR(item.unit_price)}</p>
                   </div>
-                  <p className="font-medium text-foreground">{t.common.currency}{item.total.toFixed(2)}</p>
+                  <p className="font-medium text-foreground">{formatEUR(item.total)}</p>
                 </div>
               ))}
             </div>
             <div className="mt-3 space-y-1 border-t border-border pt-3 text-sm">
               <div className="flex justify-between text-muted-foreground">
-                <span>{t.offers.subtotal}</span><span>{t.common.currency}{offer.subtotal.toFixed(2)}</span>
+                <span>{t.offers.subtotal}</span><span>{formatEUR(offer.subtotal)}</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
-                <span>{t.offers.taxTotal}</span><span>{t.common.currency}{offer.tax_total.toFixed(2)}</span>
+                <span>{t.offers.taxTotal}</span><span>{formatEUR(offer.tax_total)}</span>
               </div>
               <div className="flex justify-between font-semibold text-foreground">
-                <span>{t.offers.grandTotal}</span><span>{t.common.currency}{offer.grand_total.toFixed(2)}</span>
+                <span>{t.offers.grandTotal}</span><span>{formatEUR(offer.grand_total)}</span>
               </div>
             </div>
           </div>

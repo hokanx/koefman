@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatAddress } from '@/types';
 import { formatDateDE } from '@/lib/generatePdf';
+import { formatEUR } from '@/lib/utils';
 import type { Customer } from '@/types';
 
 const CustomerDetail = () => {
@@ -162,7 +163,7 @@ const CustomerDetail = () => {
                     <span className="ml-2 text-muted-foreground">{formatDateDE(o.date)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-foreground">{t.common.currency}{o.grand_total.toFixed(2)}</span>
+                    <span className="text-foreground">{formatEUR(o.grand_total)}</span>
                     <StatusBadge status={o.status} label={statusLabels[o.status] || o.status} />
                   </div>
                 </Link>
@@ -182,7 +183,7 @@ const CustomerDetail = () => {
                     <span className="ml-2 text-muted-foreground">{formatDateDE(inv.date)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-foreground">{t.common.currency}{inv.grand_total.toFixed(2)}</span>
+                    <span className="text-foreground">{formatEUR(inv.grand_total)}</span>
                     <StatusBadge status={inv.status} label={statusLabels[inv.status] || inv.status} />
                   </div>
                 </Link>

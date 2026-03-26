@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { formatEUR } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText } from 'lucide-react';
@@ -134,7 +135,7 @@ const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, i
           <div className="rounded-lg bg-muted/30 border border-border p-3 text-sm text-muted-foreground">
             <p>{ct.sourceOffer}: <strong className="text-foreground">{offerNumber}</strong></p>
             <p>{ct.services}: <strong className="text-foreground">{items.length}</strong></p>
-            <p>{t.common.currency}{grandTotal.toFixed(2)} / {frequency === 'monthly' ? ct.monthly : frequency === 'weekly' ? ct.weekly : frequency === 'every_2_weeks' ? ct.every2Weeks : ct.quarterly}</p>
+            <p>{formatEUR(grandTotal)} / {frequency === 'monthly' ? ct.monthly : frequency === 'weekly' ? ct.weekly : frequency === 'every_2_weeks' ? ct.every2Weeks : ct.quarterly}</p>
           </div>
 
           <div className="flex gap-2 pt-2">

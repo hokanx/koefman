@@ -9,6 +9,7 @@ import SearchBar from '@/components/shared/SearchBar';
 import EmptyState from '@/components/shared/EmptyState';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE } from '@/lib/generatePdf';
+import { formatEUR } from '@/lib/utils';
 import type { Offer, OfferStatus } from '@/types';
 
 const statusFilters: (OfferStatus | 'all')[] = ['all', 'draft', 'sent', 'accepted', 'rejected'];
@@ -102,7 +103,7 @@ const Offers = () => {
               </div>
               <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
                 <span>{formatDateDE(offer.date)}</span>
-                <span className="font-medium text-foreground">{t.common.currency}{offer.grand_total.toFixed(2)}</span>
+                <span className="font-medium text-foreground">{formatEUR(offer.grand_total)}</span>
               </div>
             </Link>
           ))}
