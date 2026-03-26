@@ -3,10 +3,12 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download } from 'lucide-react';
+import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download, FileArchive } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatEUR } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { generateTaxExportZip } from '@/lib/taxExport';
+import { toast } from 'sonner';
 
 type DateRange = 'month' | 'quarter' | 'year';
 
@@ -39,6 +41,7 @@ const Finances = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [range, setRange] = useState<DateRange>('month');
+  const [exporting, setExporting] = useState(false);
   const fin = (t as any).finances;
 
   const { from, to } = useMemo(() => getDateRange(range), [range]);
@@ -62,7 +65,7 @@ const Finances = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('business_settings')
-        .select('small_business_regulation, business_name')
+        .select('*')
         .eq('user_id', user!.id)
         .maybeSingle();
       return data;
@@ -119,6 +122,31 @@ const Finances = () => {
     : range === 'quarter'
       ? `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`
       : `${new Date().getFullYear()}`;
+
+  const handleTaxExport = async () => {
+    if (!user || !settings) return;
+    setExporting(true);
+    try {
+      const blob = await generateTaxExportZip({
+        userId: user.id,
+        from,
+        to,
+        businessSettings: settings,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Steuerberater_${from}_${to}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Export wurde erstellt');
+    } catch (e) {
+      console.error('Tax export failed', e);
+      toast.error('Export fehlgeschlagen');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleCsvExport = () => {
     const relevant = invoices.filter((inv) => inv.status !== 'cancelled');
@@ -261,9 +289,9 @@ const Finances = () => {
             <Download className="h-4 w-4 mr-1" />
             {fin?.exportCsv || 'CSV-Übersicht exportieren'}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleCsvExport}>
-            <Download className="h-4 w-4 mr-1" />
-            {fin?.exportTaxAdvisor || 'Unterlagen für Steuerberater'}
+          <Button variant="outline" size="sm" onClick={handleTaxExport} disabled={exporting}>
+            <FileArchive className="h-4 w-4 mr-1" />
+            {exporting ? 'Wird erstellt…' : (fin?.exportTaxAdvisor || 'Unterlagen für Steuerberater')}
           </Button>
         </div>
       </div>
