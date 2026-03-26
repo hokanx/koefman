@@ -1,4 +1,4 @@
-import { Users, FileText, Receipt, Plus, ArrowRight, Inbox } from 'lucide-react';
+import { Users, FileText, Receipt, Plus, ArrowRight, Inbox, RepeatIcon } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -106,6 +106,22 @@ const Dashboard = () => {
         .order('created_at', { ascending: false })
         .limit(3);
       return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const { data: nextRecurring } = useQuery({
+    queryKey: ['next-recurring'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('recurring_invoices')
+        .select('next_run_date, customer:customers(name)')
+        .eq('user_id', user!.id)
+        .eq('status', 'active')
+        .order('next_run_date', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
     },
     enabled: !!user,
   });
@@ -259,6 +275,25 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Upcoming recurring */}
+      {nextRecurring && (
+        <button
+          onClick={() => navigate('/recurring-invoices')}
+          className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/50"
+        >
+          <RepeatIcon className="h-5 w-5 text-primary shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">
+              {(t as any).recurring.upcomingRecurring}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {(nextRecurring as any).customer?.name} – {formatDateDE((nextRecurring as any).next_run_date)}
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
+      )}
 
       {/* Stats (secondary) */}
       <div>

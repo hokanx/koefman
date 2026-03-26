@@ -465,6 +465,7 @@ export type Database = {
           invoice_number: string
           notes: string | null
           source_offer_id: string | null
+          source_recurring_id: string | null
           status: string
           subtotal: number
           tax_total: number
@@ -484,6 +485,7 @@ export type Database = {
           invoice_number: string
           notes?: string | null
           source_offer_id?: string | null
+          source_recurring_id?: string | null
           status?: string
           subtotal?: number
           tax_total?: number
@@ -503,6 +505,7 @@ export type Database = {
           invoice_number?: string
           notes?: string | null
           source_offer_id?: string | null
+          source_recurring_id?: string | null
           status?: string
           subtotal?: number
           tax_total?: number
@@ -522,6 +525,13 @@ export type Database = {
             columns: ["source_offer_id"]
             isOneToOne: false
             referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_source_recurring_id_fkey"
+            columns: ["source_recurring_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -711,6 +721,66 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      recurring_invoices: {
+        Row: {
+          auto_generate: boolean
+          created_at: string
+          customer_id: string
+          end_date: string | null
+          frequency: string
+          id: string
+          next_run_date: string
+          source_invoice_id: string
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_generate?: boolean
+          created_at?: string
+          customer_id: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          next_run_date?: string
+          source_invoice_id: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_generate?: boolean
+          created_at?: string
+          customer_id?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          next_run_date?: string
+          source_invoice_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_invoices_source_invoice_id_fkey"
+            columns: ["source_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_template_items: {
         Row: {
