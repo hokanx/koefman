@@ -9,6 +9,7 @@ import SearchBar from '@/components/shared/SearchBar';
 import EmptyState from '@/components/shared/EmptyState';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE } from '@/lib/generatePdf';
+import { formatEUR } from '@/lib/utils';
 import type { Invoice, InvoiceStatus } from '@/types';
 
 const statusFilters: (InvoiceStatus | 'all')[] = ['all', 'draft', 'open', 'paid', 'overdue', 'cancelled'];
@@ -113,7 +114,7 @@ const Invoices = () => {
                       → {formatDateDE(invoice.due_date)}
                     </span>
                   </div>
-                  <span className="font-medium text-foreground">{t.common.currency}{invoice.grand_total.toFixed(2)}</span>
+                  <span className="font-medium text-foreground">{formatEUR(invoice.grand_total)}</span>
                 </div>
               </Link>
             );
