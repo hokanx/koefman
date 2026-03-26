@@ -131,6 +131,44 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_acceptances: {
+        Row: {
+          accepted_at: string
+          accepted_by_name: string
+          contract_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          signature_image: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_by_name: string
+          contract_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          signature_image?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          accepted_by_name?: string
+          contract_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          signature_image?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_acceptances_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_items: {
         Row: {
           contract_id: string
@@ -191,6 +229,7 @@ export type Database = {
           grand_total: number
           id: string
           notes: string | null
+          public_token: string | null
           source_offer_id: string
           start_date: string
           status: string
@@ -209,6 +248,7 @@ export type Database = {
           grand_total?: number
           id?: string
           notes?: string | null
+          public_token?: string | null
           source_offer_id: string
           start_date?: string
           status?: string
@@ -227,6 +267,7 @@ export type Database = {
           grand_total?: number
           id?: string
           notes?: string | null
+          public_token?: string | null
           source_offer_id?: string
           start_date?: string
           status?: string
