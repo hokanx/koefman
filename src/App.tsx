@@ -26,6 +26,7 @@ import Leads from "@/pages/Leads";
 import Templates from "@/pages/Templates";
 import IntakeForm from "@/pages/IntakeForm";
 import PublicOfferView from "@/pages/PublicOfferView";
+import PublicContractView from "@/pages/PublicContractView";
 import RecurringInvoices from "@/pages/RecurringInvoices";
 import Contracts from "@/pages/Contracts";
 import Finances from "@/pages/Finances";
@@ -67,6 +68,7 @@ const App = () => (
               </Route>
               <Route path="/intake/:token" element={<IntakeForm />} />
               <Route path="/offer/view/:token" element={<PublicOfferView />} />
+              <Route path="/contract/view/:token" element={<PublicContractView />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
