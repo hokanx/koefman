@@ -372,11 +372,16 @@ const Contracts = () => {
                   </>
                 )}
 
-                {/* Recurring: only for signed contracts */}
+                {/* Signed: confirmation PDF + recurring */}
                 {c.status === 'unterzeichnet' && (
-                  <Button size="sm" variant="outline" onClick={() => handleActivateRecurring(c)}>
-                    <RepeatIcon className="h-3.5 w-3.5 mr-1" /> {ct.activateRecurring}
-                  </Button>
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => handleDownloadConfirmation(c)}>
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" /> Vertragsbestätigung
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleActivateRecurring(c)}>
+                      <RepeatIcon className="h-3.5 w-3.5 mr-1" /> {ct.activateRecurring}
+                    </Button>
+                  </>
                 )}
 
                 {/* Pause/Resume/End for active/gesendet/paused */}
