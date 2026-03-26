@@ -523,6 +523,22 @@ export const de = {
     pdfPaymentTerms: 'Die Zahlung ist innerhalb von 14 Tagen nach Rechnungsstellung fällig.',
     pdfPerCycle: 'Pro Zyklus',
   },
+  finances: {
+    title: 'Steuer & Finanzen',
+    month: 'Monat',
+    quarter: 'Quartal',
+    year: 'Jahr',
+    totalRevenue: 'Umsatz gesamt',
+    paid: 'Bezahlt',
+    openAmount: 'Offen',
+    overdueAmount: 'Überfällig',
+    invoiceSummary: 'Rechnungsübersicht',
+    totalInvoices: 'Anzahl Rechnungen',
+    openInvoices: 'Offene Rechnungen',
+    overdueInvoices: 'Überfällige Rechnungen',
+    taxHintSmallBusiness: 'Hinweis: Es wird keine Umsatzsteuer berechnet (§19 UStG).',
+    taxHintVat: 'Hinweis: Umsatzsteuer wird berücksichtigt.',
+  },
 };
 
 export type Translations = typeof de;
