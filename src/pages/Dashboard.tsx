@@ -110,6 +110,22 @@ const Dashboard = () => {
     enabled: !!user,
   });
 
+  const { data: nextRecurring } = useQuery({
+    queryKey: ['next-recurring'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('recurring_invoices')
+        .select('next_run_date, customer:customers(name)')
+        .eq('user_id', user!.id)
+        .eq('status', 'active')
+        .order('next_run_date', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const todoItems = [
     {
       label: t.dashboard.overdueInvoices,
