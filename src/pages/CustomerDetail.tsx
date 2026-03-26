@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatAddress } from '@/types';
 import { formatDateDE } from '@/lib/generatePdf';
+import { formatEUR } from '@/lib/utils';
 import type { Customer } from '@/types';
 
 const CustomerDetail = () => {

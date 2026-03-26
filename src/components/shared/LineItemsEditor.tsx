@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { formatEUR } from '@/lib/utils';
 import TemplatePicker from './TemplatePicker';
 import type { LineItem } from '@/types';
 
