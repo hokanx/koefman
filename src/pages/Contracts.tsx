@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import StatusBadge from '@/components/shared/StatusBadge';
-import { formatDateDE, generateContractPdf } from '@/lib/generatePdf';
+import { formatDateDE, generateContractPdf, generateContractConfirmationPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle } from 'lucide-react';
