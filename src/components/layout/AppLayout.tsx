@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import LanguageSwitcher from './LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
@@ -76,7 +75,6 @@ const AppLayout = () => {
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          <LanguageSwitcher />
           <button
             onClick={handleSignOut}
             className="hidden rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground md:flex"
