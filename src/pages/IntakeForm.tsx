@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
-import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+
 import FormSection from '@/components/shared/FormSection';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 

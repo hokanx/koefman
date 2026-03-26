@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import FormSection from '@/components/shared/FormSection';
-import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+
 import { toast } from 'sonner';
 
 const DEFAULT_TEXTS = {
