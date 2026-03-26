@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import LanguageSwitcher from './LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
