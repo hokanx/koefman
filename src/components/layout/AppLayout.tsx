@@ -46,6 +46,7 @@ const AppLayout = () => {
 
   const secondaryNavItems = [
     { to: '/leads', icon: Inbox, label: t.nav.leads, badge: newLeadsCount },
+    { to: '/contracts', icon: ScrollText, label: (t as any).contracts?.title || 'Contracts', badge: 0 },
     { to: '/recurring-invoices', icon: RepeatIcon, label: (t as any).recurring?.title || 'Recurring', badge: 0 },
     { to: '/templates', icon: FileStack, label: t.nav.templates, badge: 0 },
     { to: '/settings', icon: Settings, label: t.nav.settings, badge: 0 },
