@@ -798,6 +798,27 @@ interface ContractPdfData {
     endLabel: string;
     durationOpen: string;
     refOffer: string;
+    // New structured contract labels
+    sectionScope: string;
+    sectionExecution: string;
+    sectionCompensation: string;
+    sectionDuration: string;
+    sectionFinal: string;
+    contractorLabel: string;
+    clientLabel: string;
+    introText: string;
+    scopeIntro: string;
+    executionText: string;
+    compensationText: string;
+    durationText: string;
+    durationOpenText: string;
+    finalText: string;
+    signaturePlace: string;
+    signatureDateLabel: string;
+    signatureContractor: string;
+    signatureClient: string;
+    paymentTerms: string;
+    perCycle: string;
   };
 }
 
@@ -808,7 +829,18 @@ export const generateContractPdf = async (data: ContractPdfData, returnBase64 = 
   const contentWidth = pageWidth - margin * 2;
   const rightEdge = pageWidth - margin;
 
-  // 1. HEADER
+  // Helper: check page break needed
+  const checkPageBreak = (currentY: number, needed: number): number => {
+    if (currentY + needed > 270) {
+      doc.addPage();
+      return 20;
+    }
+    return currentY;
+  };
+
+  // ============================================================
+  // 1. HEADER: Sender line (left) + Logo (right)
+  // ============================================================
   const headerY = 12;
   let logoBottomY = headerY;
   if (data.business.logo_url) {
@@ -840,69 +872,114 @@ export const generateContractPdf = async (data: ContractPdfData, returnBase64 = 
   doc.setTextColor(100, 100, 100);
   if (data.business.phone) { doc.text(data.business.phone, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
   if (data.business.email) { doc.text(data.business.email, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+  if (data.business.tax_number) { doc.text(`St.-Nr.: ${data.business.tax_number}`, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
+  if (data.business.vat_id) { doc.text(`USt-IdNr.: ${data.business.vat_id}`, rightEdge, contactY, { align: 'right' }); contactY += 3.5; }
 
-  // 2. RECEIVER
-  let y = dividerY + 8;
-  doc.setFontSize(10.5);
+  // ============================================================
+  // 2. DOCUMENT TITLE
+  // ============================================================
+  let y = dividerY + 14;
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.setFont('helvetica', 'bold');
-  doc.text(data.customer.name, margin, y);
-  doc.setFont('helvetica', 'normal');
-  y += 5;
-  if (data.customer.address) {
-    data.customer.address.split('\n').forEach((line) => {
-      const trimmed = line.trim();
-      if (trimmed) { doc.text(trimmed, margin, y); y += 5; }
-    });
-  }
-
-  // 3. TITLE + META
-  y = Math.max(y + 10, 62);
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(30, 30, 30);
   doc.text(data.title, margin, y);
-  y += 8;
+  y += 4;
 
+  // Contract number + date line
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 100, 100);
+  doc.text(`${data.contractNumber}  ·  ${data.labels.date}: ${data.date}  ·  ${data.labels.refOffer}: ${data.sourceOfferNumber}`, margin, y + 4);
+  y += 12;
 
-  const metaItems = [
-    ['Vertragsnummer', data.contractNumber],
-    [data.labels.date, data.date],
-    [data.labels.frequencyLabel, data.frequency],
-    [data.labels.startLabel, data.startDate],
-    [data.labels.endLabel, data.endDate || data.labels.durationOpen],
-    [data.labels.refOffer, data.sourceOfferNumber],
-  ];
+  // ============================================================
+  // 3. PARTIES INTRO BLOCK
+  // ============================================================
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
 
-  metaItems.forEach(([label, value]) => {
-    doc.setTextColor(100, 100, 100);
-    doc.text(label, margin, y);
-    doc.setTextColor(30, 30, 30);
-    doc.setFont('helvetica', 'bold');
-    doc.text(value, margin + 50, y);
-    doc.setFont('helvetica', 'normal');
-    y += 5;
-  });
+  // "Zwischen"
+  const introLines = doc.splitTextToSize(data.labels.introText, contentWidth);
+  doc.text(introLines, margin, y);
+  y += introLines.length * 4.5 + 3;
 
+  // Contractor (business)
+  doc.setFont('helvetica', 'bold');
+  doc.text(data.business.business_name, margin, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  if (data.business.address) {
+    data.business.address.split('\n').forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed) { doc.text(trimmed, margin, y); y += 4.5; }
+    });
+  }
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(80, 80, 80);
+  doc.text(`– ${data.labels.contractorLabel} –`, margin, y);
+  y += 7;
+
+  // "und"
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+
+  // Client (customer)
+  doc.setFont('helvetica', 'bold');
+  doc.text(data.customer.name, margin, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  if (data.customer.address) {
+    data.customer.address.split('\n').forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed) { doc.text(trimmed, margin, y); y += 4.5; }
+    });
+  }
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(80, 80, 80);
+  doc.text(`– ${data.labels.clientLabel} –`, margin, y);
+  y += 8;
+
+  // Closing intro line
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+
+  // ============================================================
+  // §1 LEISTUNGSUMFANG
+  // ============================================================
+  y = checkPageBreak(y, 30);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.labels.sectionScope, margin, y);
   y += 6;
 
-  // 4. LINE ITEMS TABLE
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+  const scopeLines = doc.splitTextToSize(data.labels.scopeIntro, contentWidth);
+  doc.text(scopeLines, margin, y);
+  y += scopeLines.length * 4.5 + 4;
+
+  // Items table
   const isSmallBiz = data.small_business_regulation;
   const tableColumns = isSmallBiz
-    ? [data.labels.itemTitle, data.labels.quantity, data.labels.unit, data.labels.unitPrice, data.labels.total]
-    : [data.labels.itemTitle, data.labels.quantity, data.labels.unit, data.labels.unitPrice, data.labels.taxRate, data.labels.total];
+    ? ['Pos.', data.labels.itemTitle, data.labels.quantity, data.labels.unit, data.labels.unitPrice, data.labels.total]
+    : ['Pos.', data.labels.itemTitle, data.labels.quantity, data.labels.unit, data.labels.unitPrice, data.labels.taxRate, data.labels.total];
 
-  const tableRows = data.items.map((item) => {
+  const tableRows = data.items.map((item, i) => {
     const row = [
+      String(i + 1),
       item.description ? `${item.title}\n${item.description}` : item.title,
-      String(item.quantity),
+      item.quantity.toFixed(2).replace('.', ','),
       item.unit,
       formatCurrency(item.unit_price),
     ];
-    if (!isSmallBiz) row.push(`${item.tax_rate}%`);
+    if (!isSmallBiz) row.push(`${item.tax_rate} %`);
     row.push(formatCurrency(item.total));
     return row;
   });
@@ -913,72 +990,210 @@ export const generateContractPdf = async (data: ContractPdfData, returnBase64 = 
     body: tableRows,
     theme: 'plain',
     margin: { left: margin, right: margin },
-    styles: { fontSize: 8.5, cellPadding: { top: 3, bottom: 3, left: 2, right: 2 }, textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.2 },
-    headStyles: { fillColor: [245, 245, 245], textColor: [80, 80, 80], fontStyle: 'bold', fontSize: 7.5 },
-    alternateRowStyles: { fillColor: [252, 252, 252] },
+    styles: {
+      fontSize: 8.5,
+      cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+      textColor: [30, 30, 30],
+      lineColor: [220, 220, 220],
+      lineWidth: 0,
+    },
+    headStyles: {
+      fillColor: false as any,
+      textColor: [80, 80, 80],
+      fontStyle: 'bold',
+      fontSize: 8,
+    },
+    alternateRowStyles: { fillColor: [248, 248, 248] },
     columnStyles: isSmallBiz
-      ? { 0: { cellWidth: 'auto' }, 1: { halign: 'center', cellWidth: 18 }, 2: { halign: 'center', cellWidth: 20 }, 3: { halign: 'right', cellWidth: 28 }, 4: { halign: 'right', cellWidth: 28 } }
-      : { 0: { cellWidth: 'auto' }, 1: { halign: 'center', cellWidth: 16 }, 2: { halign: 'center', cellWidth: 18 }, 3: { halign: 'right', cellWidth: 25 }, 4: { halign: 'center', cellWidth: 16 }, 5: { halign: 'right', cellWidth: 25 } },
+      ? { 0: { cellWidth: 12, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { halign: 'right', cellWidth: 18 }, 3: { cellWidth: 16 }, 4: { halign: 'right', cellWidth: 26 }, 5: { halign: 'right', cellWidth: 26 } }
+      : { 0: { cellWidth: 12, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { halign: 'right', cellWidth: 16 }, 3: { cellWidth: 16 }, 4: { halign: 'right', cellWidth: 25 }, 5: { halign: 'right', cellWidth: 16 }, 6: { halign: 'right', cellWidth: 25 } },
   });
 
-  y = (doc as any).lastAutoTable.finalY + 6;
+  y = (doc as any).lastAutoTable.finalY + 8;
 
-  // 5. TOTALS
+  // ============================================================
+  // §2 AUSFÜHRUNG
+  // ============================================================
+  y = checkPageBreak(y, 20);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.labels.sectionExecution, margin, y);
+  y += 6;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+  const execText = data.labels.executionText
+    .replace('{frequency}', data.frequency)
+    .replace('{startDate}', data.startDate);
+  const execLines = doc.splitTextToSize(execText, contentWidth);
+  doc.text(execLines, margin, y);
+  y += execLines.length * 4.5 + 6;
+
+  // ============================================================
+  // §3 VERGÜTUNG
+  // ============================================================
+  y = checkPageBreak(y, 30);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.labels.sectionCompensation, margin, y);
+  y += 6;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+  const compText = data.labels.compensationText
+    .replace('{amount}', formatCurrency(data.grand_total))
+    .replace('{cycle}', data.frequency);
+  const compLines = doc.splitTextToSize(compText, contentWidth);
+  doc.text(compLines, margin, y);
+  y += compLines.length * 4.5 + 4;
+
+  // Totals block
+  const totalsLabelX = rightEdge - 55;
+  if (!isSmallBiz) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text(data.labels.subtotal, totalsLabelX, y);
+    doc.text(formatCurrency(data.subtotal), rightEdge, y, { align: 'right' });
+    y += 5;
+    doc.text(data.labels.taxTotal, totalsLabelX, y);
+    doc.text(formatCurrency(data.tax_total), rightEdge, y, { align: 'right' });
+    y += 6;
+  }
+
+  doc.setDrawColor(40, 40, 40);
+  doc.setLineWidth(0.4);
+  doc.line(totalsLabelX, y - 1.5, rightEdge, y - 1.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.text(data.labels.grandTotal, totalsLabelX, y + 3);
+  doc.text(formatCurrency(data.grand_total), rightEdge, y + 3, { align: 'right' });
+  y += 8;
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text(`${data.labels.perCycle}: ${data.frequency}`, totalsLabelX, y);
+  y += 4;
+
+  if (isSmallBiz) {
+    doc.setFont('helvetica', 'italic');
+    doc.text('Gemäß §19 UStG wird keine Umsatzsteuer berechnet.', totalsLabelX, y);
+    y += 4;
+  }
+
+  // Payment terms
+  if (data.labels.paymentTerms) {
+    y += 2;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    const ptLines = doc.splitTextToSize(data.labels.paymentTerms, contentWidth);
+    doc.text(ptLines, margin, y);
+    y += ptLines.length * 4.5;
+  }
+  y += 6;
+
+  // ============================================================
+  // §4 VERTRAGSLAUFZEIT
+  // ============================================================
+  y = checkPageBreak(y, 20);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.labels.sectionDuration, margin, y);
+  y += 6;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+  const durText = data.endDate
+    ? data.labels.durationText.replace('{startDate}', data.startDate).replace('{endDate}', data.endDate)
+    : data.labels.durationOpenText.replace('{startDate}', data.startDate);
+  const durLines = doc.splitTextToSize(durText, contentWidth);
+  doc.text(durLines, margin, y);
+  y += durLines.length * 4.5 + 6;
+
+  // ============================================================
+  // §5 SCHLUSSBESTIMMUNGEN
+  // ============================================================
+  y = checkPageBreak(y, 20);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.labels.sectionFinal, margin, y);
+  y += 6;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(30, 30, 30);
+  const finalLines = doc.splitTextToSize(data.labels.finalText, contentWidth);
+  doc.text(finalLines, margin, y);
+  y += finalLines.length * 4.5 + 12;
+
+  // ============================================================
+  // SIGNATURE AREA
+  // ============================================================
+  y = checkPageBreak(y, 40);
+
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(80, 80, 80);
-  doc.text(data.labels.subtotal, rightEdge - 55, y);
-  doc.text(formatCurrency(data.subtotal), rightEdge, y, { align: 'right' });
-  y += 5;
+  doc.text(`${data.labels.signaturePlace}, ${data.labels.signatureDateLabel}`, margin, y);
+  y += 14;
 
-  if (!isSmallBiz) {
-    doc.text(data.labels.taxTotal, rightEdge - 55, y);
-    doc.text(formatCurrency(data.tax_total), rightEdge, y, { align: 'right' });
-    y += 5;
-  }
+  // Two-column signatures
+  const colWidth = (contentWidth - 20) / 2;
+  const leftCol = margin;
+  const rightCol = margin + colWidth + 20;
 
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(30, 30, 30);
-  doc.setFontSize(10);
-  doc.text(data.labels.grandTotal, rightEdge - 55, y);
-  doc.text(formatCurrency(data.grand_total), rightEdge, y, { align: 'right' });
+  // Signature lines
+  doc.setDrawColor(120, 120, 120);
+  doc.setLineWidth(0.3);
+  doc.line(leftCol, y, leftCol + colWidth, y);
+  doc.line(rightCol, y, rightCol + colWidth, y);
   y += 4;
-  doc.setDrawColor(60, 60, 60);
-  doc.setLineWidth(0.5);
-  doc.line(rightEdge - 55, y, rightEdge, y);
-  y += 12;
 
-  // 6. CLOSING
-  if (data.closing_text) {
-    doc.setFontSize(9.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(30, 30, 30);
-    doc.text(data.closing_text, margin, y);
-    y += 8;
-  }
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  doc.text(data.labels.signatureContractor, leftCol, y);
+  doc.text(data.labels.signatureClient, rightCol, y);
+  y += 3;
+  doc.setFontSize(7.5);
+  doc.text(data.business.business_name, leftCol, y);
+  doc.text(data.customer.name, rightCol, y);
 
-  if (data.business.business_name) {
-    doc.setFont('helvetica', 'bold');
-    doc.text(data.business.business_name, margin, y);
-    y += 5;
-  }
-  if (data.business.owner_name) {
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(80, 80, 80);
-    doc.text(`Inhaber: ${data.business.owner_name}`, margin, y);
-  }
-
+  // ============================================================
   // PAGE FOOTER
-  const pageFooterY = 284;
-  doc.setDrawColor(190, 190, 190);
-  doc.setLineWidth(0.2);
-  doc.line(margin, pageFooterY - 4, rightEdge, pageFooterY - 4);
-  doc.setFontSize(6.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(140, 140, 140);
-  const footerParts = [data.business.business_name, data.business.address?.replace(/\n/g, ', '), data.business.tax_number ? `St.-Nr.: ${data.business.tax_number}` : ''].filter(Boolean).join(' | ');
-  doc.text(footerParts, pageWidth / 2, pageFooterY, { align: 'center' });
+  // ============================================================
+  const addPageFooter = (pageDoc: jsPDF) => {
+    const pageFooterY = 284;
+    pageDoc.setDrawColor(190, 190, 190);
+    pageDoc.setLineWidth(0.2);
+    pageDoc.line(margin, pageFooterY - 4, rightEdge, pageFooterY - 4);
+    pageDoc.setFontSize(6.5);
+    pageDoc.setFont('helvetica', 'normal');
+    pageDoc.setTextColor(140, 140, 140);
+    const footerParts = [
+      data.business.business_name,
+      data.business.address?.replace(/\n/g, ', '),
+      data.business.tax_number ? `St.-Nr.: ${data.business.tax_number}` : '',
+      data.business.vat_id ? `USt-IdNr.: ${data.business.vat_id}` : '',
+    ].filter(Boolean).join(' | ');
+    pageDoc.text(footerParts, pageWidth / 2, pageFooterY, { align: 'center' });
+  };
+
+  // Add footer to all pages
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    addPageFooter(doc);
+  }
 
   if (returnBase64) {
     return doc.output('datauristring').split(',')[1];
