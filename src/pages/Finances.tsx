@@ -264,9 +264,9 @@ const Finances = () => {
             <Download className="h-4 w-4 mr-1" />
             {fin?.exportCsv || 'CSV-Übersicht exportieren'}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleCsvExport}>
-            <Download className="h-4 w-4 mr-1" />
-            {fin?.exportTaxAdvisor || 'Unterlagen für Steuerberater'}
+          <Button variant="outline" size="sm" onClick={handleTaxExport} disabled={exporting}>
+            <FileArchive className="h-4 w-4 mr-1" />
+            {exporting ? 'Wird erstellt…' : (fin?.exportTaxAdvisor || 'Unterlagen für Steuerberater')}
           </Button>
         </div>
       </div>
