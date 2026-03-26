@@ -12,6 +12,7 @@ import { generatePdf, formatDateDE, generateReminderPdf } from '@/lib/generatePd
 import { formatAddress } from '@/types';
 import type { InvoiceStatus } from '@/types';
 import EmailModal from '@/components/shared/EmailModal';
+import RecurringSetupModal from '@/components/shared/RecurringSetupModal';
 
 const InvoiceDetail = () => {
   const { t } = useLanguage();
@@ -24,6 +25,7 @@ const InvoiceDetail = () => {
   const [creatingReminder, setCreatingReminder] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailType, setEmailType] = useState<'invoice' | 'reminder'>('invoice');
+  const [recurringOpen, setRecurringOpen] = useState(false);
 
   const statusLabels = t.status as Record<string, string>;
 
@@ -429,6 +431,10 @@ const InvoiceDetail = () => {
                 <Mail className="h-4 w-4" /> {t.invoices.reminderDocumentTitle}
               </button>
             )}
+            <button onClick={() => setRecurringOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+              <RepeatIcon className="h-4 w-4" /> {(t as any).recurring.saveAsRecurring}
+            </button>
           </div>
         </div>
 
@@ -523,6 +529,15 @@ const InvoiceDetail = () => {
         documentId={id!}
         onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'invoice', id] })}
       />
+
+      {invoice && (
+        <RecurringSetupModal
+          open={recurringOpen}
+          onClose={() => setRecurringOpen(false)}
+          invoiceId={id!}
+          customerId={invoice.customer_id}
+        />
+      )}
     </div>
   );
 };
