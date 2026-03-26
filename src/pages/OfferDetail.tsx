@@ -500,6 +500,12 @@ const OfferDetail = () => {
                 <FileText className="h-4 w-4" /> {converting ? t.common.loading : t.offers.convertToInvoice}
               </button>
             )}
+            {offer.status === 'accepted' && (
+              <button onClick={() => setContractOpen(true)}
+                className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10">
+                <ScrollText className="h-4 w-4" /> {(t as any).contracts.createFromOffer}
+              </button>
+            )}
             <button onClick={handleDuplicate} disabled={duplicating}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">
               <CopyPlus className="h-4 w-4" /> {duplicating ? t.common.loading : t.offers.duplicateOffer}
