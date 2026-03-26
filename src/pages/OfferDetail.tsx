@@ -576,6 +576,20 @@ const OfferDetail = () => {
         documentId={id!}
         onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'offer', id] })}
       />
+
+      {offer && (
+        <ContractSetupModal
+          open={contractOpen}
+          onClose={() => setContractOpen(false)}
+          offerId={id!}
+          customerId={offer.customer_id}
+          offerNumber={offer.offer_number}
+          items={items}
+          subtotal={offer.subtotal}
+          taxTotal={offer.tax_total}
+          grandTotal={offer.grand_total}
+        />
+      )}
     </div>
   );
 };
