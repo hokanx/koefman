@@ -27,6 +27,7 @@ import Templates from "@/pages/Templates";
 import IntakeForm from "@/pages/IntakeForm";
 import PublicOfferView from "@/pages/PublicOfferView";
 import RecurringInvoices from "@/pages/RecurringInvoices";
+import Contracts from "@/pages/Contracts";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
