@@ -6,10 +6,7 @@ import { formatAddress } from '@/types';
 import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
 import { useLanguage } from '@/i18n/LanguageContext';
-
-const formatCurrency = (value: number): string => {
-  return value.toFixed(2).replace('.', ',') + ' €';
-};
+import { formatEUR } from '@/lib/utils';
 
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
