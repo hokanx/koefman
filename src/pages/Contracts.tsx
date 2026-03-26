@@ -9,9 +9,8 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE, generateContractPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Pause, Play, XCircle, FileText, Download, RepeatIcon } from 'lucide-react';
+import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle } from 'lucide-react';
 import { formatEUR } from '@/lib/utils';
-import RecurringSetupModal from '@/components/shared/RecurringSetupModal';
 
 const frequencyLabels: Record<string, Record<string, string>> = {
   weekly: { de: 'Wöchentlich', en: 'Weekly', ar: 'أسبوعياً' },
@@ -27,8 +26,6 @@ const Contracts = () => {
   const queryClient = useQueryClient();
   const ct = (t as any).contracts;
 
-  const [selectedContract, setSelectedContract] = useState<any>(null);
-  const [detailOpen, setDetailOpen] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
 
   const { data: contracts = [], isLoading } = useQuery({
@@ -64,6 +61,31 @@ const Contracts = () => {
     },
     enabled: !!user,
   });
+
+  const handleSendContract = async (contract: any) => {
+    // Mark as sent
+    if (contract.status === 'active') {
+      await supabase.from('contracts').update({ status: 'gesendet' } as any).eq('id', contract.id);
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      toast.success(ct.contractSent);
+    }
+    // Copy link
+    const publicToken = (contract as any).public_token;
+    if (publicToken) {
+      const url = `${window.location.origin}/contract/view/${publicToken}`;
+      await navigator.clipboard.writeText(url);
+      toast.success(ct.linkCopied);
+    }
+  };
+
+  const handleCopyLink = async (contract: any) => {
+    const publicToken = (contract as any).public_token;
+    if (publicToken) {
+      const url = `${window.location.origin}/contract/view/${publicToken}`;
+      await navigator.clipboard.writeText(url);
+      toast.success(ct.linkCopied);
+    }
+  };
 
   const handleDownloadPdf = async (contract: any) => {
     setGeneratingPdf(contract.id);
@@ -169,8 +191,12 @@ const Contracts = () => {
 
   const handleActivateRecurring = async (contract: any) => {
     if (!user) return;
+    // Gate: must be signed
+    if (contract.status !== 'unterzeichnet') {
+      toast.error(ct.mustBeSignedForRecurring);
+      return;
+    }
     try {
-      // First create an invoice from the contract to serve as source
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
       const prefix = settings?.invoice_number_prefix || 'RE-';
       const { data: contractItems } = await supabase.from('contract_items').select('*').eq('contract_id', contract.id).order('sort_order');
@@ -211,7 +237,6 @@ const Contracts = () => {
         );
       }
 
-      // Create recurring invoice linked to this contract
       const calcNextRun = (freq: string): string => {
         const d = new Date();
         switch (freq) {
@@ -245,12 +270,18 @@ const Contracts = () => {
   };
 
   const statusMap: Record<string, string> = {
-    active: 'paid',
+    active: 'draft',
+    gesendet: 'sent',
+    unterzeichnet: 'paid',
+    abgelehnt: 'cancelled',
     paused: 'draft',
     ended: 'cancelled',
   };
   const statusLabel: Record<string, string> = {
     active: ct.active,
+    gesendet: ct.sent,
+    unterzeichnet: ct.signed,
+    abgelehnt: ct.rejected,
     paused: ct.paused,
     ended: ct.ended,
   };
@@ -278,7 +309,7 @@ const Contracts = () => {
                   <p className="text-xs text-muted-foreground">{c.title}</p>
                 </div>
                 <StatusBadge
-                  status={statusMap[c.status] as any}
+                  status={statusMap[c.status] as any || 'draft'}
                   label={statusLabel[c.status] || c.status}
                 />
               </div>
@@ -314,26 +345,52 @@ const Contracts = () => {
                 <p className="text-xs text-muted-foreground">{ct.endDate}: {formatDateDE(c.end_date)}</p>
               )}
 
+              {/* Signed indicator */}
+              {c.status === 'unterzeichnet' && (
+                <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-md px-2 py-1 w-fit">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Digital unterzeichnet
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button size="sm" variant="outline" onClick={() => handleDownloadPdf(c)} disabled={generatingPdf === c.id}>
                   <Download className="h-3.5 w-3.5 mr-1" /> {generatingPdf === c.id ? t.common.generating : ct.downloadPdf}
                 </Button>
-                {c.status === 'active' && (
+
+                {/* Send / Copy link actions for active or gesendet */}
+                {(c.status === 'active' || c.status === 'gesendet') && (
                   <>
-                    <Button size="sm" variant="outline" onClick={() => handleActivateRecurring(c)}>
-                      <RepeatIcon className="h-3.5 w-3.5 mr-1" /> {ct.activateRecurring}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'paused' })}>
-                      <Pause className="h-3.5 w-3.5 mr-1" /> {ct.pause}
+                    {c.status === 'active' && (
+                      <Button size="sm" variant="outline" onClick={() => handleSendContract(c)}>
+                        <Send className="h-3.5 w-3.5 mr-1" /> {ct.sendContract}
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => handleCopyLink(c)}>
+                      <Copy className="h-3.5 w-3.5 mr-1" /> {ct.copyLink}
                     </Button>
                   </>
+                )}
+
+                {/* Recurring: only for signed contracts */}
+                {c.status === 'unterzeichnet' && (
+                  <Button size="sm" variant="outline" onClick={() => handleActivateRecurring(c)}>
+                    <RepeatIcon className="h-3.5 w-3.5 mr-1" /> {ct.activateRecurring}
+                  </Button>
+                )}
+
+                {/* Pause/Resume/End for active/gesendet/paused */}
+                {(c.status === 'active' || c.status === 'gesendet' || c.status === 'unterzeichnet') && (
+                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'paused' })}>
+                    <Pause className="h-3.5 w-3.5 mr-1" /> {ct.pause}
+                  </Button>
                 )}
                 {c.status === 'paused' && (
                   <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'active' })}>
                     <Play className="h-3.5 w-3.5 mr-1" /> {ct.resume}
                   </Button>
                 )}
-                {c.status !== 'ended' && (
+                {!['ended', 'abgelehnt'].includes(c.status) && (
                   <Button size="sm" variant="outline" className="text-destructive" onClick={() => updateStatus.mutate({ id: c.id, status: 'ended' })}>
                     <XCircle className="h-3.5 w-3.5 mr-1" /> {ct.end}
                   </Button>
