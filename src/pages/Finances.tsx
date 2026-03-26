@@ -41,6 +41,7 @@ const Finances = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [range, setRange] = useState<DateRange>('month');
+  const [exporting, setExporting] = useState(false);
   const fin = (t as any).finances;
 
   const { from, to } = useMemo(() => getDateRange(range), [range]);
