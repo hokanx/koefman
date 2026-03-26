@@ -123,6 +123,31 @@ const Finances = () => {
       ? `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`
       : `${new Date().getFullYear()}`;
 
+  const handleTaxExport = async () => {
+    if (!user || !settings) return;
+    setExporting(true);
+    try {
+      const blob = await generateTaxExportZip({
+        userId: user.id,
+        from,
+        to,
+        businessSettings: settings,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Steuerberater_${from}_${to}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Export wurde erstellt');
+    } catch (e) {
+      console.error('Tax export failed', e);
+      toast.error('Export fehlgeschlagen');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleCsvExport = () => {
     const relevant = invoices.filter((inv) => inv.status !== 'cancelled');
     const header = ['Rechnungsnummer', 'Datum', 'Fällig', 'Status', 'Netto', 'USt', 'Brutto'];
