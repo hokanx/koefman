@@ -269,6 +269,69 @@ const Contracts = () => {
     }
   };
 
+  const handleDownloadConfirmation = async (contract: any) => {
+    try {
+      const { data: acceptance } = await supabase
+        .from('contract_acceptances' as any)
+        .select('*')
+        .eq('contract_id', contract.id)
+        .order('accepted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { data: contractItems } = await supabase
+        .from('contract_items')
+        .select('*')
+        .eq('contract_id', contract.id)
+        .order('sort_order');
+
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', contract.customer_id)
+        .single();
+
+      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customerAddress = customer ? formatAddress(customer) : '';
+
+      await generateContractConfirmationPdf({
+        contractNumber: contract.contract_number,
+        title: contract.title,
+        date: formatDateDE(new Date()),
+        signedByName: (acceptance as any)?.accepted_by_name || 'Unbekannt',
+        signedAt: (acceptance as any)?.accepted_at
+          ? new Date((acceptance as any).accepted_at).toLocaleString('de-DE')
+          : 'Unbekannt',
+        signatureImage: (acceptance as any)?.signature_image || null,
+        business: {
+          business_name: settings?.business_name || '',
+          address: businessAddress || undefined,
+          email: settings?.email || undefined,
+          phone: settings?.phone || undefined,
+          tax_number: settings?.tax_number || undefined,
+          logo_url: settings?.logo_url || undefined,
+        },
+        customer: {
+          name: customer?.name || '',
+          address: customerAddress || undefined,
+        },
+        items: (contractItems || []).map((i: any) => ({
+          title: i.title, description: i.description, quantity: i.quantity,
+          unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
+        })),
+        subtotal: contract.subtotal,
+        tax_total: contract.tax_total,
+        grand_total: contract.grand_total,
+        frequency: frequencyLabels[contract.frequency]?.[language] || contract.frequency,
+        startDate: formatDateDE(contract.start_date),
+        endDate: contract.end_date ? formatDateDE(contract.end_date) : null,
+        small_business_regulation: !!(settings as any)?.small_business_regulation,
+      });
+    } catch {
+      toast.error(t.common.error);
+    }
+  };
+
   const statusMap: Record<string, string> = {
     active: 'draft',
     gesendet: 'sent',
