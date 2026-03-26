@@ -131,6 +131,128 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_items: {
+        Row: {
+          contract_id: string
+          created_at: string
+          description: string | null
+          id: string
+          quantity: number
+          sort_order: number
+          tax_rate: number
+          title: string
+          total: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          quantity?: number
+          sort_order?: number
+          tax_rate?: number
+          title: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          quantity?: number
+          sort_order?: number
+          tax_rate?: number
+          title?: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          contract_number: string
+          created_at: string
+          customer_id: string
+          end_date: string | null
+          frequency: string
+          grand_total: number
+          id: string
+          notes: string | null
+          source_offer_id: string
+          start_date: string
+          status: string
+          subtotal: number
+          tax_total: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_number: string
+          created_at?: string
+          customer_id: string
+          end_date?: string | null
+          frequency?: string
+          grand_total?: number
+          id?: string
+          notes?: string | null
+          source_offer_id: string
+          start_date?: string
+          status?: string
+          subtotal?: number
+          tax_total?: number
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_number?: string
+          created_at?: string
+          customer_id?: string
+          end_date?: string | null
+          frequency?: string
+          grand_total?: number
+          id?: string
+          notes?: string | null
+          source_offer_id?: string
+          start_date?: string
+          status?: string
+          subtotal?: number
+          tax_total?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_source_offer_id_fkey"
+            columns: ["source_offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_extensions: {
         Row: {
           business_category: string
@@ -731,6 +853,7 @@ export type Database = {
           frequency: string
           id: string
           next_run_date: string
+          source_contract_id: string | null
           source_invoice_id: string
           start_date: string
           status: string
@@ -745,6 +868,7 @@ export type Database = {
           frequency?: string
           id?: string
           next_run_date?: string
+          source_contract_id?: string | null
           source_invoice_id: string
           start_date?: string
           status?: string
@@ -759,6 +883,7 @@ export type Database = {
           frequency?: string
           id?: string
           next_run_date?: string
+          source_contract_id?: string | null
           source_invoice_id?: string
           start_date?: string
           status?: string
@@ -771,6 +896,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_invoices_source_contract_id_fkey"
+            columns: ["source_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
           {
