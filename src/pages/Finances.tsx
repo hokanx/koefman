@@ -65,7 +65,7 @@ const Finances = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('business_settings')
-        .select('small_business_regulation, business_name')
+        .select('*')
         .eq('user_id', user!.id)
         .maybeSingle();
       return data;
