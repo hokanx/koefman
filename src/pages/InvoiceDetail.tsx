@@ -423,7 +423,7 @@ const InvoiceDetail = () => {
             )}
             <button onClick={() => { setEmailType('invoice'); setEmailOpen(true); }}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
-              <Mail className="h-4 w-4" /> {t.email.sendByEmail}
+              <Mail className="h-4 w-4" /> {t.email.prepareEmail}
             </button>
             {(currentStatus === 'open' || isOverdue) && reminders.length > 0 && (
               <button onClick={() => { setEmailType('reminder'); setEmailOpen(true); }}

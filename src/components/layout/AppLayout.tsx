@@ -76,7 +76,6 @@ const AppLayout = () => {
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          <LanguageSwitcher />
           <button
             onClick={handleSignOut}
             className="hidden rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground md:flex"
