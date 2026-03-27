@@ -21,6 +21,14 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   verarbeitet: { label: 'Verarbeitet', color: 'bg-success/15 text-success' },
 };
 
+// Extract storage path from file_url (handles both raw paths and full URLs)
+const getStoragePath = (fileUrl: string): string => {
+  if (fileUrl.includes('/client-documents/')) {
+    return fileUrl.split('/client-documents/').pop() || fileUrl;
+  }
+  return fileUrl; // already a raw path
+};
+
 const Documents = () => {
   const { user } = useAuth();
   const { effectiveUserId, isImpersonating, impersonatedUser } = useImpersonation();
