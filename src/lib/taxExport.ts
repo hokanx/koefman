@@ -1,7 +1,8 @@
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
-import { generatePdf, formatDateDE } from '@/lib/generatePdf';
+import { generatePdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
+import { formatDateDE, formatEUR, formatNumber } from '@/lib/utils';
 
 interface ExportOptions {
   userId: string;
@@ -146,9 +147,9 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
       inv.invoice_number,
       formatDateDE(inv.date),
       customer?.name || '',
-      fmt(inv.subtotal),
-      fmt(inv.tax_total),
-      fmt(inv.grand_total),
+      formatNumber(inv.subtotal),
+      formatNumber(inv.tax_total),
+      formatNumber(inv.grand_total),
       status,
       inv.status === 'paid' ? formatDateDE(inv.updated_at) : '',
     ];
@@ -174,11 +175,11 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
     `Erstellt am: ${formatDateDE(new Date())}`,
     ``,
     `Anzahl Rechnungen: ${relevantInvoices.length}`,
-    `Summe netto: ${fmtEur(totalNet)}`,
-    ...(isSmallBiz ? [] : [`Summe Umsatzsteuer: ${fmtEur(totalTax)}`]),
-    `Summe brutto: ${fmtEur(totalGross)}`,
-    `Bezahlt: ${fmtEur(paid)}`,
-    `Offen: ${fmtEur(open)}`,
+    `Summe netto: ${formatEUR(totalNet)}`,
+    ...(isSmallBiz ? [] : [`Summe Umsatzsteuer: ${formatEUR(totalTax)}`]),
+    `Summe brutto: ${formatEUR(totalGross)}`,
+    `Bezahlt: ${formatEUR(paid)}`,
+    `Offen: ${formatEUR(open)}`,
     ``,
     `Steuerstatus: ${isSmallBiz ? 'Kleinunternehmerregelung §19 UStG' : 'Umsatzsteuer aktiv'}`,
     ...(businessSettings?.tax_number ? [`Steuernummer: ${businessSettings.tax_number}`] : []),
@@ -188,12 +189,4 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
   zip.file('zusammenfassung.txt', summaryLines.join('\n'));
 
   return zip.generateAsync({ type: 'blob' });
-}
-
-function fmt(val: any): string {
-  return Number(val).toFixed(2).replace('.', ',');
-}
-
-function fmtEur(val: number): string {
-  return val.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }

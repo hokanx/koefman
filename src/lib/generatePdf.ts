@@ -79,17 +79,11 @@ interface PdfData {
 }
 
 const formatCurrency = (value: number): string => {
-  const formatted = value.toFixed(2).replace('.', ',');
-  return `${formatted} €`;
+  return value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 };
 
-export const formatDateDE = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}.${month}.${year}`;
-};
+// Re-export from central utils for backward compatibility
+export { formatDateDE } from '@/lib/utils';
 
 const formatIban = (iban: string): string => {
   const clean = iban.replace(/\s/g, '').toUpperCase();

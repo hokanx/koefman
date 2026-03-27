@@ -300,7 +300,7 @@ const Contracts = () => {
         date: formatDateDE(new Date()),
         signedByName: (acceptance as any)?.accepted_by_name || 'Unbekannt',
         signedAt: (acceptance as any)?.accepted_at
-          ? new Date((acceptance as any).accepted_at).toLocaleString('de-DE')
+          ? new Date((acceptance as any).accepted_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
           : 'Unbekannt',
         signatureImage: (acceptance as any)?.signature_image || null,
         business: {
