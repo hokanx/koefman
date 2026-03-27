@@ -252,10 +252,15 @@ const Documents = () => {
                           {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
                         </div>
                         <div className="flex shrink-0 gap-1">
-                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                          <button onClick={async () => {
+                              const path = getStoragePath(doc.file_url);
+                              const { data } = await supabase.storage.from('client-documents').createSignedUrl(path, 300);
+                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                              else toast.error('Download fehlgeschlagen');
+                            }}
                             className="rounded-md p-2 text-muted-foreground hover:text-foreground">
                             <Download className="h-4 w-4" />
-                          </a>
+                          </button>
                           <button onClick={() => { if (confirm('Beleg wirklich löschen?')) deleteMutation.mutate(doc); }}
                             className="rounded-md p-2 text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
