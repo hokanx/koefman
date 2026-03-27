@@ -102,6 +102,28 @@ const Contracts = () => {
         .eq('id', contract.customer_id)
         .single();
 
+      // Fetch signature data if contract is signed
+      let signatureData: { signedByName: string; signedAt: string; signatureImage: string | null } | undefined;
+      if (contract.status === 'unterzeichnet') {
+        const { data: acceptance } = await supabase
+          .from('contract_acceptances')
+          .select('*')
+          .eq('contract_id', contract.id)
+          .order('accepted_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (acceptance) {
+          signatureData = {
+            signedByName: (acceptance as any).accepted_by_name || 'Unbekannt',
+            signedAt: (acceptance as any).accepted_at
+              ? new Date((acceptance as any).accepted_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+              : 'Unbekannt',
+            signatureImage: (acceptance as any).signature_image || null,
+          };
+        }
+      }
+
       const businessAddress = settings ? formatAddress(settings as any) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
       const isSmallBiz = !!(settings as any)?.small_business_regulation;
@@ -141,6 +163,7 @@ const Contracts = () => {
         tax_total: contract.tax_total,
         grand_total: contract.grand_total,
         small_business_regulation: isSmallBiz,
+        signatureData,
         labels: {
           date: t.offers.date,
           quantity: t.offers.quantity,
