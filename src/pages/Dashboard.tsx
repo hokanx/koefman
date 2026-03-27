@@ -1,4 +1,4 @@
-import { Users, FileText, Receipt, Plus, ArrowRight, Inbox, RepeatIcon } from 'lucide-react';
+import { Users, FileText, Receipt, Plus, ArrowRight, Inbox, RepeatIcon, Upload, FilePlus } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -9,10 +9,31 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE } from '@/lib/generatePdf';
 import { Button } from '@/components/ui/button';
 
+type IndustryKey = 'cleaning' | 'garage' | 'consulting' | 'service' | 'web' | 'general';
+
+interface QuickAction {
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}
+
 const Dashboard = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const { data: businessCategory = 'general' } = useQuery({
+    queryKey: ['business-category'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('business_settings')
+        .select('business_category')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+      return (data?.business_category as IndustryKey) || 'general';
+    },
+    enabled: !!user,
+  });
 
   const { data: customerCount = 0 } = useQuery({
     queryKey: ['customer-count'],
@@ -126,6 +147,37 @@ const Dashboard = () => {
     enabled: !!user,
   });
 
+  // Industry-specific quick actions
+  const getQuickActions = (): QuickAction[] => {
+    const actions: Record<string, QuickAction> = {
+      newCustomer: { label: t.customers.newCustomer, icon: <Plus className="h-5 w-5 text-primary" />, onClick: () => navigate('/customers/new') },
+      newOffer: { label: t.offers.newOffer, icon: <Plus className="h-5 w-5 text-primary" />, onClick: () => navigate('/offers/new') },
+      newInvoice: { label: t.invoices.newInvoice, icon: <Plus className="h-5 w-5 text-primary" />, onClick: () => navigate('/invoices/new') },
+      newContract: { label: 'Vertrag erstellen', icon: <FilePlus className="h-5 w-5 text-primary" />, onClick: () => navigate('/contracts') },
+      uploadDoc: { label: 'Beleg hochladen', icon: <Upload className="h-5 w-5 text-primary" />, onClick: () => navigate('/documents') },
+    };
+
+    switch (businessCategory) {
+      case 'cleaning':
+        return [actions.newContract, actions.newCustomer, actions.uploadDoc];
+      case 'garage':
+        return [actions.newInvoice, actions.newCustomer, actions.newOffer];
+      case 'consulting':
+        return [actions.newOffer, actions.newInvoice, actions.newCustomer];
+      case 'service':
+        return [actions.newCustomer, actions.newOffer, actions.newInvoice];
+      case 'web':
+        return [actions.newContract, actions.newInvoice, actions.uploadDoc];
+      default:
+        return [actions.newCustomer, actions.newOffer, actions.newInvoice];
+    }
+  };
+
+  const quickActions = getQuickActions();
+
+  // Show recurring emphasis for cleaning/web
+  const showRecurringEmphasis = businessCategory === 'cleaning' || businessCategory === 'web';
+
   const todoItems = [
     {
       label: t.dashboard.overdueInvoices,
@@ -193,36 +245,42 @@ const Dashboard = () => {
         </button>
       )}
 
-      {/* Quick Actions */}
+      {/* Quick Actions — personalized by industry */}
       <div>
         <h2 className="mb-3 text-lg font-semibold text-foreground">{t.dashboard.quickActions}</h2>
         <div className="grid grid-cols-3 gap-2 md:gap-3">
-          <Button
-            variant="outline"
-            className="h-auto flex-col gap-1.5 py-4 text-xs md:text-sm"
-            onClick={() => navigate('/customers/new')}
-          >
-            <Plus className="h-5 w-5 text-primary" />
-            {t.customers.newCustomer}
-          </Button>
-          <Button
-            variant="outline"
-            className="h-auto flex-col gap-1.5 py-4 text-xs md:text-sm"
-            onClick={() => navigate('/offers/new')}
-          >
-            <Plus className="h-5 w-5 text-primary" />
-            {t.offers.newOffer}
-          </Button>
-          <Button
-            variant="outline"
-            className="h-auto flex-col gap-1.5 py-4 text-xs md:text-sm"
-            onClick={() => navigate('/invoices/new')}
-          >
-            <Plus className="h-5 w-5 text-primary" />
-            {t.invoices.newInvoice}
-          </Button>
+          {quickActions.map((action, i) => (
+            <Button
+              key={i}
+              variant="outline"
+              className="h-auto flex-col gap-1.5 py-4 text-xs md:text-sm"
+              onClick={action.onClick}
+            >
+              {action.icon}
+              {action.label}
+            </Button>
+          ))}
         </div>
       </div>
+
+      {/* Recurring emphasis for cleaning/web — shown before to-do */}
+      {showRecurringEmphasis && nextRecurring && (
+        <button
+          onClick={() => navigate('/recurring-invoices')}
+          className="w-full flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-left transition-colors hover:bg-primary/10"
+        >
+          <RepeatIcon className="h-5 w-5 text-primary shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">
+              {(t as any).recurring.upcomingRecurring}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {(nextRecurring as any).customer?.name} – {formatDateDE((nextRecurring as any).next_run_date)}
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
+      )}
 
       {/* To-Do / Actions */}
       {todoItems.length > 0 && (
@@ -291,8 +349,8 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Upcoming recurring */}
-      {nextRecurring && (
+      {/* Upcoming recurring — for non-emphasized industries, show at bottom */}
+      {!showRecurringEmphasis && nextRecurring && (
         <button
           onClick={() => navigate('/recurring-invoices')}
           className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/50"
