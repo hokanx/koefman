@@ -111,7 +111,7 @@ const Login = () => {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/landing')}
+              onClick={() => navigate('/intake/public')}
               className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Jetzt starten
