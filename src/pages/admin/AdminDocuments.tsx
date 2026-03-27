@@ -318,10 +318,15 @@ const AdminDocuments = () => {
                             </div>
                             {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
                           </div>
-                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                          <button onClick={async () => {
+                              const path = getStoragePath(doc.file_url);
+                              const { data } = await supabase.storage.from('client-documents').createSignedUrl(path, 300);
+                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                              else toast.error('Download fehlgeschlagen');
+                            }}
                             className="rounded-md p-2 text-muted-foreground hover:text-foreground shrink-0">
                             <Download className="h-4 w-4" />
-                          </a>
+                          </button>
                         </div>
                         {/* Admin controls */}
                         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2">
