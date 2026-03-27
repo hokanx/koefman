@@ -155,6 +155,21 @@ const Dashboard = () => {
 
   return (
     <div className="animate-fade-in p-4 md:p-6 space-y-6">
+      {/* Welcome hint for new users */}
+      {customerCount === 0 && offerCount === 0 && invoiceCounts.total === 0 && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 space-y-2">
+          <h2 className="text-base font-semibold text-foreground">👋 Willkommen bei KÖFMAN!</h2>
+          <p className="text-sm text-muted-foreground">
+            Starten Sie am besten so:
+          </p>
+          <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+            <li>Legen Sie Ihren <button onClick={() => navigate('/customers/new')} className="text-primary font-medium hover:underline">ersten Kunden</button> an</li>
+            <li>Erstellen Sie ein <button onClick={() => navigate('/offers/new')} className="text-primary font-medium hover:underline">Angebot</button></li>
+            <li>Laden Sie Ihre <button onClick={() => navigate('/documents')} className="text-primary font-medium hover:underline">Belege hoch</button></li>
+          </ol>
+        </div>
+      )}
+
       {/* New Leads Alert */}
       {newLeadsCount > 0 && (
         <button

@@ -27,7 +27,7 @@ const Login = () => {
     if (isSignup) {
       const { error } = await signUp(email, password);
       if (error) setError(error);
-      else setMessage('Check your email to confirm your account.');
+      else setMessage('Bitte bestätigen Sie Ihre E-Mail-Adresse, um fortzufahren.');
     } else {
       const { error } = await signIn(email, password);
       if (error) setError(t.auth.loginError);
