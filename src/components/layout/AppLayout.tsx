@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, FileStack, MoreHorizontal, Sun, Moon, RepeatIcon, ScrollText, PiggyBank } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, FileStack, MoreHorizontal, Sun, Moon, RepeatIcon, ScrollText, PiggyBank, FolderOpen, Shield } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import NotificationBell from '@/components/shared/NotificationBell';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import {
   Sheet,
   SheetContent,
@@ -18,6 +27,8 @@ const AppLayout = () => {
   const { t } = useLanguage();
   const { signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { isImpersonating, impersonatedUser, stopImpersonation } = useImpersonation();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -48,6 +59,7 @@ const AppLayout = () => {
     { to: '/contracts', icon: ScrollText, label: (t as any).contracts?.title || 'Verträge', badge: 0 },
     { to: '/recurring-invoices', icon: RepeatIcon, label: (t as any).recurring?.title || 'Wiederkehrend', badge: 0 },
     { to: '/finances', icon: PiggyBank, label: (t as any).finances?.title || 'Steuer & Finanzen', badge: 0 },
+    { to: '/documents', icon: FolderOpen, label: 'Belege & Dokumente', badge: 0 },
     { to: '/templates', icon: FileStack, label: t.nav.templates, badge: 0 },
     { to: '/settings', icon: Settings, label: t.nav.settings, badge: 0 },
   ];
@@ -63,12 +75,32 @@ const AppLayout = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      {/* Impersonation banner */}
+      {isImpersonating && (
+        <div className="sticky top-0 z-[60] flex items-center justify-between bg-destructive px-4 py-2 text-sm text-destructive-foreground">
+          <span>Admin-Ansicht: <strong>{impersonatedUser?.businessName}</strong></span>
+          <button onClick={() => { stopImpersonation(); navigate('/admin/clients'); }} className="rounded-md bg-destructive-foreground/20 px-3 py-1 text-xs font-medium hover:bg-destructive-foreground/30">
+            Beenden
+          </button>
+        </div>
+      )}
+
       {/* Top header */}
-      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4">
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4" style={isImpersonating ? { top: '40px' } : undefined}>
         <div className="flex items-center gap-2">
           <img src="/logo-koefman.jpeg" alt="KÖFMAN" className="h-8 w-auto" />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          {isAdmin && !isImpersonating && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+              title="Admin"
+            >
+              <Shield className="h-4 w-4" />
+            </button>
+          )}
           <button
             onClick={toggleTheme}
             className="rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
