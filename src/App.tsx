@@ -30,6 +30,7 @@ import PublicContractView from "@/pages/PublicContractView";
 import RecurringInvoices from "@/pages/RecurringInvoices";
 import Contracts from "@/pages/Contracts";
 import Finances from "@/pages/Finances";
+import Onboarding from "@/pages/Onboarding";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
