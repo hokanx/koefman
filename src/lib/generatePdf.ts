@@ -774,6 +774,12 @@ interface ContractPdfData {
   grand_total: number;
   small_business_regulation?: boolean;
   closing_text?: string;
+  // Signature data for signed contracts
+  signatureData?: {
+    signedByName: string;
+    signedAt: string; // formatted timestamp
+    signatureImage: string | null;
+  };
   labels: {
     date: string;
     quantity: string;
@@ -1133,34 +1139,104 @@ export const generateContractPdf = async (data: ContractPdfData, returnBase64 = 
   // ============================================================
   // SIGNATURE AREA
   // ============================================================
-  y = checkPageBreak(y, 40);
+  if (data.signatureData) {
+    // ── SIGNED VERSION ──
+    y = checkPageBreak(y, 60);
 
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(80, 80, 80);
-  doc.text(`${data.labels.signaturePlace}, ${data.labels.signatureDateLabel}`, margin, y);
-  y += 14;
+    // Digital signature notice
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 120, 60);
+    doc.text('✓ Digital unterzeichnet', margin, y);
+    y += 6;
 
-  // Two-column signatures
-  const colWidth = (contentWidth - 20) / 2;
-  const leftCol = margin;
-  const rightCol = margin + colWidth + 20;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(`Unterzeichnet von: ${data.signatureData.signedByName}`, margin, y);
+    y += 5;
+    doc.text(`Digital unterzeichnet am: ${data.signatureData.signedAt}`, margin, y);
+    y += 8;
 
-  // Signature lines
-  doc.setDrawColor(120, 120, 120);
-  doc.setLineWidth(0.3);
-  doc.line(leftCol, y, leftCol + colWidth, y);
-  doc.line(rightCol, y, rightCol + colWidth, y);
-  y += 4;
+    // Two-column: Contractor (left) + Client signature (right)
+    const colWidth = (contentWidth - 20) / 2;
+    const leftCol = margin;
+    const rightCol = margin + colWidth + 20;
 
-  doc.setFontSize(8);
-  doc.setTextColor(100, 100, 100);
-  doc.text(data.labels.signatureContractor, leftCol, y);
-  doc.text(data.labels.signatureClient, rightCol, y);
-  y += 3;
-  doc.setFontSize(7.5);
-  doc.text(data.business.business_name, leftCol, y);
-  doc.text(data.customer.name, rightCol, y);
+    // Contractor side
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(data.labels.signatureContractor, leftCol, y);
+    y += 4;
+    doc.setFontSize(8.5);
+    doc.setTextColor(30, 30, 30);
+    doc.text(data.business.business_name, leftCol, y);
+    if (data.business.owner_name) {
+      doc.setFontSize(7.5);
+      doc.text(data.business.owner_name, leftCol, y + 4);
+    }
+
+    // Client side with signature image
+    const sigStartY = y - 4;
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(data.labels.signatureClient, rightCol, sigStartY);
+
+    if (data.signatureData.signatureImage) {
+      try {
+        const sigImg = await loadImage(data.signatureData.signatureImage);
+        if (sigImg) {
+          const maxW = colWidth;
+          const maxH = 20;
+          const ratio = Math.min(maxW / sigImg.width, maxH / sigImg.height);
+          const w = sigImg.width * ratio;
+          const h = sigImg.height * ratio;
+          doc.addImage(sigImg, 'PNG', rightCol, sigStartY + 2, w, h);
+          y = Math.max(y, sigStartY + 2 + h + 2);
+        }
+      } catch {
+        // fallback: just show name
+      }
+    }
+
+    // Signature line under client signature
+    y += 2;
+    doc.setDrawColor(120, 120, 120);
+    doc.setLineWidth(0.3);
+    doc.line(rightCol, y, rightCol + colWidth, y);
+    y += 4;
+    doc.setFontSize(7.5);
+    doc.setTextColor(80, 80, 80);
+    doc.text(data.signatureData.signedByName, rightCol, y);
+  } else {
+    // ── UNSIGNED VERSION (blank placeholders) ──
+    y = checkPageBreak(y, 40);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text(`${data.labels.signaturePlace}, ${data.labels.signatureDateLabel}`, margin, y);
+    y += 14;
+
+    const colWidth = (contentWidth - 20) / 2;
+    const leftCol = margin;
+    const rightCol = margin + colWidth + 20;
+
+    doc.setDrawColor(120, 120, 120);
+    doc.setLineWidth(0.3);
+    doc.line(leftCol, y, leftCol + colWidth, y);
+    doc.line(rightCol, y, rightCol + colWidth, y);
+    y += 4;
+
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(data.labels.signatureContractor, leftCol, y);
+    doc.text(data.labels.signatureClient, rightCol, y);
+    y += 3;
+    doc.setFontSize(7.5);
+    doc.text(data.business.business_name, leftCol, y);
+    doc.text(data.customer.name, rightCol, y);
+  }
 
   // ============================================================
   // PAGE FOOTER
