@@ -7,6 +7,14 @@ import { FileText, Download, Search, Send, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import JSZip from 'jszip';
 
+// Extract storage path from file_url (handles both raw paths and full URLs)
+const getStoragePath = (fileUrl: string): string => {
+  if (fileUrl.includes('/client-documents/')) {
+    return fileUrl.split('/client-documents/').pop() || fileUrl;
+  }
+  return fileUrl;
+};
+
 const CATEGORIES = [
   { value: 'einnahmen', label: 'Einnahme', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
   { value: 'ausgaben', label: 'Ausgabe', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
@@ -119,9 +127,11 @@ const AdminDocuments = () => {
       const zip = new JSZip();
       for (const doc of documents as any[]) {
         try {
-          const resp = await fetch(doc.file_url);
-          const blob = await resp.blob();
-          zip.file(doc.file_name, blob);
+          const path = getStoragePath(doc.file_url);
+          const { data } = await supabase.storage.from('client-documents').download(path);
+          if (data) {
+            zip.file(doc.file_name, data);
+          }
         } catch { /* skip failed */ }
       }
       const content = await zip.generateAsync({ type: 'blob' });
