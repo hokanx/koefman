@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import LeadIntakeModal from '@/components/landing/LeadIntakeModal';
 import {
   FileText, Upload, Users, Shield, Clock, ArrowRight,
   CheckCircle2, Star, Zap, HeartHandshake, ChevronRight,
