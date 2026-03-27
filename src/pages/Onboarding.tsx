@@ -3,17 +3,117 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Building2, Receipt, FileText, Sparkles, ArrowRight, ArrowLeft, Check, Plus, Trash2 } from 'lucide-react';
+import {
+  Building2, Receipt, FileText, Sparkles, ArrowRight, ArrowLeft, Check, Plus, Trash2,
+  Droplets, Wrench, BriefcaseBusiness, HeadsetIcon, Globe, MoreHorizontal,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 interface ServiceItem {
   name: string;
   price: string;
 }
+
+type IndustryKey = 'cleaning' | 'garage' | 'consulting' | 'service' | 'web' | 'general';
+
+interface IndustryOption {
+  key: IndustryKey;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const INDUSTRIES: IndustryOption[] = [
+  { key: 'cleaning', label: 'Gebäudereinigung', description: 'Reinigung, Hausmeister, Facility', icon: <Droplets className="h-5 w-5" /> },
+  { key: 'garage', label: 'Kfz / Werkstatt', description: 'Reparatur, Wartung, Service', icon: <Wrench className="h-5 w-5" /> },
+  { key: 'consulting', label: 'Beratung', description: 'Coaching, Consulting, Agentur', icon: <BriefcaseBusiness className="h-5 w-5" /> },
+  { key: 'service', label: 'Kundenservice / Termine', description: 'Dienstleistung, Termine, Support', icon: <HeadsetIcon className="h-5 w-5" /> },
+  { key: 'web', label: 'Website / Domain / Betreuung', description: 'Webdesign, Hosting, IT', icon: <Globe className="h-5 w-5" /> },
+  { key: 'general', label: 'Sonstiges', description: 'Andere Branche', icon: <MoreHorizontal className="h-5 w-5" /> },
+];
+
+const INDUSTRY_DEFAULTS: Record<IndustryKey, {
+  services: ServiceItem[];
+  offerIntro: string;
+  offerFooter: string;
+  invoiceIntro: string;
+  invoiceFooter: string;
+  closingText: string;
+}> = {
+  cleaning: {
+    services: [
+      { name: 'Unterhaltsreinigung', price: '35' },
+      { name: 'Grundreinigung', price: '120' },
+      { name: 'Fensterreinigung', price: '50' },
+    ],
+    offerIntro: 'Sehr geehrte Damen und Herren,\n\ngerne bieten wir Ihnen die folgenden Reinigungsleistungen an:',
+    offerFooter: 'Dieses Angebot ist 14 Tage gültig.',
+    invoiceIntro: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Reinigungsleistungen erlauben wir uns, wie folgt abzurechnen:',
+    invoiceFooter: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
+    closingText: 'Mit freundlichen Grüßen',
+  },
+  garage: {
+    services: [
+      { name: 'Inspektion', price: '149' },
+      { name: 'Ölwechsel', price: '69' },
+      { name: 'Reifenwechsel (4 Reifen)', price: '40' },
+    ],
+    offerIntro: 'Sehr geehrte Damen und Herren,\n\ngerne bieten wir Ihnen die folgenden Werkstattleistungen an:',
+    offerFooter: 'Dieses Angebot ist 14 Tage gültig.',
+    invoiceIntro: 'Sehr geehrte Damen und Herren,\n\nfür die durchgeführten Arbeiten an Ihrem Fahrzeug erlauben wir uns, wie folgt abzurechnen:',
+    invoiceFooter: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
+    closingText: 'Mit freundlichen Grüßen',
+  },
+  consulting: {
+    services: [
+      { name: 'Beratungsstunde', price: '120' },
+      { name: 'Workshop (halber Tag)', price: '450' },
+      { name: 'Projektpauschale', price: '1500' },
+    ],
+    offerIntro: 'Sehr geehrte Damen und Herren,\n\ngerne unterbreiten wir Ihnen folgendes Angebot für unsere Beratungsleistungen:',
+    offerFooter: 'Dieses Angebot ist 14 Tage gültig.',
+    invoiceIntro: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Beratungsleistungen stellen wir Ihnen wie folgt in Rechnung:',
+    invoiceFooter: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
+    closingText: 'Mit freundlichen Grüßen',
+  },
+  service: {
+    services: [
+      { name: 'Servicepauschale', price: '50' },
+      { name: 'Termingebühr', price: '30' },
+    ],
+    offerIntro: 'Sehr geehrte Damen und Herren,\n\ngerne bieten wir Ihnen folgende Dienstleistungen an:',
+    offerFooter: 'Dieses Angebot ist 14 Tage gültig.',
+    invoiceIntro: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Dienstleistungen erlauben wir uns, wie folgt abzurechnen:',
+    invoiceFooter: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
+    closingText: 'Mit freundlichen Grüßen',
+  },
+  web: {
+    services: [
+      { name: 'Website-Erstellung', price: '1200' },
+      { name: 'Monatliche Betreuung', price: '99' },
+      { name: 'Domain & Hosting (jährlich)', price: '120' },
+    ],
+    offerIntro: 'Sehr geehrte Damen und Herren,\n\ngerne bieten wir Ihnen folgende Leistungen im Bereich Web & IT an:',
+    offerFooter: 'Dieses Angebot ist 14 Tage gültig.',
+    invoiceIntro: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen im Bereich Web & IT erlauben wir uns, wie folgt abzurechnen:',
+    invoiceFooter: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
+    closingText: 'Mit freundlichen Grüßen',
+  },
+  general: {
+    services: [
+      { name: '', price: '' },
+    ],
+    offerIntro: 'Sehr geehrte Damen und Herren,\n\nwir bieten Ihnen die nachfolgend aufgeführten Leistungen zu den genannten Konditionen an:',
+    offerFooter: 'Dieses Angebot ist 14 Tage gültig.',
+    invoiceIntro: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:',
+    invoiceFooter: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
+    closingText: 'Mit freundlichen Grüßen',
+  },
+};
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -21,7 +121,10 @@ const Onboarding = () => {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
 
-  // Step 2 — Unternehmen
+  // Step 2 — Branche
+  const [industry, setIndustry] = useState<IndustryKey>('general');
+
+  // Step 3 — Unternehmen
   const [business, setBusiness] = useState({
     business_name: '',
     owner_name: '',
@@ -33,11 +136,11 @@ const Onboarding = () => {
     phone: '',
   });
 
-  // Step 3 — Steuern
+  // Step 4 — Steuern
   const [taxMode, setTaxMode] = useState<'klein' | 'ust'>('klein');
   const [taxRate, setTaxRate] = useState('19');
 
-  // Step 4 — Rechnungen
+  // Step 5 — Rechnungen
   const [payment, setPayment] = useState({
     payment_terms: 'Zahlbar innerhalb von 14 Tagen ohne Abzug.',
     iban: '',
@@ -45,14 +148,24 @@ const Onboarding = () => {
     bank_name: '',
   });
 
-  // Step 5 — Leistungen
-  const [services, setServices] = useState<ServiceItem[]>([
-    { name: '', price: '' },
-  ]);
+  // Step 6 — Leistungen (seeded from industry)
+  const [services, setServices] = useState<ServiceItem[]>([{ name: '', price: '' }]);
+  const [servicesSynced, setServicesSynced] = useState(false);
 
   const progress = (step / TOTAL_STEPS) * 100;
 
-  const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
+  const next = () => {
+    const nextStep = Math.min(step + 1, TOTAL_STEPS);
+    // Seed services from industry defaults when entering step 6
+    if (nextStep === 6 && !servicesSynced) {
+      const defaults = INDUSTRY_DEFAULTS[industry];
+      if (defaults.services.length > 0 && defaults.services[0].name) {
+        setServices(defaults.services.map(s => ({ ...s })));
+      }
+      setServicesSynced(true);
+    }
+    setStep(nextStep);
+  };
   const prev = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleFinish = async () => {
@@ -60,8 +173,10 @@ const Onboarding = () => {
     setSaving(true);
 
     try {
-      // Save business settings
       const isKlein = taxMode === 'klein';
+      const defaults = INDUSTRY_DEFAULTS[industry];
+      const kleinFooter = isKlein ? '\n\nGemäß §19 UStG wird keine Umsatzsteuer berechnet.' : '';
+
       const { error: settingsError } = await supabase
         .from('business_settings')
         .upsert({
@@ -82,13 +197,12 @@ const Onboarding = () => {
           bic: payment.bic,
           bank_name: payment.bank_name,
           account_holder: business.owner_name,
-          default_offer_intro_text: 'Sehr geehrte Damen und Herren,\n\nwir bieten Ihnen die nachfolgend aufgeführten Leistungen zu den genannten Konditionen an:',
-          default_offer_footer_text: isKlein
-            ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.\n\nDieses Angebot ist 14 Tage gültig.'
-            : 'Dieses Angebot ist 14 Tage gültig.',
-          default_invoice_intro_text: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:',
-          default_invoice_footer_text: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
-          default_closing_text: 'Mit freundlichen Grüßen',
+          business_category: industry,
+          default_offer_intro_text: defaults.offerIntro,
+          default_offer_footer_text: defaults.offerFooter + kleinFooter,
+          default_invoice_intro_text: defaults.invoiceIntro,
+          default_invoice_footer_text: defaults.invoiceFooter,
+          default_closing_text: defaults.closingText,
         }, { onConflict: 'user_id' });
 
       if (settingsError) throw settingsError;
@@ -175,8 +289,55 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* STEP 2 — Unternehmen */}
+          {/* STEP 2 — Branche */}
           {step === 2 && (
+            <div className="space-y-5">
+              <div className="text-center">
+                <h2 className="text-lg font-semibold text-foreground">Was passt am besten zu Ihrem Unternehmen?</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Wir passen die Einrichtung an Ihre Branche an.</p>
+              </div>
+
+              <div className="space-y-2">
+                {INDUSTRIES.map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setIndustry(opt.key)}
+                    className={`flex w-full items-center gap-3 rounded-xl border p-3.5 text-left transition-colors ${
+                      industry === opt.key
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border bg-card hover:bg-accent'
+                    }`}
+                  >
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                      industry === opt.key ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {opt.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground text-sm">{opt.label}</p>
+                      <p className="text-xs text-muted-foreground">{opt.description}</p>
+                    </div>
+                    {industry === opt.key && (
+                      <Check className="ml-auto h-4 w-4 shrink-0 text-primary" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={prev} className="flex-1">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Zurück
+                </Button>
+                <Button onClick={next} className="flex-1">
+                  Weiter <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 — Unternehmen */}
+          {step === 3 && (
             <div className="space-y-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -214,8 +375,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* STEP 3 — Steuern */}
-          {step === 3 && (
+          {/* STEP 4 — Steuern */}
+          {step === 4 && (
             <div className="space-y-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -283,8 +444,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* STEP 4 — Rechnungen */}
-          {step === 4 && (
+          {/* STEP 5 — Rechnungen */}
+          {step === 5 && (
             <div className="space-y-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -323,8 +484,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* STEP 5 — Leistungen */}
-          {step === 5 && (
+          {/* STEP 6 — Leistungen */}
+          {step === 6 && (
             <div className="space-y-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -332,7 +493,11 @@ const Onboarding = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">Deine Leistungen</h2>
-                  <p className="text-sm text-muted-foreground">Erstelle Vorlagen für häufige Leistungen</p>
+                  <p className="text-sm text-muted-foreground">
+                    {industry !== 'general'
+                      ? 'Wir haben Vorschläge für Ihre Branche vorbereitet – passen Sie diese gerne an.'
+                      : 'Erstelle Vorlagen für häufige Leistungen'}
+                  </p>
                 </div>
               </div>
 
@@ -381,8 +546,8 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* STEP 6 — Abschluss */}
-          {step === 6 && (
+          {/* STEP 7 — Abschluss */}
+          {step === 7 && (
             <div className="space-y-6 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
                 <Check className="h-8 w-8 text-primary" />
