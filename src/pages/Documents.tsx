@@ -53,9 +53,10 @@ const Documents = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (doc: { id: string; file_url: string }) => {
-      const urlParts = doc.file_url.split('/client-documents/');
-      if (urlParts[1]) {
-        await supabase.storage.from('client-documents').remove([urlParts[1]]);
+      // file_url stores the storage path (e.g. "userId/timestamp.ext")
+      const storagePath = getStoragePath(doc.file_url);
+      if (storagePath) {
+        await supabase.storage.from('client-documents').remove([storagePath]);
       }
       const { error } = await supabase.from('documents').delete().eq('id', doc.id);
       if (error) throw error;
@@ -87,12 +88,10 @@ const Documents = () => {
       const { error: uploadError } = await supabase.storage.from('client-documents').upload(path, file);
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from('client-documents').getPublicUrl(path);
-
       const { error: insertError } = await supabase.from('documents').insert({
         user_id: targetUserId,
         file_name: file.name,
-        file_url: urlData.publicUrl,
+        file_url: path,
         file_size: file.size,
         mime_type: file.type,
         category,
