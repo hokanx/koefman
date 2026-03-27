@@ -258,12 +258,12 @@ const Documents = () => {
                               if (data?.signedUrl) window.open(data.signedUrl, '_blank');
                               else toast.error('Download fehlgeschlagen');
                             }}
-                            className="rounded-md p-2 text-muted-foreground hover:text-foreground">
-                            <Download className="h-4 w-4" />
+                            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground">
+                            <Download className="h-5 w-5" />
                           </button>
                           <button onClick={() => { if (confirm('Beleg wirklich löschen?')) deleteMutation.mutate(doc); }}
-                            className="rounded-md p-2 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
+                            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       </div>
