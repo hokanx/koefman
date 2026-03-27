@@ -439,6 +439,7 @@ export type Database = {
       }
       documents: {
         Row: {
+          admin_note: string | null
           category: string
           created_at: string
           description: string | null
@@ -447,9 +448,11 @@ export type Database = {
           file_url: string
           id: string
           mime_type: string | null
+          status: string
           user_id: string
         }
         Insert: {
+          admin_note?: string | null
           category?: string
           created_at?: string
           description?: string | null
@@ -458,9 +461,11 @@ export type Database = {
           file_url: string
           id?: string
           mime_type?: string | null
+          status?: string
           user_id: string
         }
         Update: {
+          admin_note?: string | null
           category?: string
           created_at?: string
           description?: string | null
@@ -469,6 +474,7 @@ export type Database = {
           file_url?: string
           id?: string
           mime_type?: string | null
+          status?: string
           user_id?: string
         }
         Relationships: []
