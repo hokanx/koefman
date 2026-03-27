@@ -43,6 +43,7 @@ import AdminWorkspaces from "@/pages/admin/AdminWorkspaces";
 import AdminClients from "@/pages/admin/AdminClients";
 import AdminDocuments from "@/pages/admin/AdminDocuments";
 import AdminTemplates from "@/pages/admin/AdminTemplates";
+import LandingPage from "@/pages/LandingPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,7 +58,7 @@ const AppWithImpersonation = () => {
           <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/pending" element={<ProtectedRoute><PendingActivation /></ProtectedRoute>} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route path="/admin" element={<AdminDashboard />} />
