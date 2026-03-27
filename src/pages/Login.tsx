@@ -48,6 +48,7 @@ const Login = () => {
           <h2 className="text-lg font-semibold text-foreground">
             {isSignup ? t.auth.signup : t.auth.login}
           </h2>
+          <p className="text-xs text-muted-foreground -mt-2">Willkommen bei KÖFMAN – Ihr digitales Büromanagement.</p>
 
           {error && (
             <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
@@ -96,6 +97,27 @@ const Login = () => {
             </button>
           </p>
         </form>
+
+        <div className="rounded-xl border border-border bg-card p-5 text-center space-y-3">
+          <p className="text-sm font-medium text-foreground">Neu bei KÖFMAN?</p>
+          <p className="text-xs text-muted-foreground">Digitales Büromanagement mit persönlicher Betreuung – einfach, strukturiert und zeitsparend.</p>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/landing')}
+              className="w-full rounded-lg border border-border py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              Mehr erfahren
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/landing')}
+              className="w-full rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Jetzt starten
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
