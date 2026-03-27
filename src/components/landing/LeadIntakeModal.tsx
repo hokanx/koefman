@@ -102,11 +102,11 @@ const LeadIntakeModal = ({ open, onOpenChange }: LeadIntakeModalProps) => {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-md">
-          <div className="flex flex-col items-center text-center py-6">
+          <div className="flex flex-col items-center text-center py-8 px-4">
             <CheckCircle2 className="w-14 h-14 text-primary mb-4" />
-            <h2 className="text-xl font-bold mb-2">Anfrage gesendet!</h2>
+            <h2 className="text-xl font-bold mb-2">Vielen Dank!</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
-              Vielen Dank, {name}! Wir melden uns in Kürze bei dir.
+              Ihre Anfrage wurde erfolgreich gesendet. Wir melden uns in Kürze bei Ihnen.
             </p>
             <Button className="mt-6" onClick={() => handleClose(false)}>Schließen</Button>
           </div>
