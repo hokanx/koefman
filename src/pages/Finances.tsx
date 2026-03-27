@@ -285,17 +285,30 @@ const Finances = () => {
       </div>
 
       {/* Export Actions */}
-      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+      <div className="rounded-xl border border-border bg-card p-4 space-y-4">
         <h2 className="font-semibold text-foreground">{fin?.exportTitle || 'Export'}</h2>
         <p className="text-sm text-muted-foreground">{fin?.exportDesc || 'Finanzübersicht und Rechnungsdaten für den gewählten Zeitraum exportieren.'}</p>
+
+        {/* Primary: Steuerberater Export */}
+        <Button
+          className="w-full justify-start gap-2"
+          onClick={handleTaxExport}
+          disabled={exporting}
+        >
+          <FileArchive className="h-4 w-4" />
+          <div className="flex flex-col items-start text-left">
+            <span>{exporting ? exportProgress : 'Unterlagen für Steuerberater exportieren'}</span>
+            <span className="text-xs font-normal opacity-75">
+              Rechnungen, Angebote, CSV & Zusammenfassung als ZIP
+            </span>
+          </div>
+        </Button>
+
+        {/* Secondary actions */}
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleCsvExport}>
-            <Download className="h-4 w-4 mr-1" />
-            {fin?.exportCsv || 'CSV-Übersicht exportieren'}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleTaxExport} disabled={exporting}>
-            <FileArchive className="h-4 w-4 mr-1" />
-            {exporting ? 'Wird erstellt…' : (fin?.exportTaxAdvisor || 'Unterlagen für Steuerberater')}
+            <FileText className="h-4 w-4 mr-1" />
+            Nur CSV exportieren
           </Button>
         </div>
       </div>
