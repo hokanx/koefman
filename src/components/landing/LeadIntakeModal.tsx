@@ -73,14 +73,6 @@ const LeadIntakeModal = ({ open, onOpenChange }: LeadIntakeModalProps) => {
         email, phone: phone || null,
       });
       if (error) throw error;
-
-      // Prepare email via mailto
-      const subject = encodeURIComponent('KÖFMAN – Deine Anfrage');
-      const body = encodeURIComponent(
-        `Hallo ${name},\n\nvielen Dank für deine Anfrage bei KÖFMAN!\n\nWir haben deine Informationen erhalten und melden uns in Kürze bei dir, um alles Weitere zu besprechen.\n\nFirma: ${company}\nBranche: ${INDUSTRIES.find(i => i.value === industry)?.label || industry}\n\nBei Fragen erreichst du uns jederzeit.\n\nViele Grüße\nDein KÖFMAN Team`
-      );
-      window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_self');
-
       setDone(true);
     } catch {
       alert('Fehler beim Senden. Bitte versuche es erneut.');
