@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download, FileArchive } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
-import { formatEUR } from '@/lib/utils';
+import { formatEUR, formatNumber, formatDateDE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { generateTaxExportZip } from '@/lib/taxExport';
 import { toast } from 'sonner';
@@ -153,26 +153,26 @@ const Finances = () => {
     const header = ['Rechnungsnummer', 'Datum', 'Fällig', 'Status', 'Netto', 'USt', 'Brutto'];
     const rows = relevant.map((inv) => [
       inv.invoice_number,
-      inv.date,
-      inv.due_date,
+      formatDateDE(inv.date),
+      formatDateDE(inv.due_date),
       inv.status,
-      Number(inv.subtotal).toFixed(2).replace('.', ','),
-      Number(inv.tax_total).toFixed(2).replace('.', ','),
-      Number(inv.grand_total).toFixed(2).replace('.', ','),
+      formatNumber(Number(inv.subtotal)),
+      formatNumber(Number(inv.tax_total)),
+      formatNumber(Number(inv.grand_total)),
     ]);
 
     // Summary rows
     rows.push([]);
     rows.push(['Zusammenfassung', '', '', '', '', '', '']);
     rows.push(['Anzahl Rechnungen', '', '', '', '', '', String(stats.countAll)]);
-    rows.push(['Summe netto', '', '', '', '', '', stats.totalNet.toFixed(2).replace('.', ',')]);
+    rows.push(['Summe netto', '', '', '', '', '', formatNumber(stats.totalNet)]);
     if (!isSmallBiz) {
-      rows.push(['Summe USt', '', '', '', '', '', stats.totalTax.toFixed(2).replace('.', ',')]);
+      rows.push(['Summe USt', '', '', '', '', '', formatNumber(stats.totalTax)]);
     }
-    rows.push(['Summe brutto', '', '', '', '', '', stats.totalGross.toFixed(2).replace('.', ',')]);
-    rows.push(['Bezahlt', '', '', '', '', '', stats.paid.toFixed(2).replace('.', ',')]);
-    rows.push(['Offen', '', '', '', '', '', stats.open.toFixed(2).replace('.', ',')]);
-    rows.push(['Überfällig', '', '', '', '', '', stats.overdue.toFixed(2).replace('.', ',')]);
+    rows.push(['Summe brutto', '', '', '', '', '', formatNumber(stats.totalGross)]);
+    rows.push(['Bezahlt', '', '', '', '', '', formatNumber(stats.paid)]);
+    rows.push(['Offen', '', '', '', '', '', formatNumber(stats.open)]);
+    rows.push(['Überfällig', '', '', '', '', '', formatNumber(stats.overdue)]);
     if (isSmallBiz) {
       rows.push(['Steuermodus', '', '', '', '', '', 'Kleinunternehmerregelung §19 UStG']);
     } else {
