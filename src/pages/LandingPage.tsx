@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import LeadIntakeModal from '@/components/landing/LeadIntakeModal';
@@ -11,7 +12,12 @@ import {
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [intakeOpen, setIntakeOpen] = useState(false);
+
+  useEffect(() => {
+    if (!loading && user) navigate('/dashboard', { replace: true });
+  }, [user, loading, navigate]);
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* NAV */}
