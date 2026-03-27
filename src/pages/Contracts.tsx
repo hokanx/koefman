@@ -197,6 +197,16 @@ const Contracts = () => {
       return;
     }
     try {
+      // Check if recurring already exists for this contract
+      const { data: existingRecurring } = await supabase
+        .from('recurring_invoices')
+        .select('id')
+        .eq('source_contract_id', contract.id)
+        .maybeSingle();
+      if (existingRecurring) {
+        toast.error('Wiederkehrende Rechnungen wurden bereits für diesen Vertrag aktiviert.');
+        return;
+      }
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
       const prefix = settings?.invoice_number_prefix || 'RE-';
       const { data: contractItems } = await supabase.from('contract_items').select('*').eq('contract_id', contract.id).order('sort_order');
@@ -454,7 +464,7 @@ const Contracts = () => {
                   </Button>
                 )}
                 {c.status === 'paused' && (
-                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'active' })}>
+                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'unterzeichnet' })}>
                     <Play className="h-3.5 w-3.5 mr-1" /> {ct.resume}
                   </Button>
                 )}
