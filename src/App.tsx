@@ -59,7 +59,8 @@ const AppWithImpersonation = () => {
           <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/pending" element={<ProtectedRoute><PendingActivation /></ProtectedRoute>} />
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<Login />} />
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route path="/admin" element={<AdminDashboard />} />

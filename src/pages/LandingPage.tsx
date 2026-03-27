@@ -24,7 +24,7 @@ const LandingPage = () => {
             <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
               Anmelden
             </Button>
-            <Button size="sm" onClick={() => navigate('/login')}>
+            <Button size="sm" onClick={() => setIntakeOpen(true)}>
               Jetzt starten
             </Button>
           </div>
