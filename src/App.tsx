@@ -6,8 +6,11 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import AdminRoute from "@/components/shared/AdminRoute";
 import AppLayout from "@/components/layout/AppLayout";
+import AdminLayout from "@/components/admin/AdminLayout";
 import Login from "@/pages/Login";
+import PendingActivation from "@/pages/PendingActivation";
 import Dashboard from "@/pages/Dashboard";
 import Customers from "@/pages/Customers";
 import CustomerNew from "@/pages/CustomerNew";
@@ -31,6 +34,10 @@ import RecurringInvoices from "@/pages/RecurringInvoices";
 import Contracts from "@/pages/Contracts";
 import Finances from "@/pages/Finances";
 import Onboarding from "@/pages/Onboarding";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
+import AdminWorkspaces from "@/pages/admin/AdminWorkspaces";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,8 +52,15 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/pending" element={<ProtectedRoute><PendingActivation /></ProtectedRoute>} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+              <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+                <Route path="/admin/workspaces" element={<AdminWorkspaces />} />
+              </Route>
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/customers" element={<Customers />} />

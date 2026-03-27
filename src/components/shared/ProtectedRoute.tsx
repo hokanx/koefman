@@ -20,7 +20,36 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     enabled: !!user,
   });
 
-  if (loading || (user && settingsLoading)) {
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile-status', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('account_status')
+        .eq('id', user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: isAdmin, isLoading: adminLoading } = useQuery({
+    queryKey: ['user-role-admin', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user!.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user,
+  });
+
+  const isLoading = loading || (user && (settingsLoading || profileLoading || adminLoading));
+
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -29,6 +58,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  // Admins bypass pending/onboarding checks
+  if (isAdmin) return <>{children}</>;
+
+  // Check account activation status
+  const accountStatus = profile?.account_status ?? 'pending';
+  if (accountStatus !== 'active' && location.pathname !== '/pending') {
+    return <Navigate to="/pending" replace />;
+  }
+  if (accountStatus !== 'active') return <>{children}</>;
 
   // Redirect to onboarding if no settings exist yet
   const needsOnboarding = !settings || !settings.business_name;
