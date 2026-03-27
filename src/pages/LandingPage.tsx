@@ -193,73 +193,106 @@ const LandingPage = () => {
 
       {/* PRICING */}
       <section className="py-20 md:py-28 px-4 bg-muted/30">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-2xl md:text-4xl font-bold mb-4">Einfache Preise, volle Leistung</h2>
-            <p className="text-muted-foreground text-lg">Wähle das Paket, das zu dir passt.</p>
+            <h2 className="text-2xl md:text-4xl font-bold mb-4">Klare Preise. Voller Service.</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Weniger Aufwand als ein Mitarbeiter – aber mit klarer Struktur und persönlicher Betreuung.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 items-stretch">
-            {[
-              {
-                name: 'Basic',
-                price: '49',
-                desc: 'Für Einzelunternehmer mit wenig Belegaufkommen.',
-                features: ['Bis 20 Belege / Monat', 'Rechnungen & Angebote', 'E-Mail-Support', 'Grundlegende Vorlagen'],
-                highlighted: false,
-              },
-              {
-                name: 'Standard',
-                price: '99',
-                desc: 'Für wachsende Unternehmen mit regelmäßigem Bedarf.',
-                features: ['Bis 80 Belege / Monat', 'Verträge & Unterschriften', 'Persönliche Betreuung', 'Steuerberater-Export', 'Branchenvorlagen'],
-                highlighted: true,
-              },
-              {
-                name: 'Premium',
-                price: '199',
-                desc: 'Für Unternehmen mit vollem Büroservice-Bedarf.',
-                features: ['Unbegrenzte Belege', 'Alles aus Standard', 'Prioritäts-Support', 'Individuelle Einrichtung', 'Monatlicher Check-in'],
-                highlighted: false,
-              },
-            ].map((plan, i) => (
-              <Card
-                key={i}
-                className={`relative overflow-hidden ${
-                  plan.highlighted
-                    ? 'border-primary shadow-lg gold-glow ring-2 ring-primary/20'
-                    : 'bg-card'
-                }`}
-              >
-                {plan.highlighted && (
-                  <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-center text-xs font-semibold py-1.5">
-                    Beliebteste Wahl
+
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
+            {/* Setup */}
+            <Card className="bg-card border-border card-hover">
+              <CardContent className="p-8 flex flex-col h-full">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-semibold w-fit mb-5">
+                  Einmalig
+                </div>
+                <h3 className="text-xl font-bold mb-2">Einrichtungspaket</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Wir richten alles für dich ein – damit du sofort loslegen kannst.
+                </p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">699 €</span>
+                  <span className="text-muted-foreground text-sm"> einmalig</span>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {[
+                    'Einrichtung des KÖFMAN Systems',
+                    'Erstellung einer Website',
+                    '200 Visitenkarten',
+                    'Individuelle Einrichtung der Leistungen und Abläufe',
+                  ].map((f, j) => (
+                    <li key={j} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button variant="outline" className="w-full" onClick={() => navigate('/login')}>
+                  Erstgespräch buchen
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Monthly */}
+            <Card className="relative overflow-hidden border-primary shadow-lg gold-glow ring-2 ring-primary/20">
+              <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-center text-xs font-semibold py-1.5">
+                Laufende Betreuung
+              </div>
+              <CardContent className="p-8 pt-12 flex flex-col h-full">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold w-fit mb-5">
+                  Monatlich
+                </div>
+                <h3 className="text-xl font-bold mb-2">Monatliche Betreuung</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Wir übernehmen dein laufendes Büromanagement – persönlich und zuverlässig.
+                </p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">399 €</span>
+                  <span className="text-muted-foreground text-sm"> / Monat</span>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {[
+                    'Laufendes Büromanagement',
+                    'Organisation von Belegen',
+                    'Unterstützung bei Rechnungen und Verträgen',
+                    'Erinnerungen und Struktur',
+                    'Persönlicher Ansprechpartner',
+                  ].map((f, j) => (
+                    <li key={j} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Button className="w-full" onClick={() => navigate('/login')}>
+                  Jetzt starten
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Why it's worth it */}
+          <div className="rounded-2xl border border-border bg-card p-8 md:p-10">
+            <h3 className="text-lg md:text-xl font-bold text-center mb-8">Warum sich das lohnt</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { icon: Clock, label: 'Zeit sparen', desc: 'Weniger Büroarbeit, mehr Kerngeschäft' },
+                { icon: Shield, label: 'Fehler vermeiden', desc: 'Professionelle Struktur statt Chaos' },
+                { icon: FileText, label: 'Steuerberater-ready', desc: 'Saubere Vorbereitung aller Unterlagen' },
+                { icon: Zap, label: 'Fokus behalten', desc: 'Konzentrier dich auf das, was du kannst' },
+              ].map((item, i) => (
+                <div key={i} className="flex flex-col items-center text-center">
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+                    <item.icon className="w-5 h-5" />
                   </div>
-                )}
-                <CardContent className={`p-8 flex flex-col h-full ${plan.highlighted ? 'pt-12' : ''}`}>
-                  <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-5">{plan.desc}</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold">{plan.price} €</span>
-                    <span className="text-muted-foreground text-sm"> / Monat</span>
-                  </div>
-                  <ul className="space-y-3 mb-8 flex-1">
-                    {plan.features.map((f, j) => (
-                      <li key={j} className="flex items-start gap-2 text-sm">
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className="w-full"
-                    variant={plan.highlighted ? 'default' : 'outline'}
-                    onClick={() => navigate('/login')}
-                  >
-                    Jetzt starten
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                  <h4 className="font-semibold text-sm mb-1">{item.label}</h4>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
