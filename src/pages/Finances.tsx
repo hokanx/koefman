@@ -178,7 +178,7 @@ const Finances = () => {
     } else {
       rows.push(['Steuermodus', '', '', '', '', '', 'Umsatzsteuer aktiv']);
     }
-    rows.push(['Zeitraum', '', '', '', '', '', `${from} – ${to}`]);
+    rows.push(['Zeitraum', '', '', '', '', '', `${formatDateDE(from)} – ${formatDateDE(to)}`]);
     if (settings?.business_name) {
       rows.push(['Unternehmen', '', '', '', '', '', settings.business_name]);
     }
