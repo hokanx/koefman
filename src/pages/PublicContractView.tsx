@@ -178,7 +178,7 @@ const PublicContractView = () => {
   const isSmallBusiness = !!(settings as any)?.small_business_regulation;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
       <div className="mx-auto max-w-3xl">
         {/* Header with branding */}
         <div className="mb-6 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
