@@ -437,6 +437,42 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       intake_submissions: {
         Row: {
           business_category: string | null
@@ -699,6 +735,36 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          read: boolean
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          read?: boolean
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          read?: boolean
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       offer_acceptances: {
         Row: {
           accepted_at: string
@@ -870,6 +936,7 @@ export type Database = {
       profiles: {
         Row: {
           account_status: string
+          client_status: string
           created_at: string
           email: string | null
           id: string
@@ -881,6 +948,7 @@ export type Database = {
         }
         Insert: {
           account_status?: string
+          client_status?: string
           created_at?: string
           email?: string | null
           id: string
@@ -892,6 +960,7 @@ export type Database = {
         }
         Update: {
           account_status?: string
+          client_status?: string
           created_at?: string
           email?: string | null
           id?: string

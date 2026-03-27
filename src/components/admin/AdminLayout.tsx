@@ -1,10 +1,11 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Building2, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Building2, ArrowLeft, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Übersicht', end: true },
   { to: '/admin/users', icon: Users, label: 'Benutzer' },
+  { to: '/admin/clients', icon: UserCheck, label: 'Kunden' },
   { to: '/admin/subscriptions', icon: CreditCard, label: 'Abonnements' },
   { to: '/admin/workspaces', icon: Building2, label: 'Firmen' },
 ];
