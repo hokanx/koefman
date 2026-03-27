@@ -21,6 +21,14 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   verarbeitet: { label: 'Verarbeitet', color: 'bg-success/15 text-success' },
 };
 
+// Extract storage path from file_url (handles both raw paths and full URLs)
+const getStoragePath = (fileUrl: string): string => {
+  if (fileUrl.includes('/client-documents/')) {
+    return fileUrl.split('/client-documents/').pop() || fileUrl;
+  }
+  return fileUrl; // already a raw path
+};
+
 const Documents = () => {
   const { user } = useAuth();
   const { effectiveUserId, isImpersonating, impersonatedUser } = useImpersonation();
@@ -53,9 +61,10 @@ const Documents = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (doc: { id: string; file_url: string }) => {
-      const urlParts = doc.file_url.split('/client-documents/');
-      if (urlParts[1]) {
-        await supabase.storage.from('client-documents').remove([urlParts[1]]);
+      // file_url stores the storage path (e.g. "userId/timestamp.ext")
+      const storagePath = getStoragePath(doc.file_url);
+      if (storagePath) {
+        await supabase.storage.from('client-documents').remove([storagePath]);
       }
       const { error } = await supabase.from('documents').delete().eq('id', doc.id);
       if (error) throw error;
@@ -87,12 +96,10 @@ const Documents = () => {
       const { error: uploadError } = await supabase.storage.from('client-documents').upload(path, file);
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from('client-documents').getPublicUrl(path);
-
       const { error: insertError } = await supabase.from('documents').insert({
         user_id: targetUserId,
         file_name: file.name,
-        file_url: urlData.publicUrl,
+        file_url: path,
         file_size: file.size,
         mime_type: file.type,
         category,
@@ -245,10 +252,15 @@ const Documents = () => {
                           {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
                         </div>
                         <div className="flex shrink-0 gap-1">
-                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                          <button onClick={async () => {
+                              const path = getStoragePath(doc.file_url);
+                              const { data } = await supabase.storage.from('client-documents').createSignedUrl(path, 300);
+                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                              else toast.error('Download fehlgeschlagen');
+                            }}
                             className="rounded-md p-2 text-muted-foreground hover:text-foreground">
                             <Download className="h-4 w-4" />
-                          </a>
+                          </button>
                           <button onClick={() => { if (confirm('Beleg wirklich löschen?')) deleteMutation.mutate(doc); }}
                             className="rounded-md p-2 text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
