@@ -4,10 +4,10 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Übersicht', end: true },
-  { to: '/admin/users', icon: Users, label: 'Benutzer' },
+  { to: '/admin/users', icon: Users, label: 'Konten' },
   { to: '/admin/clients', icon: UserCheck, label: 'Kunden' },
   { to: '/admin/documents', icon: FolderOpen, label: 'Belege' },
-  { to: '/admin/subscriptions', icon: CreditCard, label: 'Abonnements' },
+  { to: '/admin/subscriptions', icon: CreditCard, label: 'Abos' },
   { to: '/admin/workspaces', icon: Building2, label: 'Firmen' },
 ];
 
