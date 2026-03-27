@@ -255,15 +255,16 @@ const Leads = () => {
 
       {/* Detail modal */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setSelected(null)}>
-          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border bg-card p-4 sm:p-6"
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50" onClick={() => setSelected(null)}>
+          <div className="w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-xl flex flex-col"
+            style={{ maxHeight: '90dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             onClick={e => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-border p-4">
               <h3 className="text-lg font-bold text-foreground">{selected.company_or_name}</h3>
               <StatusBadge status={selected.status as any} label={(t.status as any)[selected.status] || selected.status} />
             </div>
 
-            <div className="space-y-3 text-sm">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3 text-sm">
               {selected.contact_person && <div><span className="text-muted-foreground">{t.intake.contactPerson}:</span> <span className="text-foreground">{selected.contact_person}</span></div>}
               {selected.email && <div><span className="text-muted-foreground">{t.intake.email}:</span> <span className="text-foreground">{selected.email}</span></div>}
               {selected.phone && <div><span className="text-muted-foreground">{t.intake.phone}:</span> <span className="text-foreground">{selected.phone}</span></div>}
@@ -283,7 +284,7 @@ const Leads = () => {
               <div className="text-xs text-muted-foreground">{new Date(selected.created_at).toLocaleString()}</div>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="flex-shrink-0 border-t border-border p-4 flex flex-wrap gap-2">
               {selected.status === 'new' && (
                 <button onClick={() => updateStatus.mutate({ id: selected.id, status: 'reviewed' })}
                   className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/80">
