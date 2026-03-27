@@ -11,7 +11,7 @@ import {
 
 const LandingPage = () => {
   const navigate = useNavigate();
-
+  const [intakeOpen, setIntakeOpen] = useState(false);
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* NAV */}
@@ -49,11 +49,11 @@ const LandingPage = () => {
             Rechnungen, Angebote, Verträge und Belege – alles digital organisiert und persönlich betreut.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => navigate('/login')}>
+            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => setIntakeOpen(true)}>
               Kostenloses Erstgespräch buchen
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => navigate('/login')}>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => setIntakeOpen(true)}>
               Jetzt starten
             </Button>
           </div>
@@ -231,7 +231,7 @@ const LandingPage = () => {
                     </li>
                   ))}
                 </ul>
-                <Button variant="outline" className="w-full" onClick={() => navigate('/login')}>
+                <Button variant="outline" className="w-full" onClick={() => setIntakeOpen(true)}>
                   Erstgespräch buchen
                 </Button>
               </CardContent>
@@ -268,7 +268,7 @@ const LandingPage = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full" onClick={() => navigate('/login')}>
+                <Button className="w-full" onClick={() => setIntakeOpen(true)}>
                   Jetzt starten
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
