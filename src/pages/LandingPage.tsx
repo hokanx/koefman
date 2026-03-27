@@ -333,11 +333,11 @@ const LandingPage = () => {
             Starte jetzt und lass uns dein Büro organisieren – persönlich, digital und stressfrei.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => navigate('/login')}>
+            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => setIntakeOpen(true)}>
               Kostenloses Erstgespräch
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => navigate('/login')}>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => setIntakeOpen(true)}>
               Jetzt starten
             </Button>
           </div>
