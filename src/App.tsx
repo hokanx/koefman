@@ -43,6 +43,7 @@ import AdminWorkspaces from "@/pages/admin/AdminWorkspaces";
 import AdminClients from "@/pages/admin/AdminClients";
 import AdminDocuments from "@/pages/admin/AdminDocuments";
 import AdminTemplates from "@/pages/admin/AdminTemplates";
+import AdminLeads from "@/pages/admin/AdminLeads";
 import LandingPage from "@/pages/LandingPage";
 import NotFound from "@/pages/NotFound";
 
@@ -68,6 +69,7 @@ const AppWithImpersonation = () => {
                 <Route path="/admin/clients" element={<AdminClients />} />
                 <Route path="/admin/documents" element={<AdminDocuments />} />
                 <Route path="/admin/templates" element={<AdminTemplates />} />
+                <Route path="/admin/leads" element={<AdminLeads />} />
               </Route>
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />

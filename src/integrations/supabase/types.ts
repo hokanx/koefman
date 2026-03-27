@@ -818,6 +818,54 @@ export type Database = {
           },
         ]
       }
+      landing_leads: {
+        Row: {
+          admin_notes: string | null
+          company: string
+          contact_method: string
+          converted_customer_id: string | null
+          created_at: string
+          email: string
+          id: string
+          industry: string
+          name: string
+          needs: string[]
+          phone: string | null
+          situation: string
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          company?: string
+          contact_method?: string
+          converted_customer_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          industry?: string
+          name?: string
+          needs?: string[]
+          phone?: string | null
+          situation?: string
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          company?: string
+          contact_method?: string
+          converted_customer_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          industry?: string
+          name?: string
+          needs?: string[]
+          phone?: string | null
+          situation?: string
+          status?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

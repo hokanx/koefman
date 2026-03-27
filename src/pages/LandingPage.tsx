@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import LeadIntakeModal from '@/components/landing/LeadIntakeModal';
 import {
   FileText, Upload, Users, Shield, Clock, ArrowRight,
   CheckCircle2, Star, Zap, HeartHandshake, ChevronRight,
@@ -9,7 +11,7 @@ import {
 
 const LandingPage = () => {
   const navigate = useNavigate();
-
+  const [intakeOpen, setIntakeOpen] = useState(false);
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* NAV */}
@@ -47,11 +49,11 @@ const LandingPage = () => {
             Rechnungen, Angebote, Verträge und Belege – alles digital organisiert und persönlich betreut.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => navigate('/login')}>
+            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => setIntakeOpen(true)}>
               Kostenloses Erstgespräch buchen
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => navigate('/login')}>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => setIntakeOpen(true)}>
               Jetzt starten
             </Button>
           </div>
@@ -229,7 +231,7 @@ const LandingPage = () => {
                     </li>
                   ))}
                 </ul>
-                <Button variant="outline" className="w-full" onClick={() => navigate('/login')}>
+                <Button variant="outline" className="w-full" onClick={() => setIntakeOpen(true)}>
                   Erstgespräch buchen
                 </Button>
               </CardContent>
@@ -266,7 +268,7 @@ const LandingPage = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full" onClick={() => navigate('/login')}>
+                <Button className="w-full" onClick={() => setIntakeOpen(true)}>
                   Jetzt starten
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -331,11 +333,11 @@ const LandingPage = () => {
             Starte jetzt und lass uns dein Büro organisieren – persönlich, digital und stressfrei.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => navigate('/login')}>
+            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => setIntakeOpen(true)}>
               Kostenloses Erstgespräch
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => navigate('/login')}>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => setIntakeOpen(true)}>
               Jetzt starten
             </Button>
           </div>
@@ -351,6 +353,7 @@ const LandingPage = () => {
           <p>© {new Date().getFullYear()} KÖFMAN. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
+      <LeadIntakeModal open={intakeOpen} onOpenChange={setIntakeOpen} />
     </div>
   );
 };
