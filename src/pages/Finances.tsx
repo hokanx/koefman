@@ -3,7 +3,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download, FileArchive } from 'lucide-react';
+import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download, FileArchive, FileText } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatEUR, formatNumber, formatDateDE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ const Finances = () => {
   const { user } = useAuth();
   const [range, setRange] = useState<DateRange>('month');
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<string>('');
   const fin = (t as any).finances;
 
   const { from, to } = useMemo(() => getDateRange(range), [range]);
@@ -126,12 +127,14 @@ const Finances = () => {
   const handleTaxExport = async () => {
     if (!user || !settings) return;
     setExporting(true);
+    setExportProgress('Daten laden…');
     try {
       const blob = await generateTaxExportZip({
         userId: user.id,
         from,
         to,
         businessSettings: settings,
+        onProgress: (_percent, label) => setExportProgress(label),
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -145,6 +148,7 @@ const Finances = () => {
       toast.error('Export fehlgeschlagen');
     } finally {
       setExporting(false);
+      setExportProgress('');
     }
   };
 
@@ -281,17 +285,30 @@ const Finances = () => {
       </div>
 
       {/* Export Actions */}
-      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+      <div className="rounded-xl border border-border bg-card p-4 space-y-4">
         <h2 className="font-semibold text-foreground">{fin?.exportTitle || 'Export'}</h2>
         <p className="text-sm text-muted-foreground">{fin?.exportDesc || 'Finanzübersicht und Rechnungsdaten für den gewählten Zeitraum exportieren.'}</p>
+
+        {/* Primary: Steuerberater Export */}
+        <Button
+          className="w-full justify-start gap-2"
+          onClick={handleTaxExport}
+          disabled={exporting}
+        >
+          <FileArchive className="h-4 w-4" />
+          <div className="flex flex-col items-start text-left">
+            <span>{exporting ? exportProgress : 'Unterlagen für Steuerberater exportieren'}</span>
+            <span className="text-xs font-normal opacity-75">
+              Rechnungen, Angebote, CSV & Zusammenfassung als ZIP
+            </span>
+          </div>
+        </Button>
+
+        {/* Secondary actions */}
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleCsvExport}>
-            <Download className="h-4 w-4 mr-1" />
-            {fin?.exportCsv || 'CSV-Übersicht exportieren'}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleTaxExport} disabled={exporting}>
-            <FileArchive className="h-4 w-4 mr-1" />
-            {exporting ? 'Wird erstellt…' : (fin?.exportTaxAdvisor || 'Unterlagen für Steuerberater')}
+            <FileText className="h-4 w-4 mr-1" />
+            Nur CSV exportieren
           </Button>
         </div>
       </div>
