@@ -3,7 +3,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download, FileArchive } from 'lucide-react';
+import { Receipt, AlertTriangle, CheckCircle, Clock, Info, Download, FileArchive, FileText } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import { formatEUR, formatNumber, formatDateDE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ const Finances = () => {
   const { user } = useAuth();
   const [range, setRange] = useState<DateRange>('month');
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<string>('');
   const fin = (t as any).finances;
 
   const { from, to } = useMemo(() => getDateRange(range), [range]);
@@ -126,12 +127,14 @@ const Finances = () => {
   const handleTaxExport = async () => {
     if (!user || !settings) return;
     setExporting(true);
+    setExportProgress('Daten laden…');
     try {
       const blob = await generateTaxExportZip({
         userId: user.id,
         from,
         to,
         businessSettings: settings,
+        onProgress: (_percent, label) => setExportProgress(label),
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -145,6 +148,7 @@ const Finances = () => {
       toast.error('Export fehlgeschlagen');
     } finally {
       setExporting(false);
+      setExportProgress('');
     }
   };
 
