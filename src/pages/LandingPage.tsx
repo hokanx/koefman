@@ -353,6 +353,7 @@ const LandingPage = () => {
           <p>© {new Date().getFullYear()} KÖFMAN. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
+      <LeadIntakeModal open={intakeOpen} onOpenChange={setIntakeOpen} />
     </div>
   );
 };
