@@ -54,7 +54,7 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
 
   // ── 1. FETCH DATA ──────────────────────────────────────────────
 
-  const [{ data: invoices = [] }, { data: offers = [] }] = await Promise.all([
+  const [{ data: invoices = [] }, { data: offers = [] }, { data: docs = [] }] = await Promise.all([
     supabase
       .from('invoices')
       .select('*, customer:customers(*)')
@@ -69,9 +69,17 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
       .gte('date', from)
       .lte('date', to)
       .order('date'),
+    supabase
+      .from('documents')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('created_at', from)
+      .lte('created_at', to + 'T23:59:59')
+      .in('status', ['geprueft', 'verarbeitet'])
+      .order('created_at'),
   ]);
 
-  const totalDocs = invoices.length + offers.length;
+  const totalDocs = invoices.length + offers.length + docs.length;
   let processedDocs = 0;
 
   // ── 2. GENERATE INVOICE PDFs ───────────────────────────────────
