@@ -86,7 +86,7 @@ const Finances = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('documents')
-        .select('id, created_at, category')
+        .select('id, created_at, category, status, extracted_data')
         .eq('user_id', targetUserId!)
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
