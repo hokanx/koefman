@@ -309,16 +309,16 @@ const Finances = () => {
       <div className="rounded-xl border border-border bg-card p-4">
         <h2 className="mb-3 font-semibold text-foreground">Finanzübersicht</h2>
         <div className="space-y-2">
-          <Row label="Einnahmen gesamt" value={formatEUR(stats.paid)} icon={TrendingUp} color="text-success" />
-          <Row label="Ausgaben gesamt" value={formatEUR(0)} icon={TrendingDown} color="text-destructive" />
+          <Row label="Einnahmen gesamt" value={formatEUR(stats.totalIncome)} icon={TrendingUp} color="text-success" />
+          <Row label="Ausgaben gesamt" value={formatEUR(stats.expenses)} icon={TrendingDown} color="text-destructive" />
           <div className="border-t border-border pt-2">
             <div className="flex items-center justify-between rounded-lg bg-primary/5 p-3">
               <div className="flex items-center gap-2">
                 <PiggyBank className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium text-foreground">Gewinn</span>
               </div>
-              <span className={`text-lg font-bold ${stats.paid >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {formatEUR(stats.paid)}
+              <span className={`text-lg font-bold ${stats.profit >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {formatEUR(stats.profit)}
               </span>
             </div>
           </div>
