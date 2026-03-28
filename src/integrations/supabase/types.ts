@@ -1067,6 +1067,39 @@ export type Database = {
           },
         ]
       }
+      period_completeness: {
+        Row: {
+          admin_override: boolean
+          admin_override_by: string | null
+          created_at: string
+          id: string
+          no_activity: boolean
+          period_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_override?: boolean
+          admin_override_by?: string | null
+          created_at?: string
+          id?: string
+          no_activity?: boolean
+          period_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_override?: boolean
+          admin_override_by?: string | null
+          created_at?: string
+          id?: string
+          no_activity?: boolean
+          period_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_status: string
