@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatEUR, formatDateDE } from '@/lib/utils';
-import { generateTaxExportZip } from '@/lib/taxExport';
+import { generateTaxExportZip, generateFullArchiveZip } from '@/lib/taxExport';
 import { toast } from 'sonner';
 import { Info, TrendingUp, TrendingDown, PiggyBank, Clock, AlertTriangle, CheckCircle2, FileArchive, FileText, Download, MinusCircle, CircleDashed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -253,6 +253,31 @@ const Finances = () => {
     }
   };
 
+  const handleFullExport = async () => {
+    if (!targetUserId || !settings) return;
+    setExporting(true);
+    setExportProgress('Daten laden…');
+    try {
+      const blob = await generateFullArchiveZip({
+        userId: targetUserId, from, to, businessSettings: settings,
+        onProgress: (_p, label) => setExportProgress(label),
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Archiv_${from}_${to}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Archiv wurde erstellt');
+    } catch (e) {
+      console.error('Full export failed', e);
+      toast.error('Export fehlgeschlagen');
+    } finally {
+      setExporting(false);
+      setExportProgress('');
+    }
+  };
+
   const handleCsvExport = () => {
     const relevant = invoices.filter((inv) => inv.status !== 'cancelled');
     const header = ['Rechnungsnummer', 'Datum', 'Fällig', 'Status', 'Netto', 'USt', 'Brutto'];
@@ -453,16 +478,19 @@ const Finances = () => {
             <FileArchive className="h-4 w-4" />
             <div className="flex flex-col items-start text-left">
               <span>{exporting ? exportProgress : 'Unterlagen für Steuerberater'}</span>
-              <span className="text-xs font-normal opacity-75">Rechnungen, Belege & Zusammenfassung als ZIP</span>
+              <span className="text-xs font-normal opacity-75">Rechnungen, Ausgaben, Bank & Zusammenfassung</span>
+            </div>
+          </Button>
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={handleFullExport} disabled={exporting}>
+            <Download className="h-4 w-4" />
+            <div className="flex flex-col items-start text-left">
+              <span>{exporting ? exportProgress : 'Alle Dokumente exportieren'}</span>
+              <span className="text-xs font-normal opacity-75">Vollständiges Archiv inkl. Angebote</span>
             </div>
           </Button>
           <Button variant="outline" className="w-full justify-start gap-2" onClick={handleCsvExport}>
             <FileText className="h-4 w-4" />
             Rechnungen als CSV exportieren
-          </Button>
-          <Button variant="outline" className="w-full justify-start gap-2" onClick={() => navigate('/documents')}>
-            <Download className="h-4 w-4" />
-            Dokumente verwalten & herunterladen
           </Button>
         </div>
       </div>
