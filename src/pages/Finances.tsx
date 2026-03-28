@@ -73,7 +73,7 @@ const Finances = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('documents')
-        .select('id, created_at')
+        .select('id, created_at, category')
         .eq('user_id', user!.id)
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
@@ -82,6 +82,10 @@ const Finances = () => {
     },
     enabled: !!user,
   });
+
+  const hasBankDocs = documents.some((d: any) =>
+    ['kontoauszuege', 'kreditkarte', 'paypal_stripe', 'kassenbuch'].includes(d.category)
+  );
 
   const isSmallBiz = !!settings?.small_business_regulation;
   const today = new Date().toISOString().split('T')[0];
@@ -236,6 +240,7 @@ const Finances = () => {
           <DocumentStatus
             count={documents.length}
             lastUploadDate={documents[0]?.created_at}
+            hasBankDocs={documents.length > 0 ? hasBankDocs : undefined}
           />
           <FinanceActions
             onTaxExport={handleTaxExport}
