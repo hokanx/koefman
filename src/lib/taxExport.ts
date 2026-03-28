@@ -18,6 +18,9 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
   const zip = new JSZip();
   const rechnungenFolder = zip.folder('Rechnungen')!;
   const angeboteFolder = zip.folder('Angebote')!;
+  const ausgabenFolder = zip.folder('Ausgaben')!;
+  const bankFolder = zip.folder('Bank')!;
+  const vertraegeFolder = zip.folder('Vertraege')!;
 
   const progress = (p: number, l: string) => onProgress?.(Math.round(p), l);
   progress(0, 'Daten laden…');
@@ -51,7 +54,7 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
 
   // ── 1. FETCH DATA ──────────────────────────────────────────────
 
-  const [{ data: invoices = [] }, { data: offers = [] }] = await Promise.all([
+  const [{ data: invoices = [] }, { data: offers = [] }, { data: docs = [] }] = await Promise.all([
     supabase
       .from('invoices')
       .select('*, customer:customers(*)')
@@ -66,9 +69,17 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
       .gte('date', from)
       .lte('date', to)
       .order('date'),
+    supabase
+      .from('documents')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('created_at', from)
+      .lte('created_at', to + 'T23:59:59')
+      .in('status', ['geprueft', 'verarbeitet'])
+      .order('created_at'),
   ]);
 
-  const totalDocs = invoices.length + offers.length;
+  const totalDocs = invoices.length + offers.length + docs.length;
   let processedDocs = 0;
 
   // ── 2. GENERATE INVOICE PDFs ───────────────────────────────────
@@ -247,48 +258,118 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
     progress(5 + (processedDocs / totalDocs) * 70, `${offer.offer_number}…`);
   }
 
-  // ── 4. GENERATE CSV ────────────────────────────────────────────
+  // ── 4. DOWNLOAD DOCUMENT FILES ──────────────────────────────────
 
-  progress(80, 'CSV erstellen…');
+  progress(75, 'Belege herunterladen…');
 
+  const expenseCats = ['eingangsrechnungen', 'bewirtung', 'fahrtkosten', 'reisekosten', 'miete', 'versicherungen', 'ausgaben'];
+  const bankCats = ['kontoauszuege', 'kreditkarte', 'paypal_stripe', 'kassenbuch'];
+  const contractCats = ['mietvertraege', 'darlehensvertraege', 'arbeitsvertraege', 'kooperationsvertraege'];
+
+  const expenseDocs: any[] = [];
+  const incomeDocs: any[] = [];
+
+  for (const doc of docs) {
+    const d = doc as any;
+    const ext = d.extracted_data as any;
+
+    // Categorize for CSV
+    if (expenseCats.includes(d.category)) {
+      expenseDocs.push(d);
+    } else if (['zahlungseingaenge', 'gutschriften'].includes(d.category)) {
+      incomeDocs.push(d);
+    }
+
+    // Download file into correct folder
+    let targetFolder = ausgabenFolder;
+    if (bankCats.includes(d.category)) targetFolder = bankFolder;
+    else if (contractCats.includes(d.category)) targetFolder = vertraegeFolder;
+    else if (!expenseCats.includes(d.category)) targetFolder = ausgabenFolder;
+
+    try {
+      const storagePath = d.file_url.includes('/client-documents/')
+        ? d.file_url.split('/client-documents/').pop()
+        : d.file_url;
+
+      const { data: signedData } = await supabase.storage
+        .from('client-documents')
+        .createSignedUrl(storagePath, 600);
+
+      if (signedData?.signedUrl) {
+        const resp = await fetch(signedData.signedUrl);
+        if (resp.ok) {
+          const arrayBuf = await resp.arrayBuffer();
+          const safeName = d.file_name.replace(/[^a-zA-Z0-9_.\-]/g, '_');
+          targetFolder.file(safeName, arrayBuf);
+        }
+      }
+    } catch (e) {
+      console.error(`Failed to download document ${d.file_name}`, e);
+    }
+
+    processedDocs++;
+    progress(75 + (processedDocs / totalDocs) * 10, `${d.file_name}…`);
+  }
+
+  // ── 5. GENERATE einnahmen_liste.csv ────────────────────────────
+
+  progress(87, 'Einnahmen-CSV erstellen…');
+
+  const einnahmenHeader = ['Rechnungsnummer', 'Rechnungsdatum', 'Fälligkeitsdatum', 'Kunde', 'Betrag Netto', 'Umsatzsteuer', 'Betrag Brutto', 'Status', 'Zahlungsdatum'];
   const relevantInvoices = invoices.filter((inv: any) => inv.status !== 'cancelled');
-  const csvHeader = [
-    'Rechnungsnummer',
-    'Rechnungsdatum',
-    'Fälligkeitsdatum',
-    'Kunde',
-    'Betrag Netto',
-    'Umsatzsteuer',
-    'Betrag Brutto',
-    'Status',
-    'Zahlungsdatum',
-  ];
-  const csvRows = relevantInvoices.map((inv: any) => {
+  const einnahmenRows = relevantInvoices.map((inv: any) => {
     const customer = inv.customer as any;
     const isOverdue = (inv.status === 'open' || inv.status === 'draft') && inv.due_date && inv.due_date < today;
     let status = 'offen';
     if (inv.status === 'paid') status = 'bezahlt';
     else if (isOverdue) status = 'überfällig';
-
     return [
-      inv.invoice_number,
-      formatDateDE(inv.date),
-      formatDateDE(inv.due_date),
-      customer?.name || '',
-      formatNumber(inv.subtotal),
-      formatNumber(inv.tax_total),
-      formatNumber(inv.grand_total),
-      status,
+      inv.invoice_number, formatDateDE(inv.date), formatDateDE(inv.due_date),
+      customer?.name || '', formatNumber(inv.subtotal), formatNumber(inv.tax_total),
+      formatNumber(inv.grand_total), status,
       inv.status === 'paid' ? formatDateDE(inv.updated_at) : '',
     ];
   });
 
-  const csvContent = [csvHeader, ...csvRows].map((r) => r.join(';')).join('\n');
-  zip.file('zusammenfassung.csv', '\uFEFF' + csvContent);
+  // Add document-based income
+  for (const d of incomeDocs) {
+    const ext = d.extracted_data as any;
+    einnahmenRows.push([
+      '', formatDateDE(ext?.receipt_date || d.created_at), '',
+      ext?.vendor_name || d.description || d.file_name,
+      formatNumber(Number(ext?.net_amount) || 0),
+      formatNumber(Number(ext?.vat_amount) || 0),
+      formatNumber(Number(ext?.total_amount) || Number(ext?.net_amount) || 0),
+      'Beleg', '',
+    ]);
+  }
 
-  // ── 5. GENERATE SUMMARY.TXT ────────────────────────────────────
+  const einnahmenCsv = [einnahmenHeader, ...einnahmenRows].map((r) => r.join(';')).join('\n');
+  zip.file('einnahmen_liste.csv', '\uFEFF' + einnahmenCsv);
 
-  progress(90, 'Zusammenfassung erstellen…');
+  // ── 6. GENERATE ausgaben_liste.csv ─────────────────────────────
+
+  progress(89, 'Ausgaben-CSV erstellen…');
+
+  const ausgabenHeader = ['Datum', 'Kategorie', 'Beschreibung', 'Anbieter', 'Netto', 'Umsatzsteuer', 'Brutto'];
+  const ausgabenRows = expenseDocs.map((d: any) => {
+    const ext = d.extracted_data as any;
+    return [
+      formatDateDE(ext?.receipt_date || d.created_at),
+      d.category,
+      d.description || d.file_name,
+      ext?.vendor_name || '',
+      formatNumber(Number(ext?.net_amount) || 0),
+      formatNumber(Number(ext?.vat_amount) || 0),
+      formatNumber(Number(ext?.total_amount) || Number(ext?.net_amount) || 0),
+    ];
+  });
+  const ausgabenCsv = [ausgabenHeader, ...ausgabenRows].map((r) => r.join(';')).join('\n');
+  zip.file('ausgaben_liste.csv', '\uFEFF' + ausgabenCsv);
+
+  // ── 7. GENERATE zusammenfassung.csv ────────────────────────────
+
+  progress(91, 'Zusammenfassung erstellen…');
 
   let totalNet = 0, totalTax = 0, totalGross = 0, paid = 0, open = 0, overdue = 0;
   for (const inv of relevantInvoices) {
@@ -299,40 +380,69 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
       paid += Number(inv.grand_total);
     } else {
       const isOverdue = inv.due_date && inv.due_date < today;
-      if (isOverdue) {
-        overdue += Number(inv.grand_total);
-      } else {
-        open += Number(inv.grand_total);
-      }
+      if (isOverdue) overdue += Number(inv.grand_total);
+      else open += Number(inv.grand_total);
     }
   }
 
-  const relevantOffers = offers.filter((o: any) => o.status !== 'draft');
+  let totalExpenses = 0;
+  for (const d of expenseDocs) {
+    const ext = (d as any).extracted_data as any;
+    totalExpenses += Number(ext?.total_amount) || Number(ext?.net_amount) || 0;
+  }
 
+  const profit = (paid - totalExpenses);
+
+  const summaryHeader = ['Kennzahl', 'Wert'];
+  const summaryRows = [
+    ['Zeitraum', `${formatDateDE(from)} – ${formatDateDE(to)}`],
+    ['Erstellt am', formatDateDE(new Date())],
+    ['Einnahmen gesamt (bezahlt)', formatEUR(paid)],
+    ['Ausgaben gesamt', formatEUR(totalExpenses)],
+    ['Gewinn', formatEUR(profit)],
+    ['Offene Rechnungen', formatEUR(open)],
+    ['Überfällige Rechnungen', formatEUR(overdue)],
+    ...(isSmallBiz ? [['Steuermodus', 'Kleinunternehmerregelung §19 UStG']] : [
+      ['Netto gesamt', formatEUR(totalNet)],
+      ['Umsatzsteuer gesamt', formatEUR(totalTax)],
+      ['Brutto gesamt', formatEUR(totalGross)],
+    ]),
+    ...(businessSettings?.tax_number ? [['Steuernummer', businessSettings.tax_number]] : []),
+    ...(businessSettings?.vat_id ? [['USt-IdNr', businessSettings.vat_id]] : []),
+  ];
+  const summaryCsv = [summaryHeader, ...summaryRows].map((r) => r.join(';')).join('\n');
+  zip.file('zusammenfassung.csv', '\uFEFF' + summaryCsv);
+
+  // Also keep text summary for readability
+  const relevantOffers = offers.filter((o: any) => o.status !== 'draft');
   const summaryLines = [
     `Finanzübersicht – ${businessSettings?.business_name || ''}`,
     ``,
     `Zeitraum: ${formatDateDE(from)} – ${formatDateDE(to)}`,
     `Erstellt am: ${formatDateDE(new Date())}`,
     ``,
-    `── Rechnungen ──`,
+    `── Einnahmen ──`,
     `Anzahl Rechnungen: ${relevantInvoices.length}`,
-    `Summe netto: ${formatEUR(totalNet)}`,
-    ...(isSmallBiz ? [] : [`Summe Umsatzsteuer: ${formatEUR(totalTax)}`]),
-    `Summe brutto: ${formatEUR(totalGross)}`,
     `Bezahlt: ${formatEUR(paid)}`,
     `Offen: ${formatEUR(open)}`,
     `Überfällig: ${formatEUR(overdue)}`,
+    ``,
+    `── Ausgaben ──`,
+    `Anzahl Belege: ${expenseDocs.length}`,
+    `Ausgaben gesamt: ${formatEUR(totalExpenses)}`,
+    ``,
+    `── Ergebnis ──`,
+    `Gewinn: ${formatEUR(profit)}`,
     ``,
     `── Angebote ──`,
     `Anzahl Angebote: ${relevantOffers.length}`,
     ``,
     `── Steuerstatus ──`,
     `Steuermodus: ${isSmallBiz ? 'Kleinunternehmerregelung §19 UStG' : 'Umsatzsteuer aktiv'}`,
+    ...(isSmallBiz ? [] : [`Netto gesamt: ${formatEUR(totalNet)}`, `Umsatzsteuer gesamt: ${formatEUR(totalTax)}`, `Brutto gesamt: ${formatEUR(totalGross)}`]),
     ...(businessSettings?.tax_number ? [`Steuernummer: ${businessSettings.tax_number}`] : []),
     ...(businessSettings?.vat_id ? [`USt-IdNr: ${businessSettings.vat_id}`] : []),
   ];
-
   zip.file('zusammenfassung.txt', summaryLines.join('\n'));
 
   progress(95, 'ZIP erstellen…');

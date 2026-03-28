@@ -292,16 +292,38 @@ const Documents = () => {
                               </span>
                             )}
                             {doc.file_size && <span className="text-[10px] text-muted-foreground">{formatSize(doc.file_size)}</span>}
-                            {doc.file_size && <span className="text-[10px] text-muted-foreground">{formatSize(doc.file_size)}</span>}
                           </div>
                           {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
                         </div>
                         <div className="flex shrink-0 gap-1">
                           <button onClick={async () => {
-                              const path = getStoragePath(doc.file_url);
-                              const { data } = await supabase.storage.from('client-documents').createSignedUrl(path, 300);
-                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                              else toast.error('Download fehlgeschlagen');
+                              try {
+                                const path = getStoragePath(doc.file_url);
+                                const { data, error } = await supabase.storage.from('client-documents').createSignedUrl(path, 600);
+                                if (error || !data?.signedUrl) {
+                                  console.error('Signed URL error:', error);
+                                  toast.error('Datei konnte nicht geladen werden. Bitte versuchen Sie es erneut.');
+                                  return;
+                                }
+                                // Force download via fetch + blob
+                                const resp = await fetch(data.signedUrl);
+                                if (!resp.ok) {
+                                  toast.error('Datei nicht verfügbar');
+                                  return;
+                                }
+                                const blob = await resp.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = doc.file_name || 'dokument';
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                              } catch (err) {
+                                console.error('Download failed:', err);
+                                toast.error('Download fehlgeschlagen');
+                              }
                             }}
                             className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground">
                             <Download className="h-5 w-5" />

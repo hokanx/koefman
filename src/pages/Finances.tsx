@@ -86,7 +86,7 @@ const Finances = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('documents')
-        .select('id, created_at, category')
+        .select('id, created_at, category, status, extracted_data')
         .eq('user_id', targetUserId!)
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
@@ -139,6 +139,8 @@ const Finances = () => {
   const stats = useMemo(() => {
     let totalGross = 0, totalNet = 0, totalTax = 0, paid = 0, open = 0, overdue = 0;
     let countOverdue = 0;
+    let expenses = 0, docIncome = 0;
+
     for (const inv of invoices) {
       if (inv.status === 'cancelled') continue;
       totalGross += Number(inv.grand_total);
@@ -155,8 +157,31 @@ const Finances = () => {
         }
       }
     }
-    return { totalGross, totalNet, totalTax, paid, open, overdue, countOverdue };
-  }, [invoices, today]);
+
+    // Include approved documents (geprüft/verarbeitet) with extracted amounts
+    const expenseCategories = ['eingangsrechnungen', 'bewirtung', 'fahrtkosten', 'reisekosten', 'miete', 'versicherungen', 'ausgaben'];
+    const incomeCategories = ['zahlungseingaenge', 'gutschriften'];
+
+    for (const doc of documents) {
+      const d = doc as any;
+      if (d.status !== 'geprueft' && d.status !== 'verarbeitet') continue;
+      const ext = d.extracted_data as any;
+      if (!ext) continue;
+      const amount = Number(ext.total_amount) || Number(ext.net_amount) || 0;
+      if (amount <= 0) continue;
+
+      if (expenseCategories.includes(d.category)) {
+        expenses += amount;
+      } else if (incomeCategories.includes(d.category)) {
+        docIncome += amount;
+      }
+    }
+
+    const totalIncome = paid + docIncome;
+    const profit = totalIncome - expenses;
+
+    return { totalGross, totalNet, totalTax, paid, open, overdue, countOverdue, expenses, docIncome, totalIncome, profit };
+  }, [invoices, documents, today]);
 
   // Completeness logic
   const completeness = useMemo(() => {
@@ -284,16 +309,16 @@ const Finances = () => {
       <div className="rounded-xl border border-border bg-card p-4">
         <h2 className="mb-3 font-semibold text-foreground">Finanzübersicht</h2>
         <div className="space-y-2">
-          <Row label="Einnahmen gesamt" value={formatEUR(stats.paid)} icon={TrendingUp} color="text-success" />
-          <Row label="Ausgaben gesamt" value={formatEUR(0)} icon={TrendingDown} color="text-destructive" />
+          <Row label="Einnahmen gesamt" value={formatEUR(stats.totalIncome)} icon={TrendingUp} color="text-success" />
+          <Row label="Ausgaben gesamt" value={formatEUR(stats.expenses)} icon={TrendingDown} color="text-destructive" />
           <div className="border-t border-border pt-2">
             <div className="flex items-center justify-between rounded-lg bg-primary/5 p-3">
               <div className="flex items-center gap-2">
                 <PiggyBank className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium text-foreground">Gewinn</span>
               </div>
-              <span className={`text-lg font-bold ${stats.paid >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {formatEUR(stats.paid)}
+              <span className={`text-lg font-bold ${stats.profit >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {formatEUR(stats.profit)}
               </span>
             </div>
           </div>
