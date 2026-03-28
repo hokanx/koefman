@@ -2,14 +2,12 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { formatNumber, formatDateDE } from '@/lib/utils';
+import { formatEUR, formatDateDE } from '@/lib/utils';
 import { generateTaxExportZip } from '@/lib/taxExport';
 import { toast } from 'sonner';
-import FinanceCards from '@/components/finances/FinanceCards';
-import TaxOverview from '@/components/finances/TaxOverview';
-import EuerSection from '@/components/finances/EuerSection';
-import DocumentStatus from '@/components/finances/DocumentStatus';
-import FinanceActions from '@/components/finances/FinanceActions';
+import { Info, TrendingUp, TrendingDown, PiggyBank, Clock, AlertTriangle, CheckCircle2, FileArchive, FileText, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 type DateRange = 'month' | 'quarter' | 'year';
 
@@ -35,6 +33,7 @@ const getDateRange = (range: DateRange): { from: string; to: string } => {
 
 const Finances = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [range, setRange] = useState<DateRange>('month');
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState('');
@@ -92,10 +91,9 @@ const Finances = () => {
 
   const stats = useMemo(() => {
     let totalGross = 0, totalNet = 0, totalTax = 0, paid = 0, open = 0, overdue = 0;
-    let countAll = 0, countOpen = 0, countOverdue = 0;
+    let countOverdue = 0;
     for (const inv of invoices) {
       if (inv.status === 'cancelled') continue;
-      countAll++;
       totalGross += Number(inv.grand_total);
       totalNet += Number(inv.subtotal);
       totalTax += Number(inv.tax_total);
@@ -107,11 +105,10 @@ const Finances = () => {
           countOverdue++;
         } else {
           open += Number(inv.grand_total);
-          countOpen++;
         }
       }
     }
-    return { totalGross, totalNet, totalTax, paid, open, overdue, countAll, countOpen, countOverdue };
+    return { totalGross, totalNet, totalTax, paid, open, overdue, countOverdue };
   }, [invoices, today]);
 
   const rangeOptions: { value: DateRange; label: string }[] = [
@@ -125,6 +122,9 @@ const Finances = () => {
     : range === 'quarter'
       ? `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`
       : `${new Date().getFullYear()}`;
+
+  const docCount = documents.length;
+  const isComplete = docCount >= 3 && hasBankDocs;
 
   const handleTaxExport = async () => {
     if (!user || !settings) return;
@@ -158,37 +158,35 @@ const Finances = () => {
       inv.invoice_number, formatDateDE(inv.date), formatDateDE(inv.due_date), inv.status,
       formatNumber(Number(inv.subtotal)), formatNumber(Number(inv.tax_total)), formatNumber(Number(inv.grand_total)),
     ]);
-    rows.push([]);
-    rows.push(['Zusammenfassung', '', '', '', '', '', '']);
-    rows.push(['Anzahl Rechnungen', '', '', '', '', '', String(stats.countAll)]);
-    rows.push(['Summe netto', '', '', '', '', '', formatNumber(stats.totalNet)]);
-    if (!isSmallBiz) rows.push(['Summe USt', '', '', '', '', '', formatNumber(stats.totalTax)]);
-    rows.push(['Summe brutto', '', '', '', '', '', formatNumber(stats.totalGross)]);
-    rows.push(['Bezahlt', '', '', '', '', '', formatNumber(stats.paid)]);
-    rows.push(['Offen', '', '', '', '', '', formatNumber(stats.open)]);
-    rows.push(['Überfällig', '', '', '', '', '', formatNumber(stats.overdue)]);
-    rows.push(['Steuermodus', '', '', '', '', '', isSmallBiz ? 'Kleinunternehmerregelung §19 UStG' : 'Umsatzsteuer aktiv']);
-    rows.push(['Zeitraum', '', '', '', '', '', `${formatDateDE(from)} – ${formatDateDE(to)}`]);
-    if (settings?.business_name) rows.push(['Unternehmen', '', '', '', '', '', settings.business_name]);
     const csvContent = [header, ...rows].map((r) => (r as string[]).join(';')).join('\n');
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Finanzuebersicht_${from}_${to}.csv`;
+    a.download = `Rechnungen_${from}_${to}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
+  const Row = ({ label, value, icon: Icon, color }: { label: string; value: string; icon?: any; color?: string }) => (
+    <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className={`h-4 w-4 ${color || 'text-muted-foreground'}`} />}
+        <span className="text-sm text-muted-foreground">{label}</span>
+      </div>
+      <span className={`font-medium ${color || 'text-foreground'}`}>{value}</span>
+    </div>
+  );
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
+    <div className="mx-auto max-w-3xl space-y-5 p-4 md:p-6">
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-foreground">Steuer & Finanzen</h1>
         <p className="text-sm text-muted-foreground">{rangeLabel}</p>
       </div>
 
-      {/* Date Range Filter */}
+      {/* Zeitraum filter */}
       <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
         {rangeOptions.map((opt) => (
           <button
@@ -205,60 +203,110 @@ const Finances = () => {
         ))}
       </div>
 
-      {/* Summary Cards */}
-      <FinanceCards
-        totalGross={stats.totalGross}
-        paid={stats.paid}
-        open={stats.open}
-        overdue={stats.overdue}
-        labels={{
-          totalRevenue: 'Umsatz gesamt',
-          paid: 'Bezahlt',
-          openAmount: 'Offen',
-          overdueAmount: 'Überfällig',
-        }}
-      />
-
-      {/* Two-column layout on desktop */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {/* Left column: financial overview */}
-        <div className="space-y-4">
-          <TaxOverview
-            isSmallBiz={isSmallBiz}
-            totalNet={stats.totalNet}
-            totalTax={stats.totalTax}
-            totalGross={stats.totalGross}
-            countAll={stats.countAll}
-            countOpen={stats.countOpen}
-            countOverdue={stats.countOverdue}
-          />
-          <EuerSection income={stats.paid} expenses={0} />
-        </div>
-
-        {/* Right column: documents + actions */}
-        <div className="space-y-4">
-          <DocumentStatus
-            count={documents.length}
-            lastUploadDate={documents[0]?.created_at}
-            hasBankDocs={documents.length > 0 ? hasBankDocs : undefined}
-          />
-          <FinanceActions
-            onTaxExport={handleTaxExport}
-            onCsvExport={handleCsvExport}
-            exporting={exporting}
-            exportProgress={exportProgress}
-          />
+      {/* Finanzübersicht */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h2 className="mb-3 font-semibold text-foreground">Finanzübersicht</h2>
+        <div className="space-y-2">
+          <Row label="Einnahmen gesamt" value={formatEUR(stats.paid)} icon={TrendingUp} color="text-success" />
+          <Row label="Ausgaben gesamt" value={formatEUR(0)} icon={TrendingDown} color="text-destructive" />
+          <div className="border-t border-border pt-2">
+            <div className="flex items-center justify-between rounded-lg bg-primary/5 p-3">
+              <div className="flex items-center gap-2">
+                <PiggyBank className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">Gewinn</span>
+              </div>
+              <span className={`text-lg font-bold ${stats.paid >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {formatEUR(stats.paid)}
+              </span>
+            </div>
+          </div>
+          {stats.open > 0 && (
+            <Row label="Offene Rechnungen" value={formatEUR(stats.open)} icon={Clock} color="text-warning" />
+          )}
+          {stats.overdue > 0 && (
+            <Row label="Überfällige Rechnungen" value={formatEUR(stats.overdue)} icon={AlertTriangle} color="text-destructive" />
+          )}
         </div>
       </div>
 
-      {/* Tax hint */}
-      {!isSmallBiz && (
-        <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-          Hinweis: Umsatzsteuer wird berücksichtigt.
+      {/* Steuerübersicht */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h2 className="mb-3 font-semibold text-foreground">Steuerübersicht</h2>
+        {isSmallBiz ? (
+          <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/20 p-3 text-sm text-muted-foreground">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>Kleinunternehmerregelung aktiv (§19 UStG) – keine Umsatzsteuer wird berechnet.</span>
+          </div>
+        ) : (
+          <div className="space-y-2 text-sm">
+            <Row label="Netto gesamt" value={formatEUR(stats.totalNet)} />
+            <Row label="Umsatzsteuer gesamt" value={formatEUR(stats.totalTax)} />
+            <Row label="Brutto gesamt" value={formatEUR(stats.totalGross)} />
+          </div>
+        )}
+      </div>
+
+      {/* Unterlagenstatus */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h2 className="mb-3 font-semibold text-foreground">Unterlagenstatus</h2>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
+            <span className="text-muted-foreground">Hochgeladene Belege</span>
+            <span className="font-medium text-foreground">{docCount}</span>
+          </div>
+          {isComplete ? (
+            <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/5 p-3 text-sm text-success">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Alles vollständig für diesen Zeitraum
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {docCount < 3 && (
+                <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-warning">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  Es fehlen noch Unterlagen für diesen Zeitraum
+                </div>
+              )}
+              {docCount > 0 && !hasBankDocs && (
+                <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-warning">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  Kontoauszüge fehlen noch
+                </div>
+              )}
+            </div>
+          )}
+          <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => navigate('/documents')}>
+            Belege verwalten
+          </Button>
         </div>
-      )}
+      </div>
+
+      {/* Exporte */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h2 className="mb-3 font-semibold text-foreground">Exporte</h2>
+        <div className="space-y-2">
+          <Button className="w-full justify-start gap-2" onClick={handleTaxExport} disabled={exporting}>
+            <FileArchive className="h-4 w-4" />
+            <div className="flex flex-col items-start text-left">
+              <span>{exporting ? exportProgress : 'Unterlagen für Steuerberater'}</span>
+              <span className="text-xs font-normal opacity-75">Rechnungen, Belege & Zusammenfassung als ZIP</span>
+            </div>
+          </Button>
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={handleCsvExport}>
+            <FileText className="h-4 w-4" />
+            Rechnungen als CSV exportieren
+          </Button>
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={() => navigate('/documents')}>
+            <Download className="h-4 w-4" />
+            Dokumente verwalten & herunterladen
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
+
+// Simple number formatter for CSV
+const formatNumber = (n: number) => n.toFixed(2).replace('.', ',');
 
 export default Finances;
