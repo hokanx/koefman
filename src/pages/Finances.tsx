@@ -253,6 +253,31 @@ const Finances = () => {
     }
   };
 
+  const handleFullExport = async () => {
+    if (!targetUserId || !settings) return;
+    setExporting(true);
+    setExportProgress('Daten laden…');
+    try {
+      const blob = await generateFullArchiveZip({
+        userId: targetUserId, from, to, businessSettings: settings,
+        onProgress: (_p, label) => setExportProgress(label),
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Archiv_${from}_${to}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Archiv wurde erstellt');
+    } catch (e) {
+      console.error('Full export failed', e);
+      toast.error('Export fehlgeschlagen');
+    } finally {
+      setExporting(false);
+      setExportProgress('');
+    }
+  };
+
   const handleCsvExport = () => {
     const relevant = invoices.filter((inv) => inv.status !== 'cancelled');
     const header = ['Rechnungsnummer', 'Datum', 'Fällig', 'Status', 'Netto', 'USt', 'Brutto'];
