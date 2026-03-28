@@ -18,6 +18,9 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
   const zip = new JSZip();
   const rechnungenFolder = zip.folder('Rechnungen')!;
   const angeboteFolder = zip.folder('Angebote')!;
+  const ausgabenFolder = zip.folder('Ausgaben')!;
+  const bankFolder = zip.folder('Bank')!;
+  const vertraegeFolder = zip.folder('Vertraege')!;
 
   const progress = (p: number, l: string) => onProgress?.(Math.round(p), l);
   progress(0, 'Daten laden…');
