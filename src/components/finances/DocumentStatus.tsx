@@ -1,4 +1,4 @@
-import { FileText, Upload } from 'lucide-react';
+import { FileText, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDateDE } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -6,11 +6,13 @@ import { useNavigate } from 'react-router-dom';
 interface DocumentStatusProps {
   count: number;
   lastUploadDate?: string;
+  hasBankDocs?: boolean;
+  hasExpenseDocs?: boolean;
 }
 
-const DocumentStatus = ({ count, lastUploadDate }: DocumentStatusProps) => {
+const DocumentStatus = ({ count, lastUploadDate, hasBankDocs, hasExpenseDocs }: DocumentStatusProps) => {
   const navigate = useNavigate();
-  const hasEnough = count >= 3;
+  const isComplete = count >= 3 && hasBankDocs !== false;
 
   return (
     <div className="rounded-xl border border-border bg-card p-4">
@@ -31,9 +33,25 @@ const DocumentStatus = ({ count, lastUploadDate }: DocumentStatusProps) => {
           </div>
         )}
 
-        {!hasEnough && (
-          <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-warning">
-            Es fehlen noch Belege für diesen Zeitraum.
+        {isComplete ? (
+          <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/5 p-3 text-sm text-success">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            Alles vollständig für diesen Zeitraum
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {count < 3 && (
+              <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-warning">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Es fehlen noch Belege für diesen Zeitraum
+              </div>
+            )}
+            {hasBankDocs === false && (
+              <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-warning">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Kontoauszüge fehlen noch
+              </div>
+            )}
           </div>
         )}
 
