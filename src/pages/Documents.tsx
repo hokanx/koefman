@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Download, FolderOpen, Search } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, FolderOpen, Search, Info } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,26 +7,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDateDE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { DOCUMENT_GROUPS, getCategoryInfo, getStatusInfo } from '@/lib/documentCategories';
 
-const CATEGORIES = [
-  { value: 'einnahmen', label: 'Einnahme', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-  { value: 'ausgaben', label: 'Ausgabe', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-  { value: 'vertraege', label: 'Vertrag', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
-  { value: 'sonstiges', label: 'Sonstiges', color: 'bg-muted text-muted-foreground' },
-];
-
-const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  neu: { label: 'Neu', color: 'bg-info/15 text-info' },
-  geprueft: { label: 'Geprüft', color: 'bg-warning/15 text-warning' },
-  verarbeitet: { label: 'Verarbeitet', color: 'bg-success/15 text-success' },
-};
-
-// Extract storage path from file_url (handles both raw paths and full URLs)
 const getStoragePath = (fileUrl: string): string => {
   if (fileUrl.includes('/client-documents/')) {
     return fileUrl.split('/client-documents/').pop() || fileUrl;
   }
-  return fileUrl; // already a raw path
+  return fileUrl;
 };
 
 const Documents = () => {
@@ -34,24 +21,35 @@ const Documents = () => {
   const { effectiveUserId, isImpersonating, impersonatedUser } = useImpersonation();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [filter, setFilter] = useState<string>('alle');
+  const [filterGroup, setFilterGroup] = useState<string>('alle');
   const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('sonstiges');
+  const [category, setCategory] = useState('eingangsrechnungen');
 
   const targetUserId = effectiveUserId || user?.id;
 
   const { data: documents = [], isLoading } = useQuery({
-    queryKey: ['documents', targetUserId, filter],
+    queryKey: ['documents', targetUserId, filterGroup],
     queryFn: async () => {
       let query = supabase
         .from('documents')
         .select('*')
         .eq('user_id', targetUserId!)
         .order('created_at', { ascending: false });
-      if (filter !== 'alle') query = query.eq('category', filter);
+
+      if (filterGroup !== 'alle') {
+        // Get all subcategory values for this group
+        const group = DOCUMENT_GROUPS.find(g => g.group === filterGroup);
+        if (group) {
+          const values = group.subcategories.map(s => s.value);
+          // Also include legacy value
+          values.push(filterGroup);
+          query = query.in('category', values);
+        }
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -61,7 +59,6 @@ const Documents = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (doc: { id: string; file_url: string }) => {
-      // file_url stores the storage path (e.g. "userId/timestamp.ext")
       const storagePath = getStoragePath(doc.file_url);
       if (storagePath) {
         await supabase.storage.from('client-documents').remove([storagePath]);
@@ -119,9 +116,6 @@ const Documents = () => {
     }
   };
 
-  const getCategoryInfo = (cat: string) => CATEGORIES.find(c => c.value === cat) || CATEGORIES[3];
-  const getStatusInfo = (s: string) => STATUS_MAP[s] || STATUS_MAP.neu;
-
   const formatSize = (bytes: number | null) => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
@@ -129,14 +123,12 @@ const Documents = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // Filter by search
   const filtered = documents.filter((doc: any) => {
     if (!search) return true;
     const s = search.toLowerCase();
     return doc.file_name?.toLowerCase().includes(s) || doc.description?.toLowerCase().includes(s);
   });
 
-  // Group by month
   const grouped = filtered.reduce((acc: Record<string, any[]>, doc: any) => {
     const d = new Date(doc.created_at);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -164,24 +156,45 @@ const Documents = () => {
         </Button>
       </div>
 
+      {/* Guidance hints */}
+      <div className="mb-4 flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="text-xs text-muted-foreground space-y-0.5">
+          <p>Angebote und Ausgangsrechnungen werden automatisch erfasst und müssen nicht hochgeladen werden.</p>
+          <p>Laden Sie hier Belege, Kontoauszüge und Eingangsrechnungen hoch.</p>
+        </div>
+      </div>
+
       {/* Upload section */}
       {showUpload && (
         <div className="mb-6 rounded-xl border border-border bg-card p-4 space-y-3 animate-fade-in">
           <div className="grid gap-3 sm:grid-cols-2">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-            >
-              {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-            <input
-              type="text"
-              placeholder="Beschreibung (optional)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
-            />
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Kategorie</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              >
+                {DOCUMENT_GROUPS.filter(g => g.group !== 'einnahmen').map(g => (
+                  <optgroup key={g.group} label={g.label}>
+                    {g.subcategories.map(s => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Beschreibung (optional)</label>
+              <input
+                type="text"
+                placeholder="z.B. Telefonrechnung März"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
           </div>
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/30 px-4 py-6 text-sm text-muted-foreground transition hover:border-primary hover:text-primary">
             <Upload className="h-5 w-5" />
@@ -191,7 +204,7 @@ const Documents = () => {
         </div>
       )}
 
-      {/* Search + Filter */}
+      {/* Search + Group Filter */}
       <div className="mb-4 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -204,15 +217,23 @@ const Documents = () => {
           />
         </div>
         <div className="flex gap-2 overflow-x-auto">
-          {[{ value: 'alle', label: 'Alle' }, ...CATEGORIES].map(c => (
+          <button
+            onClick={() => setFilterGroup('alle')}
+            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              filterGroup === 'alle' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            Alle
+          </button>
+          {DOCUMENT_GROUPS.map(g => (
             <button
-              key={c.value}
-              onClick={() => setFilter(c.value)}
+              key={g.group}
+              onClick={() => setFilterGroup(g.group)}
               className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                filter === c.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+                filterGroup === g.group ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
-              {c.label}
+              {g.label}
             </button>
           ))}
         </div>
@@ -233,7 +254,7 @@ const Documents = () => {
             const monthLabel = docs[0]._monthLabel;
             return (
               <div key={monthKey}>
-                <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{monthLabel}</h2>
+                <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{monthLabel} ({docs.length})</h2>
                 <div className="space-y-2">
                   {docs.map((doc: any) => {
                     const catInfo = getCategoryInfo(doc.category);
