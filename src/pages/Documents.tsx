@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Download, FolderOpen, Search, Info } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, FolderOpen, Search, Info, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -286,6 +286,12 @@ const Documents = () => {
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${catInfo.color}`}>{catInfo.label}</span>
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
                             <span className="text-[10px] text-muted-foreground">{formatDateDE(doc.created_at)}</span>
+                            {doc.extracted_data && (
+                              <span className="flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                <Sparkles className="h-2.5 w-2.5" /> Analysiert
+                              </span>
+                            )}
+                            {doc.file_size && <span className="text-[10px] text-muted-foreground">{formatSize(doc.file_size)}</span>}
                             {doc.file_size && <span className="text-[10px] text-muted-foreground">{formatSize(doc.file_size)}</span>}
                           </div>
                           {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
