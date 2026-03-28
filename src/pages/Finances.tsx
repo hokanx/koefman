@@ -139,6 +139,8 @@ const Finances = () => {
   const stats = useMemo(() => {
     let totalGross = 0, totalNet = 0, totalTax = 0, paid = 0, open = 0, overdue = 0;
     let countOverdue = 0;
+    let expenses = 0, docIncome = 0;
+
     for (const inv of invoices) {
       if (inv.status === 'cancelled') continue;
       totalGross += Number(inv.grand_total);
@@ -155,8 +157,31 @@ const Finances = () => {
         }
       }
     }
-    return { totalGross, totalNet, totalTax, paid, open, overdue, countOverdue };
-  }, [invoices, today]);
+
+    // Include approved documents (geprüft/verarbeitet) with extracted amounts
+    const expenseCategories = ['eingangsrechnungen', 'bewirtung', 'fahrtkosten', 'reisekosten', 'miete', 'versicherungen', 'ausgaben'];
+    const incomeCategories = ['zahlungseingaenge', 'gutschriften'];
+
+    for (const doc of documents) {
+      const d = doc as any;
+      if (d.status !== 'geprueft' && d.status !== 'verarbeitet') continue;
+      const ext = d.extracted_data as any;
+      if (!ext) continue;
+      const amount = Number(ext.total_amount) || Number(ext.net_amount) || 0;
+      if (amount <= 0) continue;
+
+      if (expenseCategories.includes(d.category)) {
+        expenses += amount;
+      } else if (incomeCategories.includes(d.category)) {
+        docIncome += amount;
+      }
+    }
+
+    const totalIncome = paid + docIncome;
+    const profit = totalIncome - expenses;
+
+    return { totalGross, totalNet, totalTax, paid, open, overdue, countOverdue, expenses, docIncome, totalIncome, profit };
+  }, [invoices, documents, today]);
 
   // Completeness logic
   const completeness = useMemo(() => {
