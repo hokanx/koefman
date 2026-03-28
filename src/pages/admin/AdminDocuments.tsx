@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDateDE } from '@/lib/utils';
-import { FileText, Download, Search, Send, ChevronDown, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { FileText, Download, Search, Send, ChevronDown, CheckCircle2, AlertTriangle, Sparkles, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DOCUMENT_GROUPS, ALL_SUBCATEGORIES, getCategoryInfo, STATUS_OPTIONS, getStatusInfo } from '@/lib/documentCategories';
 import JSZip from 'jszip';
@@ -309,13 +309,44 @@ const AdminDocuments = () => {
                     return (
                       <div key={doc.id} className="rounded-xl border border-border bg-card p-3 space-y-2">
                         <div className="flex items-center gap-3">
-                          <FileText className="h-7 w-7 shrink-0 text-muted-foreground" />
+                          {/* Image preview for receipts */}
+                          {doc.mime_type?.startsWith('image/') ? (
+                            <button
+                              onClick={async () => {
+                                const path = getStoragePath(doc.file_url);
+                                const { data } = await supabase.storage.from('client-documents').createSignedUrl(path, 300);
+                                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                              }}
+                              className="relative h-12 w-12 shrink-0 rounded-lg bg-muted overflow-hidden group"
+                            >
+                              <Eye className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition z-10" />
+                              <img
+                                src=""
+                                alt=""
+                                className="h-full w-full object-cover opacity-60 group-hover:opacity-40 transition"
+                                ref={(el) => {
+                                  if (!el) return;
+                                  const path = getStoragePath(doc.file_url);
+                                  supabase.storage.from('client-documents').createSignedUrl(path, 300).then(({ data }) => {
+                                    if (data?.signedUrl) el.src = data.signedUrl;
+                                  });
+                                }}
+                              />
+                            </button>
+                          ) : (
+                            <FileText className="h-7 w-7 shrink-0 text-muted-foreground" />
+                          )}
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
                             <div className="flex flex-wrap items-center gap-2 mt-1">
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${catInfo.color}`}>{catInfo.label}</span>
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
                               <span className="text-[10px] text-muted-foreground">{formatDateDE(doc.created_at)}</span>
+                              {doc.extracted_data && (
+                                <span className="flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                  <Sparkles className="h-2.5 w-2.5" /> Analysiert
+                                </span>
+                              )}
                             </div>
                             {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
                           </div>
@@ -329,6 +360,61 @@ const AdminDocuments = () => {
                             <Download className="h-4 w-4" />
                           </button>
                         </div>
+
+                        {/* Extracted data display */}
+                        {doc.extracted_data && (
+                          <div className="rounded-lg border border-primary/20 bg-primary/5 p-2.5 space-y-1.5">
+                            <p className="flex items-center gap-1 text-[11px] font-semibold text-primary">
+                              <Sparkles className="h-3 w-3" /> KI-Analyse
+                              {doc.extracted_data.confidence && (
+                                <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
+                                  doc.extracted_data.confidence === 'high' ? 'bg-success/15 text-success' :
+                                  doc.extracted_data.confidence === 'medium' ? 'bg-warning/15 text-warning' :
+                                  'bg-destructive/15 text-destructive'
+                                }`}>
+                                  {doc.extracted_data.confidence === 'high' ? 'Sicher' :
+                                   doc.extracted_data.confidence === 'medium' ? 'Mittel' : 'Unsicher'}
+                                </span>
+                              )}
+                            </p>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                              {doc.extracted_data.vendor_name && (
+                                <>
+                                  <span className="text-muted-foreground">Aussteller</span>
+                                  <span className="font-medium text-foreground">{doc.extracted_data.vendor_name}</span>
+                                </>
+                              )}
+                              {doc.extracted_data.receipt_date && (
+                                <>
+                                  <span className="text-muted-foreground">Datum</span>
+                                  <span className="font-medium text-foreground">{formatDateDE(doc.extracted_data.receipt_date)}</span>
+                                </>
+                              )}
+                              {doc.extracted_data.total_amount != null && (
+                                <>
+                                  <span className="text-muted-foreground">Betrag</span>
+                                  <span className="font-medium text-foreground">{Number(doc.extracted_data.total_amount).toFixed(2).replace('.', ',')} €</span>
+                                </>
+                              )}
+                              {doc.extracted_data.vat_amount != null && doc.extracted_data.vat_amount > 0 && (
+                                <>
+                                  <span className="text-muted-foreground">USt</span>
+                                  <span className="font-medium text-foreground">{Number(doc.extracted_data.vat_amount).toFixed(2).replace('.', ',')} €</span>
+                                </>
+                              )}
+                              {doc.extracted_data.net_amount != null && doc.extracted_data.net_amount > 0 && (
+                                <>
+                                  <span className="text-muted-foreground">Netto</span>
+                                  <span className="font-medium text-foreground">{Number(doc.extracted_data.net_amount).toFixed(2).replace('.', ',')} €</span>
+                                </>
+                              )}
+                            </div>
+                            {doc.extracted_data.notes && (
+                              <p className="text-[10px] text-muted-foreground italic">{doc.extracted_data.notes}</p>
+                            )}
+                          </div>
+                        )}
+
                         {/* Admin controls */}
                         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2">
                           <select value={doc.category}

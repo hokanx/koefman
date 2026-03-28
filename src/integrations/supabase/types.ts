@@ -443,6 +443,7 @@ export type Database = {
           category: string
           created_at: string
           description: string | null
+          extracted_data: Json | null
           file_name: string
           file_size: number | null
           file_url: string
@@ -456,6 +457,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string | null
+          extracted_data?: Json | null
           file_name: string
           file_size?: number | null
           file_url: string
@@ -469,6 +471,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string | null
+          extracted_data?: Json | null
           file_name?: string
           file_size?: number | null
           file_url?: string

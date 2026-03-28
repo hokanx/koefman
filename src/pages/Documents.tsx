@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Download, FolderOpen, Search, Info } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, FolderOpen, Search, Info, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -93,7 +93,7 @@ const Documents = () => {
       const { error: uploadError } = await supabase.storage.from('client-documents').upload(path, file);
       if (uploadError) throw uploadError;
 
-      const { error: insertError } = await supabase.from('documents').insert({
+      const { data: insertData, error: insertError } = await supabase.from('documents').insert({
         user_id: targetUserId,
         file_name: file.name,
         file_url: path,
@@ -101,13 +101,31 @@ const Documents = () => {
         mime_type: file.type,
         category,
         description: description || null,
-      });
+      }).select('id').single();
       if (insertError) throw insertError;
 
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       toast.success('Beleg hochgeladen');
       setDescription('');
       setShowUpload(false);
+
+      // Trigger AI analysis for images in background
+      const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+      if (isImage && insertData?.id) {
+        toast.info('Beleg wird analysiert…');
+        supabase.functions.invoke('analyze-receipt', {
+          body: { documentId: insertData.id, fileUrl: path },
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('Receipt analysis failed:', error);
+            return;
+          }
+          if (data?.extracted) {
+            queryClient.invalidateQueries({ queryKey: ['documents'] });
+            toast.success('Beleg wurde automatisch analysiert');
+          }
+        });
+      }
     } catch (err: any) {
       toast.error(err.message || 'Upload fehlgeschlagen');
     } finally {
@@ -268,6 +286,12 @@ const Documents = () => {
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${catInfo.color}`}>{catInfo.label}</span>
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
                             <span className="text-[10px] text-muted-foreground">{formatDateDE(doc.created_at)}</span>
+                            {doc.extracted_data && (
+                              <span className="flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                <Sparkles className="h-2.5 w-2.5" /> Analysiert
+                              </span>
+                            )}
+                            {doc.file_size && <span className="text-[10px] text-muted-foreground">{formatSize(doc.file_size)}</span>}
                             {doc.file_size && <span className="text-[10px] text-muted-foreground">{formatSize(doc.file_size)}</span>}
                           </div>
                           {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
