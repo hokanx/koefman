@@ -82,7 +82,7 @@ const AppLayout = () => {
       {/* Top header */}
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4" style={isImpersonating ? { top: '40px' } : undefined}>
         <div className="flex items-center gap-2">
-          <img src="/logo-koefman.jpeg" alt="KÖFMAN" className="h-8 w-auto" />
+          <img src="/logo-wordmark-white.png" alt="KÖFMAN" className="h-7 w-auto" />
         </div>
         <div className="flex items-center gap-1">
           <NotificationBell />
