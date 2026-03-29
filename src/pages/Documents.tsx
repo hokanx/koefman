@@ -138,10 +138,10 @@ const Documents = () => {
     if (filterStatus !== 'alle' && doc.status !== filterStatus) return false;
     if (!search) return true;
     const s = search.toLowerCase();
-    const extracted = doc.extracted_data || {};
+    const norm = normalizeExtracted(doc.extracted_data);
     return doc.file_name?.toLowerCase().includes(s)
       || doc.description?.toLowerCase().includes(s)
-      || extracted.vendor?.toLowerCase().includes(s);
+      || norm.vendor?.toLowerCase().includes(s);
   });
 
   const grouped = filtered.reduce((acc: Record<string, any[]>, doc: any) => {
