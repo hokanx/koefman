@@ -1,0 +1,381 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS")
+    return new Response(null, { headers: corsHeaders });
+
+  try {
+    const body = await req.json();
+    const {
+      name,
+      email,
+      company,
+      business_type,
+      lead_flow,
+      revenue_clarity,
+      main_problem,
+      variant,
+      qr_session_id,
+    } = body;
+
+    if (!name || !email) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Name und E-Mail sind erforderlich." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // 1. Store diagnostic submission
+    const { data: submission, error: subErr } = await supabase
+      .from("diagnostic_submissions")
+      .insert({
+        name,
+        email,
+        company: company || null,
+        business_type: business_type || "",
+        lead_flow: lead_flow || "",
+        revenue_clarity: revenue_clarity || "",
+        main_problem: main_problem || "",
+        variant: variant || null,
+        qr_session_id: qr_session_id || null,
+      })
+      .select()
+      .single();
+
+    if (subErr) throw subErr;
+
+    // 2. Also insert into landing_leads for admin backward compatibility
+    await supabase.from("landing_leads").insert({
+      name,
+      email,
+      company: company || "",
+      industry: business_type || "unknown",
+      situation: `Anfragen: ${lead_flow || "-"}, Umsatzverlust: ${revenue_clarity || "-"}`,
+      needs: [main_problem || "unknown"],
+      contact_method: "email",
+      status: "neu",
+      admin_notes: `QR-Variante: ${variant || "direct"}. Submission-ID: ${submission.id}`,
+    });
+
+    // 3. Generate AI analysis
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    let analysis: {
+      headline: string;
+      main_issue: string;
+      practical_meaning: string;
+      priorities: string[];
+      next_step: string;
+    };
+    let analysisStatus = "completed";
+
+    if (!LOVABLE_API_KEY) {
+      analysisStatus = "failed";
+      analysis = {
+        headline: "Kurzanalyse",
+        main_issue: "Analyse konnte nicht generiert werden.",
+        practical_meaning: "Deine Angaben wurden gespeichert.",
+        priorities: ["Wir kümmern uns darum."],
+        next_step: "Wir melden uns bei dir.",
+      };
+    } else {
+      const problemLabels: Record<string, string> = {
+        wenig_anfragen: "Zu wenig qualifizierte Anfragen",
+        unklare_ablaeufe: "Unklare Abläufe",
+        keine_conversion: "Keine klare Conversion-Struktur",
+        unsicher: "Nicht sicher, wo das Problem liegt",
+      };
+      const typeLabels: Record<string, string> = {
+        dienstleistung: "Dienstleistung",
+        lokal: "Lokales Geschäft",
+        online: "Online Business",
+        andere: "Andere Branche",
+      };
+
+      const aiResponse = await fetch(
+        "https://ai.gateway.lovable.dev/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              {
+                role: "system",
+                content: `Du bist ein erfahrener Business-Analyst für kleine Unternehmen in Deutschland. Erstelle eine kurze, scharfe Kurzanalyse basierend auf den Intake-Antworten. Ton: direkt, professionell, klar – keine leeren Versprechen, keine übertriebene Dramatik, keine generischen Startup-Phrasen. Jedes Feld kurz und prägnant halten (maximal 2 Sätze pro Feld). Keine Markdown-Formatierung verwenden.`,
+              },
+              {
+                role: "user",
+                content: `Intake-Daten eines potenziellen Kunden:
+- Unternehmenstyp: ${typeLabels[business_type] || business_type || "unbekannt"}
+- Bekommt kontinuierlich Anfragen: ${lead_flow || "keine Angabe"}
+- Weiß, wo Umsatz verloren geht: ${revenue_clarity || "keine Angabe"}
+- Hauptproblem: ${problemLabels[main_problem] || main_problem || "keine Angabe"}
+- Firma: ${company || "nicht angegeben"}
+
+Erstelle eine Kurzanalyse mit konkreten, umsetzbaren Empfehlungen.`,
+              },
+            ],
+            tools: [
+              {
+                type: "function",
+                function: {
+                  name: "create_analysis",
+                  description: "Erstelle eine strukturierte Kurzanalyse",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      headline: {
+                        type: "string",
+                        description: "Kurze Überschrift der Analyse (z.B. 'Deine Kurzanalyse')",
+                      },
+                      main_issue: {
+                        type: "string",
+                        description:
+                          "Wahrscheinlich größte Schwachstelle (1-2 Sätze, konkret)",
+                      },
+                      practical_meaning: {
+                        type: "string",
+                        description:
+                          "Was das praktisch für das Unternehmen bedeutet (1-2 Sätze)",
+                      },
+                      priorities: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "Genau 3 konkrete Prioritäten (je 1 Satz)",
+                      },
+                      next_step: {
+                        type: "string",
+                        description:
+                          "Der nächste sinnvolle Schritt (1 Satz, konkret)",
+                      },
+                    },
+                    required: [
+                      "headline",
+                      "main_issue",
+                      "practical_meaning",
+                      "priorities",
+                      "next_step",
+                    ],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            ],
+            tool_choice: {
+              type: "function",
+              function: { name: "create_analysis" },
+            },
+          }),
+        }
+      );
+
+      if (!aiResponse.ok) {
+        console.error("AI gateway error:", aiResponse.status, await aiResponse.text());
+        analysisStatus = "failed";
+        analysis = {
+          headline: "Kurzanalyse",
+          main_issue: "Analyse konnte gerade nicht generiert werden.",
+          practical_meaning: "Deine Angaben wurden gespeichert und wir kümmern uns darum.",
+          priorities: ["Wir werden deine Situation manuell prüfen."],
+          next_step: "Wir melden uns in Kürze bei dir.",
+        };
+      } else {
+        const aiData = await aiResponse.json();
+        try {
+          const toolCall = aiData.choices[0].message.tool_calls[0];
+          analysis = JSON.parse(toolCall.function.arguments);
+          // Ensure priorities is an array of 3
+          if (!Array.isArray(analysis.priorities)) {
+            analysis.priorities = [];
+          }
+          while (analysis.priorities.length < 3) {
+            analysis.priorities.push("");
+          }
+        } catch (parseErr) {
+          console.error("AI parse error:", parseErr);
+          analysisStatus = "failed";
+          analysis = {
+            headline: "Kurzanalyse",
+            main_issue: "Analyse konnte nicht vollständig erstellt werden.",
+            practical_meaning: "Deine Angaben wurden gespeichert.",
+            priorities: ["Wir kümmern uns darum.", "", ""],
+            next_step: "Wir melden uns bei dir.",
+          };
+        }
+      }
+    }
+
+    // 4. Store analysis
+    const { data: savedAnalysis } = await supabase
+      .from("lead_analyses")
+      .insert({
+        submission_id: submission.id,
+        analysis_status: analysisStatus,
+        headline: analysis.headline || "Kurzanalyse",
+        main_issue: analysis.main_issue || "",
+        practical_meaning: analysis.practical_meaning || "",
+        priority_1: analysis.priorities[0] || "",
+        priority_2: analysis.priorities[1] || "",
+        priority_3: analysis.priorities[2] || "",
+        next_step: analysis.next_step || "",
+        full_analysis_json: analysis,
+      })
+      .select()
+      .single();
+
+    // 5. Send email
+    let emailSent = false;
+    try {
+      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+      if (RESEND_API_KEY && email && analysisStatus === "completed") {
+        const prioritiesHtml = analysis.priorities
+          .filter((p: string) => p)
+          .map(
+            (p: string, i: number) =>
+              `<tr><td style="padding:8px 12px;color:#A0A0A0;vertical-align:top;font-size:13px;width:24px;">${i + 1}.</td><td style="padding:8px 0;color:#FFFFFF;font-size:14px;line-height:1.5;">${p}</td></tr>`
+          )
+          .join("");
+
+        const emailHtml = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:Inter,Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;padding:40px 20px;">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+
+<tr><td style="padding:0 0 32px 0;">
+  <p style="color:#A0A0A0;font-size:11px;letter-spacing:0.12em;margin:0;text-transform:uppercase;">KÖFMAN</p>
+</td></tr>
+
+<tr><td style="padding:0 0 24px 0;">
+  <p style="color:#FFFFFF;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin:0;">
+    ${name ? `HALLO ${name.toUpperCase()},` : "HALLO,"}
+  </p>
+</td></tr>
+
+<tr><td style="padding:0 0 32px 0;">
+  <p style="color:#A0A0A0;font-size:13px;line-height:1.6;margin:0;">
+    Hier ist deine Kurzanalyse basierend auf deinen Angaben.
+  </p>
+</td></tr>
+
+<tr><td style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 8px 0;">WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.5;margin:0;">${analysis.main_issue}</p>
+</td></tr>
+
+<tr><td style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 8px 0;">WAS DAS PRAKTISCH BEDEUTET</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.5;margin:0;">${analysis.practical_meaning}</p>
+</td></tr>
+
+<tr><td style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 12px 0;">DEINE NÄCHSTEN 3 HEBEL</p>
+  <table width="100%" cellpadding="0" cellspacing="0">${prioritiesHtml}</table>
+</td></tr>
+
+<tr><td style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 8px 0;">NÄCHSTER SINNVOLLER SCHRITT</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.5;margin:0;">${analysis.next_step}</p>
+</td></tr>
+
+<tr><td style="padding:40px 0 0 0;" align="center">
+  <a href="https://koefman.lovable.app/landing" style="display:inline-block;border:1px solid #FFFFFF;color:#FFFFFF;text-decoration:none;padding:14px 32px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;font-family:Inter,Helvetica,Arial,sans-serif;">KOSTENLOSE STRATEGIE-SESSION</a>
+</td></tr>
+
+<tr><td style="padding:40px 0 0 0;">
+  <p style="color:#A0A0A0;font-size:11px;line-height:1.5;margin:0;text-align:center;">
+    Wir zeigen dir konkret, wo du Geld verlierst – und wie du es fixst.
+  </p>
+</td></tr>
+
+<tr><td style="padding:40px 0 0 0;border-top:1px solid #1A1A1A;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-align:center;margin:16px 0 0 0;text-transform:uppercase;">KÖFMAN</p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+        const emailRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "Köfman <onboarding@resend.dev>",
+            to: email,
+            subject: "Deine Köfman Kurzanalyse",
+            html: emailHtml,
+          }),
+        });
+
+        emailSent = emailRes.ok;
+        if (!emailSent) {
+          console.error("Email send failed:", emailRes.status, await emailRes.text());
+        }
+
+        if (emailSent && savedAnalysis) {
+          await supabase
+            .from("lead_analyses")
+            .update({
+              email_sent: true,
+              email_sent_at: new Date().toISOString(),
+            })
+            .eq("id", savedAnalysis.id);
+        }
+      }
+    } catch (emailErr) {
+      console.error("Email error:", emailErr);
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        analysis: {
+          headline: analysis.headline,
+          main_issue: analysis.main_issue,
+          practical_meaning: analysis.practical_meaning,
+          priorities: analysis.priorities,
+          next_step: analysis.next_step,
+        },
+        analysis_status: analysisStatus,
+        email_sent: emailSent,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  } catch (e) {
+    console.error("generate-lead-analysis error:", e);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: e instanceof Error ? e.message : "Unbekannter Fehler",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+});

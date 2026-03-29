@@ -128,6 +128,7 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
     if (sessionIdRef.current) {
       try {
         await (supabase as any).from('qr_sessions').update({ converted: true }).eq('id', sessionIdRef.current);
+        sessionStorage.setItem('qr_session_id', sessionIdRef.current);
       } catch {}
     }
     navigate(`/diagnose?v=${variant}`);
