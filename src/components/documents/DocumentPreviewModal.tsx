@@ -1,23 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, X, Sparkles, Save, FileText } from 'lucide-react';
+import { Download, Sparkles, Save, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDateDE } from '@/lib/utils';
 import { getCategoryInfo, getStatusInfo, DOCUMENT_GROUPS, STATUS_OPTIONS } from '@/lib/documentCategories';
+import { normalizeExtracted, formatAmountDE } from '@/lib/extractedDataUtils';
 import { useAdmin } from '@/hooks/useAdmin';
-
-interface ExtractedData {
-  vendor?: string;
-  date?: string;
-  net_amount?: number;
-  vat_amount?: number;
-  gross_amount?: number;
-  suggested_category?: string;
-  description?: string;
-  [key: string]: any;
-}
 
 interface DocumentPreviewModalProps {
   open: boolean;
@@ -37,22 +27,28 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
   const { isAdmin } = useAdmin();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // Admin edit state
   const [editCategory, setEditCategory] = useState('');
   const [editStatus, setEditStatus] = useState('');
   const [editNote, setEditNote] = useState('');
-  const [editExtracted, setEditExtracted] = useState<ExtractedData>({});
+  const [editVendor, setEditVendor] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editNet, setEditNet] = useState<string>('');
+  const [editVat, setEditVat] = useState<string>('');
+  const [editGross, setEditGross] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!doc || !open) {
-      setPreviewUrl(null);
-      return;
-    }
+    if (!doc || !open) { setPreviewUrl(null); return; }
+
+    const norm = normalizeExtracted(doc.extracted_data);
     setEditCategory(doc.category || '');
     setEditStatus(doc.status || 'neu');
     setEditNote(doc.admin_note || '');
-    setEditExtracted((doc.extracted_data as ExtractedData) || {});
+    setEditVendor(norm.vendor || '');
+    setEditDate(norm.date || '');
+    setEditNet(norm.net_amount != null ? String(norm.net_amount) : '');
+    setEditVat(norm.vat_amount != null ? String(norm.vat_amount) : '');
+    setEditGross(norm.gross_amount != null ? String(norm.gross_amount) : '');
 
     const loadPreview = async () => {
       setLoading(true);
@@ -61,21 +57,27 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
         const { data, error } = await supabase.storage.from('client-documents').createSignedUrl(path, 600);
         if (error || !data?.signedUrl) throw error;
         setPreviewUrl(data.signedUrl);
-      } catch {
-        setPreviewUrl(null);
-      } finally {
-        setLoading(false);
-      }
+      } catch { setPreviewUrl(null); }
+      finally { setLoading(false); }
     };
     loadPreview();
   }, [doc, open]);
+
+  // Auto-calculate brutto
+  useEffect(() => {
+    const net = parseFloat(editNet);
+    const vat = parseFloat(editVat);
+    if (!isNaN(net) && !isNaN(vat) && !editGross) {
+      setEditGross((net + vat).toFixed(2));
+    }
+  }, [editNet, editVat]);
 
   if (!doc) return null;
 
   const isImage = doc.mime_type?.startsWith('image/');
   const isPdf = doc.mime_type === 'application/pdf';
-  const extracted = (doc.extracted_data as ExtractedData) || {};
-  const hasExtracted = Object.keys(extracted).length > 0;
+  const norm = normalizeExtracted(doc.extracted_data);
+  const hasExtracted = !!doc.extracted_data && Object.keys(doc.extracted_data).length > 0;
   const catInfo = getCategoryInfo(doc.category);
   const statusInfo = getStatusInfo(doc.status);
 
@@ -88,37 +90,38 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
       const blob = await resp.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.file_name || 'dokument';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      a.href = url; a.download = doc.file_name || 'dokument';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Download fehlgeschlagen');
-    }
+    } catch { toast.error('Download fehlgeschlagen'); }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      const extractedData: Record<string, any> = { ...(doc.extracted_data || {}) };
+      // Save normalized fields back
+      extractedData.vendor = editVendor || undefined;
+      extractedData.vendor_name = editVendor || undefined;
+      extractedData.date = editDate || undefined;
+      extractedData.receipt_date = editDate || undefined;
+      extractedData.net_amount = editNet ? parseFloat(editNet) : undefined;
+      extractedData.vat_amount = editVat ? parseFloat(editVat) : undefined;
+      extractedData.gross_amount = editGross ? parseFloat(editGross) : undefined;
+      extractedData.total_amount = editGross ? parseFloat(editGross) : undefined;
+
       const { error } = await supabase.from('documents').update({
         category: editCategory,
         status: editStatus,
         admin_note: editNote || null,
-        extracted_data: Object.keys(editExtracted).length > 0 ? editExtracted as any : null,
+        extracted_data: Object.keys(extractedData).some(k => extractedData[k] != null) ? extractedData : null,
       }).eq('id', doc.id);
       if (error) throw error;
       toast.success('Dokument aktualisiert');
       onUpdate?.();
-    } catch {
-      toast.error('Speichern fehlgeschlagen');
-    } finally {
-      setSaving(false);
-    }
+    } catch { toast.error('Speichern fehlgeschlagen'); }
+    finally { setSaving(false); }
   };
-
-  const fmt = (n: number | undefined) => n != null ? `${n.toFixed(2)} €` : '–';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -139,7 +142,7 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
             {doc.description && <span className="text-muted-foreground">· {doc.description}</span>}
           </div>
 
-          {/* Preview area */}
+          {/* Preview */}
           <div className="rounded-lg border border-border bg-muted/20 overflow-hidden">
             {loading ? (
               <div className="flex items-center justify-center py-20">
@@ -164,75 +167,62 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
             </Button>
           </div>
 
-          {/* Extracted data section */}
+          {/* Extracted data (non-admin) */}
           {hasExtracted && !isAdmin && (
             <div className="rounded-lg border border-border bg-card p-4 space-y-3">
               <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                 <Sparkles className="h-4 w-4 text-primary" /> Erkannte Informationen
               </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
-                {extracted.vendor && (
-                  <div><span className="text-muted-foreground text-xs">Anbieter</span><p className="font-medium">{extracted.vendor}</p></div>
-                )}
-                {extracted.date && (
-                  <div><span className="text-muted-foreground text-xs">Datum</span><p className="font-medium">{extracted.date}</p></div>
-                )}
-                {extracted.net_amount != null && (
-                  <div><span className="text-muted-foreground text-xs">Netto</span><p className="font-medium">{fmt(extracted.net_amount)}</p></div>
-                )}
-                {extracted.vat_amount != null && (
-                  <div><span className="text-muted-foreground text-xs">Umsatzsteuer</span><p className="font-medium">{fmt(extracted.vat_amount)}</p></div>
-                )}
-                {extracted.gross_amount != null && (
-                  <div><span className="text-muted-foreground text-xs">Brutto</span><p className="font-medium">{fmt(extracted.gross_amount)}</p></div>
-                )}
-                {extracted.suggested_category && (
-                  <div><span className="text-muted-foreground text-xs">Vorgeschlagene Kategorie</span><p className="font-medium">{getCategoryInfo(extracted.suggested_category).label}</p></div>
-                )}
+                {norm.vendor && <div><span className="text-muted-foreground text-xs">Anbieter</span><p className="font-medium">{norm.vendor}</p></div>}
+                {norm.date && <div><span className="text-muted-foreground text-xs">Datum</span><p className="font-medium">{norm.date}</p></div>}
+                {norm.net_amount != null && <div><span className="text-muted-foreground text-xs">Netto</span><p className="font-medium">{formatAmountDE(norm.net_amount)}</p></div>}
+                {norm.vat_amount != null && <div><span className="text-muted-foreground text-xs">Umsatzsteuer</span><p className="font-medium">{formatAmountDE(norm.vat_amount)}</p></div>}
+                {norm.gross_amount != null && <div><span className="text-muted-foreground text-xs">Brutto</span><p className="font-medium">{formatAmountDE(norm.gross_amount)}</p></div>}
+                {norm.suggested_category && <div><span className="text-muted-foreground text-xs">Vorgeschlagene Kategorie</span><p className="font-medium">{getCategoryInfo(norm.suggested_category).label}</p></div>}
               </div>
             </div>
           )}
 
-          {/* Admin review section */}
+          {/* Admin review */}
           {isAdmin && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-4">
               <h3 className="text-sm font-semibold text-foreground">Admin-Prüfung</h3>
 
-              {/* Editable extracted fields */}
-              {hasExtracted && (
-                <div className="space-y-2">
-                  <p className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                    <Sparkles className="h-3 w-3" /> Erkannte Daten (bearbeitbar)
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs text-muted-foreground">Anbieter</label>
-                      <input value={editExtracted.vendor || ''} onChange={e => setEditExtracted(p => ({ ...p, vendor: e.target.value }))}
-                        className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">Datum</label>
-                      <input value={editExtracted.date || ''} onChange={e => setEditExtracted(p => ({ ...p, date: e.target.value }))}
-                        className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">Netto (€)</label>
-                      <input type="number" step="0.01" value={editExtracted.net_amount ?? ''} onChange={e => setEditExtracted(p => ({ ...p, net_amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                        className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">USt (€)</label>
-                      <input type="number" step="0.01" value={editExtracted.vat_amount ?? ''} onChange={e => setEditExtracted(p => ({ ...p, vat_amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                        className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">Brutto (€)</label>
-                      <input type="number" step="0.01" value={editExtracted.gross_amount ?? ''} onChange={e => setEditExtracted(p => ({ ...p, gross_amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                        className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
-                    </div>
+              {/* Editable extracted fields - always show for admin */}
+              <div className="space-y-2">
+                <p className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <Sparkles className="h-3 w-3" /> Erkannte Daten (bearbeitbar)
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Anbieter</label>
+                    <input value={editVendor} onChange={e => setEditVendor(e.target.value)}
+                      className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Datum</label>
+                    <input value={editDate} onChange={e => setEditDate(e.target.value)}
+                      placeholder="YYYY-MM-DD"
+                      className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Netto (€)</label>
+                    <input type="number" step="0.01" value={editNet} onChange={e => setEditNet(e.target.value)}
+                      className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">USt (€)</label>
+                    <input type="number" step="0.01" value={editVat} onChange={e => setEditVat(e.target.value)}
+                      className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Brutto (€)</label>
+                    <input type="number" step="0.01" value={editGross} onChange={e => setEditGross(e.target.value)}
+                      className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
                   </div>
                 </div>
-              )}
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
