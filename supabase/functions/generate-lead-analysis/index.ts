@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const EMAIL_FROM = "Köfman <onboarding@resend.dev>";
+const EMAIL_FROM = "Köfman <no-reply@koefman.de>";
 const STRATEGY_SESSION_URL = "https://koefman.lovable.app/landing";
 
 function buildEmailHtml(
