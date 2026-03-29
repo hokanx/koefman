@@ -233,6 +233,14 @@ serve(async (req) => {
       qr_session_id,
       // Resend-only mode: just re-send email for existing submission
       resend_submission_id,
+      // New qualification fields
+      company_size,
+      problems,
+      free_text,
+      importance,
+      commitment,
+      urgency,
+      intent_score,
     } = body;
 
     const supabase = createClient(
@@ -301,6 +309,13 @@ serve(async (req) => {
         main_problem: main_problem || "",
         variant: variant || null,
         qr_session_id: qr_session_id || null,
+        company_size: company_size || "",
+        problems: problems || [],
+        free_text: free_text || "",
+        importance: importance || "",
+        commitment: commitment || "",
+        urgency: urgency || "",
+        intent_score: intent_score || "medium",
       })
       .select()
       .single();
@@ -313,11 +328,11 @@ serve(async (req) => {
       email,
       company: company || "",
       industry: business_type || "unknown",
-      situation: `Anfragen: ${lead_flow || "-"}, Umsatzverlust: ${revenue_clarity || "-"}`,
-      needs: [main_problem || "unknown"],
+      situation: `Anfragen: ${lead_flow || "-"}, Umsatzverlust: ${revenue_clarity || "-"}, Größe: ${company_size || "-"}`,
+      needs: problems && problems.length > 0 ? problems : [main_problem || "unknown"],
       contact_method: "email",
       status: "neu",
-      admin_notes: `QR-Variante: ${variant || "direct"}. Submission-ID: ${submission.id}`,
+      admin_notes: `QR-Variante: ${variant || "direct"}. Intent: ${intent_score || "medium"}. Submission-ID: ${submission.id}`,
     });
 
     // 3. Generate AI analysis
@@ -345,7 +360,10 @@ serve(async (req) => {
     } else {
       const problemLabels: Record<string, string> = {
         wenig_anfragen: "Zu wenig qualifizierte Anfragen",
+        schlechte_umwandlung: "Schlechte Umwandlung von Anfragen",
         unklare_ablaeufe: "Unklare Abläufe",
+        zeitverlust: "Zeitverlust durch fehlende Struktur",
+        keine_struktur: "Keine klare Struktur",
         keine_conversion: "Keine klare Conversion-Struktur",
         unsicher: "Nicht sicher, wo das Problem liegt",
       };
@@ -400,9 +418,14 @@ Vermeide: Übertreibung, künstliche Dramatik, Fachjargon ohne Nutzen, leere Mot
                 role: "user",
                 content: `Intake-Daten eines potenziellen Kunden:
 - Unternehmenstyp: ${typeLabels[business_type] || business_type || "unbekannt"}
+- Unternehmensgröße: ${company_size || "keine Angabe"}
 - Bekommt kontinuierlich Anfragen: ${lead_flow || "keine Angabe"}
 - Weiß, wo Umsatz verloren geht: ${revenue_clarity || "keine Angabe"}
-- Hauptproblem: ${problemLabels[main_problem] || main_problem || "keine Angabe"}
+- Hauptprobleme: ${(problems || []).map((p: string) => problemLabels[p] || p).join(", ") || main_problem || "keine Angabe"}
+- Eigene Beschreibung: ${free_text || "keine Angabe"}
+- Wichtigkeit der Lösung: ${importance || "keine Angabe"}
+- Offen für Umsetzung: ${commitment || "keine Angabe"}
+- Gewünschte Geschwindigkeit: ${urgency || "keine Angabe"}
 - Firma: ${company || "nicht angegeben"}
 - Variante: ${variant || "direct"}
 
