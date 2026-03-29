@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import NotificationBell from '@/components/shared/NotificationBell';
+import BrandMark from '@/components/shared/BrandMark';
 import {
   Sheet,
   SheetContent,
@@ -82,7 +83,7 @@ const AppLayout = () => {
       {/* Top header */}
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4" style={isImpersonating ? { top: '40px' } : undefined}>
         <div className="flex items-center gap-2">
-          <img src="/logo-wordmark-white.png" alt="KÖFMAN" className="h-7 w-auto" />
+          <BrandMark variant="wordmark" size="md" />
         </div>
         <div className="flex items-center gap-1">
           <NotificationBell />
