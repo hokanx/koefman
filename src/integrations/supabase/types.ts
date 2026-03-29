@@ -1145,6 +1145,27 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_sessions: {
+        Row: {
+          campaign_id: string
+          converted: boolean
+          created_at: string
+          id: string
+        }
+        Insert: {
+          campaign_id?: string
+          converted?: boolean
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          campaign_id?: string
+          converted?: boolean
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       recurring_invoices: {
         Row: {
           auto_generate: boolean

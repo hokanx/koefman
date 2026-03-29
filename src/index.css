@@ -5,100 +5,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
-  /* Light theme (default) */
   :root {
-    --background: 0 0% 98%;
-    --foreground: 224 15% 15%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 224 15% 15%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 15% 15%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 40 85% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 220 14% 94%;
-    --secondary-foreground: 224 15% 25%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 85%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 15% 45%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 63%;
 
-    --accent: 220 14% 92%;
-    --accent-foreground: 224 15% 15%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 87%;
-    --input: 220 13% 91%;
-    --ring: 40 85% 50%;
+    --border: 0 0% 10%;
+    --input: 0 0% 10%;
+    --ring: 0 0% 100%;
 
-    --radius: 0.75rem;
+    --radius: 0rem;
 
-    --sidebar-background: 0 0% 99%;
-    --sidebar-foreground: 224 15% 25%;
-    --sidebar-primary: 40 85% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 224 15% 25%;
-    --sidebar-border: 220 13% 90%;
-    --sidebar-ring: 40 85% 50%;
+    --sidebar-background: 0 0% 2%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 8%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 0 0% 100%;
 
-    --success: 145 60% 38%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 224 15% 10%;
-    --info: 210 80% 50%;
-    --info-foreground: 0 0% 100%;
-  }
-
-  /* Dark theme */
-  .dark {
-    --background: 225 15% 7%;
-    --foreground: 210 20% 93%;
-
-    --card: 225 14% 11%;
-    --card-foreground: 210 20% 93%;
-
-    --popover: 225 14% 13%;
-    --popover-foreground: 210 20% 93%;
-
-    --primary: 40 85% 55%;
-    --primary-foreground: 225 15% 7%;
-
-    --secondary: 225 12% 16%;
-    --secondary-foreground: 210 20% 88%;
-
-    --muted: 225 12% 14%;
-    --muted-foreground: 215 15% 55%;
-
-    --accent: 225 12% 18%;
-    --accent-foreground: 210 20% 93%;
-
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 225 10% 20%;
-    --input: 225 12% 16%;
-    --ring: 40 85% 55%;
-
-    --sidebar-background: 225 14% 9%;
-    --sidebar-foreground: 210 20% 88%;
-    --sidebar-primary: 40 85% 55%;
-    --sidebar-primary-foreground: 225 15% 7%;
-    --sidebar-accent: 225 12% 14%;
-    --sidebar-accent-foreground: 210 20% 88%;
-    --sidebar-border: 225 10% 18%;
-    --sidebar-ring: 40 85% 55%;
-
-    --success: 145 60% 42%;
-    --success-foreground: 210 40% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 225 15% 7%;
-    --info: 210 80% 55%;
-    --info-foreground: 210 40% 98%;
+    --success: 0 0% 70%;
+    --success-foreground: 0 0% 0%;
+    --warning: 0 0% 63%;
+    --warning-foreground: 0 0% 0%;
+    --info: 0 0% 63%;
+    --info-foreground: 0 0% 0%;
   }
 }
 
@@ -109,7 +61,15 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', Helvetica, Arial, sans-serif;
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
   }
 
   [dir="rtl"] {
@@ -118,10 +78,6 @@
 }
 
 @layer utilities {
-  .gold-glow {
-    box-shadow: 0 0 20px -5px hsl(40 85% 55% / 0.3);
-  }
-  
   .card-hover {
     @apply transition-all duration-200 hover:border-primary/30;
   }
