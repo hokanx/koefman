@@ -48,6 +48,7 @@ import LandingPage from "@/pages/LandingPage";
 import Truth from "@/pages/Truth";
 import TruthA from "@/pages/TruthA";
 import TruthB from "@/pages/TruthB";
+import DiagnosticIntake from "@/pages/DiagnosticIntake";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -104,6 +105,7 @@ const AppWithImpersonation = () => {
               <Route path="/truth-a" element={<TruthA />} />
               <Route path="/truth-b" element={<TruthB />} />
               <Route path="/truth-:campaignId" element={<Truth />} />
+              <Route path="/diagnose" element={<DiagnosticIntake />} />
               <Route path="*" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
