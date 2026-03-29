@@ -264,6 +264,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
         priority_3: analysis.priorities[2] || "",
         next_step: analysis.next_step || "",
         full_analysis_json: analysis,
+        error_message: errorMessage,
       })
       .select()
       .single();
