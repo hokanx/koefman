@@ -161,8 +161,8 @@ const AdminLeads = () => {
 
       <!-- Logo -->
       <tr><td style="padding:40px 32px 32px 32px;text-align:center;background-color:#000000;">
-        <span style="color:#FFFFFF;font-size:18px;letter-spacing:0.2em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">KÖFMAN</span><br/>
-        <span style="color:#9A9A9A;font-size:10px;letter-spacing:0.15em;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">BUSINESS SYSTEMS</span>
+        <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="KÖFMAN" width="48" height="48" style="display:block;margin:0 auto 12px auto;width:48px;height:48px;" />
+        <span style="color:#FFFFFF;font-size:16px;letter-spacing:0.2em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">KÖFMAN</span>
       </td></tr>
 
       <tr><td style="padding:0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>

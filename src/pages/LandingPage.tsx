@@ -23,7 +23,7 @@ const LandingPage = () => {
       {/* NAV */}
       <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="text-xl font-bold tracking-[0.1em]">KÖFMAN</span>
+          <img src="/logo-wordmark-white.png" alt="KÖFMAN" className="h-7 w-auto" />
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" className="uppercase tracking-[0.08em] text-xs" onClick={() => navigate('/login')}>
               Anmelden
@@ -349,7 +349,7 @@ const LandingPage = () => {
       {/* FOOTER */}
       <footer className="border-t border-border py-10 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground tracking-[0.1em]">KÖFMAN</span>
+          <img src="/logo-wordmark-white.png" alt="KÖFMAN" className="h-5 w-auto" />
           <p>© {new Date().getFullYear()} KÖFMAN. Alle Rechte vorbehalten.</p>
         </div>
       </footer>

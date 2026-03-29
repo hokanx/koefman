@@ -63,14 +63,8 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 
 <!-- Logo / Brand Header -->
 <tr><td style="padding:40px 32px 32px 32px;text-align:center;background-color:#000000;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-  <tr><td style="text-align:center;">
-    <span style="color:#FFFFFF;font-size:18px;letter-spacing:0.2em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">K&#214;FMAN</span>
-  </td></tr>
-  <tr><td style="padding-top:6px;text-align:center;">
-    <span style="color:#9A9A9A;font-size:10px;letter-spacing:0.15em;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">BUSINESS SYSTEMS</span>
-  </td></tr>
-  </table>
+  <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="K&#214;FMAN" width="48" height="48" style="display:block;margin:0 auto 12px auto;width:48px;height:48px;border:0;outline:none;" />
+  <span style="color:#FFFFFF;font-size:16px;letter-spacing:0.2em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">K&#214;FMAN</span>
 </td></tr>
 
 <!-- Divider -->

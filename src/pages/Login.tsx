@@ -40,7 +40,7 @@ const Login = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <img src="/logo-koefman.jpeg" alt="KÖFMAN" className="mx-auto h-20 w-auto" />
+          <img src="/logo-wordmark-white.png" alt="KÖFMAN" className="mx-auto h-16 w-auto" />
           <p className="mt-3 text-sm text-muted-foreground">{t.auth.subtitle}</p>
         </div>
 
