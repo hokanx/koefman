@@ -145,16 +145,22 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 <!-- CTA Button -->
 <tr><td style="padding:24px 32px 12px 32px;background-color:#000000;" align="center">
   <!--[if mso]>
-  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:56px;v-text-anchor:middle;width:100%;" arcsize="0%" fillcolor="#FFFFFF">
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:60px;v-text-anchor:middle;width:496px;" arcsize="0%" strokecolor="#FFFFFF" strokeweight="2px" fillcolor="#000000">
   <w:anchorlock/>
-  <center style="color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;letter-spacing:0.08em;">STRATEGIE-SESSION BUCHEN</center>
+  <center style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;line-height:22px;letter-spacing:0.08em;text-transform:uppercase;">STRATEGIE-SESSION BUCHEN</center>
   </v:roundrect>
   <![endif]-->
   <!--[if !mso]><!-->
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
     <tr>
-      <td align="center" bgcolor="#FFFFFF" style="background-color:#FFFFFF;border:1px solid #FFFFFF;">
-        <a href="${ctaUrl}" target="_blank" style="display:block;background-color:#FFFFFF;color:#000000 !important;text-decoration:none;padding:18px 24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-align:center;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;"><!--[if mso]><![endif]-->STRATEGIE-SESSION BUCHEN<!--[if mso]><![endif]--></a>
+      <td align="center" style="padding:0;background-color:#000000 !important;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr>
+            <td bgcolor="#000000" style="background-color:#000000 !important;border:2px solid #FFFFFF;">
+              <a href="${ctaUrl}" target="_blank" style="display:block;padding:18px 24px;font-family:Arial, Helvetica, sans-serif;font-size:18px;line-height:22px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;text-align:center;color:#FFFFFF !important;background-color:#000000 !important;-webkit-text-fill-color:#FFFFFF;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">STRATEGIE-SESSION BUCHEN</a>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   </table>

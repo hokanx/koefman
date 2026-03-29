@@ -217,9 +217,19 @@ const AdminLeads = () => {
       </td></tr>
 
       <tr><td style="padding:24px 32px 12px 32px;background-color:#000000;" align="center">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" bgcolor="#FFFFFF" style="background-color:#FFFFFF;border:1px solid #FFFFFF;">
-          <div style="display:block;background-color:#FFFFFF;color:#000000;text-align:center;padding:18px 24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">STRATEGIE-SESSION BUCHEN</div>
-        </td></tr></table>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td align="center" style="padding:0;background-color:#000000 !important;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td bgcolor="#000000" style="background-color:#000000 !important;border:2px solid #FFFFFF;">
+                    <div style="display:block;padding:18px 24px;font-family:Arial, Helvetica, sans-serif;font-size:18px;line-height:22px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;text-align:center;color:#FFFFFF !important;background-color:#000000 !important;-webkit-text-fill-color:#FFFFFF;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">STRATEGIE-SESSION BUCHEN</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       </td></tr>
 
       <tr><td style="padding:20px 32px 0 32px;background-color:#000000;">
