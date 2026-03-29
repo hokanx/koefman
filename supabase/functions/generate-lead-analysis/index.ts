@@ -145,16 +145,18 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 <!-- CTA Button -->
 <tr><td style="padding:24px 32px 12px 32px;background-color:#000000;" align="center">
   <!--[if mso]>
-  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:60px;v-text-anchor:middle;width:100%;" arcsize="0%" fillcolor="#FFFFFF">
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:56px;v-text-anchor:middle;width:100%;" arcsize="0%" fillcolor="#FFFFFF">
   <w:anchorlock/>
-  <center style="color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;letter-spacing:0.14em;">STRATEGIE-SESSION BUCHEN</center>
+  <center style="color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;letter-spacing:0.08em;">STRATEGIE-SESSION BUCHEN</center>
   </v:roundrect>
   <![endif]-->
   <!--[if !mso]><!-->
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:separate;">
-    <tr><td align="center" style="background-color:#FFFFFF;padding:0;">
-      <a href="${ctaUrl}" target="_blank" style="display:block;background-color:#FFFFFF;color:#000000;text-decoration:none;padding:22px 32px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-align:center;line-height:1;mso-padding-alt:0;border:2px solid #FFFFFF;">STRATEGIE-SESSION BUCHEN</a>
-    </td></tr>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td align="center" bgcolor="#FFFFFF" style="background-color:#FFFFFF;border:1px solid #FFFFFF;">
+        <a href="${ctaUrl}" target="_blank" style="display:block;background-color:#FFFFFF;color:#000000 !important;text-decoration:none;padding:18px 24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-align:center;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;"><!--[if mso]><![endif]-->STRATEGIE-SESSION BUCHEN<!--[if mso]><![endif]--></a>
+      </td>
+    </tr>
   </table>
   <!--<![endif]-->
 </td></tr>
