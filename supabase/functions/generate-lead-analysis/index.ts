@@ -309,6 +309,13 @@ serve(async (req) => {
         main_problem: main_problem || "",
         variant: variant || null,
         qr_session_id: qr_session_id || null,
+        company_size: company_size || "",
+        problems: problems || [],
+        free_text: free_text || "",
+        importance: importance || "",
+        commitment: commitment || "",
+        urgency: urgency || "",
+        intent_score: intent_score || "medium",
       })
       .select()
       .single();
@@ -408,9 +415,14 @@ Vermeide: Übertreibung, künstliche Dramatik, Fachjargon ohne Nutzen, leere Mot
                 role: "user",
                 content: `Intake-Daten eines potenziellen Kunden:
 - Unternehmenstyp: ${typeLabels[business_type] || business_type || "unbekannt"}
+- Unternehmensgröße: ${company_size || "keine Angabe"}
 - Bekommt kontinuierlich Anfragen: ${lead_flow || "keine Angabe"}
 - Weiß, wo Umsatz verloren geht: ${revenue_clarity || "keine Angabe"}
-- Hauptproblem: ${problemLabels[main_problem] || main_problem || "keine Angabe"}
+- Hauptprobleme: ${(problems || []).map((p: string) => problemLabels[p] || p).join(", ") || main_problem || "keine Angabe"}
+- Eigene Beschreibung: ${free_text || "keine Angabe"}
+- Wichtigkeit der Lösung: ${importance || "keine Angabe"}
+- Offen für Umsetzung: ${commitment || "keine Angabe"}
+- Gewünschte Geschwindigkeit: ${urgency || "keine Angabe"}
 - Firma: ${company || "nicht angegeben"}
 - Variante: ${variant || "direct"}
 
