@@ -252,29 +252,50 @@ export default function DiagnosticIntake() {
 
       case 'result':
         return (
-          <div className="space-y-8 text-center">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em]">
+          <div className="space-y-10 text-center animate-fade-in">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">
               DEIN ERGEBNIS IST KLAR.
             </h1>
-            <div className="space-y-2">
+
+            <div className="space-y-3">
               <p className="text-base sm:text-lg text-foreground tracking-[0.08em]">
-                DEIN UNTERNEHMEN VERLIERT POTENZIAL,
+                DEIN UNTERNEHMEN VERLIERT GELD,
               </p>
-              <p className="text-base sm:text-lg text-muted-foreground tracking-[0.08em]">
-                WEIL KEIN KLARES SYSTEM VORHANDEN IST.
+              <p className="text-base sm:text-lg text-foreground tracking-[0.08em]">
+                WEIL DEIN SYSTEM NICHT SAUBER AUFGEBAUT IST.
               </p>
             </div>
-            <div className="space-y-4 pt-4">
-              <a
-                href="https://koefman.lovable.app/landing"
-                className="inline-block border border-foreground px-8 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
+
+            <div className="space-y-2 pt-2">
+              <p className="text-sm sm:text-base text-muted-foreground tracking-[0.08em]">
+                DAS IST KEIN ZUFALL.
+              </p>
+              <p className="text-sm sm:text-base text-muted-foreground tracking-[0.08em]">
+                UND ES WIRD NICHT VON ALLEINE BESSER.
+              </p>
+            </div>
+
+            <div className="pt-6">
+              <button
+                onClick={() => window.location.href = '/landing'}
+                className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
               >
                 [ KOSTENLOSE STRATEGIE-SESSION ]
-              </a>
-              <p className="text-xs text-muted-foreground tracking-[0.1em]">
-                ODER ERHALTE ZUERST DEINE ANALYSE.
+              </button>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <p className="text-xs text-muted-foreground/70 tracking-[0.08em]">
+                WIR ZEIGEN DIR KONKRET,
+              </p>
+              <p className="text-xs text-muted-foreground/70 tracking-[0.08em]">
+                WO DU GELD VERLIERST – UND WIE DU ES FIXST.
               </p>
             </div>
+
+            <p className="text-[11px] text-muted-foreground/40 tracking-[0.1em] pt-4">
+              ODER ERHALTE ZUERST DEINE ANALYSE.
+            </p>
           </div>
         );
 
