@@ -216,9 +216,9 @@ const AdminLeads = () => {
         <p style="color:#FFFFFF;font-size:13px;margin:4px 0 16px 0;font-weight:600;font-family:Arial,Helvetica,sans-serif;">2. Mit uns herausfinden, was sich konkret ändern lässt.</p>
       </td></tr>
 
-      <tr><td style="padding:24px 32px 12px 32px;background-color:#000000;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="background-color:#FFFFFF;padding:0;">
-          <div style="background-color:#FFFFFF;color:#000000;text-align:center;padding:22px 32px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Arial,Helvetica,sans-serif;line-height:1;border:2px solid #FFFFFF;">STRATEGIE-SESSION BUCHEN</div>
+      <tr><td style="padding:24px 32px 12px 32px;background-color:#000000;" align="center">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" bgcolor="#FFFFFF" style="background-color:#FFFFFF;border:1px solid #FFFFFF;">
+          <div style="display:block;background-color:#FFFFFF;color:#000000;text-align:center;padding:18px 24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">STRATEGIE-SESSION BUCHEN</div>
         </td></tr></table>
       </td></tr>
 
