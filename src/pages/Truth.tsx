@@ -46,7 +46,7 @@ const sections = [
   {
     id: 'interaction',
     lines: [],
-    cta: { label: '[ ZEIG MIR DEN BEWEIS ]', action: 'scroll' },
+    cta: { label: '[ ZEIG MIR DEN BEWEIS ]', action: 'scroll' as const },
   },
   {
     id: 'diagnosis',
@@ -66,7 +66,7 @@ const sections = [
       { text: 'FINDE HERAUS,', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
       { text: 'WO DEIN SYSTEM VERSAGT.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
     ],
-    cta: { label: '[ KOSTENLOSE ANALYSE STARTEN ]', action: 'navigate' },
+    cta: { label: '[ KOSTENLOSE ANALYSE STARTEN ]', action: 'navigate' as const },
   },
 ];
 
@@ -117,7 +117,7 @@ export default function Truth() {
     const campaign = campaignId || 'direct';
     const trackVisit = async () => {
       try {
-        const { data } = await supabase.from('qr_sessions').insert({ campaign_id: campaign, converted: false }).select('id').single();
+        const { data } = await (supabase as any).from('qr_sessions').insert({ campaign_id: campaign, converted: false }).select('id').single();
         if (data) sessionIdRef.current = data.id;
       } catch {}
     };
@@ -127,7 +127,7 @@ export default function Truth() {
   const handleCTA = async () => {
     if (sessionIdRef.current) {
       try {
-        await supabase.from('qr_sessions').update({ converted: true }).eq('id', sessionIdRef.current);
+        await (supabase as any).from('qr_sessions').update({ converted: true }).eq('id', sessionIdRef.current);
       } catch {}
     }
     navigate('/landing');
@@ -135,7 +135,7 @@ export default function Truth() {
 
   return (
     <div className="bg-background text-foreground min-h-screen">
-      {sections.map((section, si) => (
+      {sections.map((section) => (
         <section
           key={section.id}
           ref={section.id === 'diagnosis' ? diagnosisRef : undefined}
