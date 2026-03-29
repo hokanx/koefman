@@ -21,93 +21,172 @@ function buildEmailHtml(
     .filter((p: string) => p)
     .map(
       (p: string, i: number) =>
-        `<tr><td style="padding:10px 12px 10px 0;color:#A0A0A0;vertical-align:top;font-size:13px;width:24px;font-family:Inter,Helvetica,Arial,sans-serif;">${i + 1}.</td><td style="padding:10px 0;color:#FFFFFF;font-size:14px;line-height:1.6;font-family:Inter,Helvetica,Arial,sans-serif;">${p}</td></tr>`
+        `<tr><td style="padding:8px 12px 8px 0;color:#9A9A9A;vertical-align:top;font-size:14px;width:28px;font-family:Arial,Helvetica,sans-serif;">${i + 1}.</td><td style="padding:8px 0;color:#FFFFFF;font-size:15px;line-height:1.65;font-family:Arial,Helvetica,sans-serif;">${p}</td></tr>`
     )
     .join("");
 
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background-color:#000000;font-family:Inter,Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;padding:40px 20px;">
-<tr><td align="center">
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="de" xml:lang="de">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light dark" />
+<meta name="supported-color-schemes" content="light dark" />
+<title>Deine K&#246;fman Kurzanalyse</title>
+<!--[if mso]>
+<style type="text/css">
+table {border-collapse:collapse;}
+td {font-family:Arial,Helvetica,sans-serif;}
+</style>
+<![endif]-->
+<style type="text/css">
+:root { color-scheme: light dark; supported-color-schemes: light dark; }
+@media (prefers-color-scheme: dark) {
+  .email-bg { background-color: #000000 !important; }
+  .email-container { background-color: #000000 !important; }
+}
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#000000;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;font-family:Arial,Helvetica,sans-serif;" class="email-bg">
 
-<!-- Brand -->
-<tr><td style="padding:0 0 32px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.14em;margin:0;text-transform:uppercase;font-family:Inter,Helvetica,Arial,sans-serif;">KÖFMAN</p>
+<!-- Preheader text (hidden) -->
+<div style="display:none;font-size:1px;color:#000000;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
+</div>
+
+<!-- Outer wrapper -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#000000;" class="email-bg">
+<tr><td align="center" style="padding:32px 16px;">
+
+<!-- Inner container -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;background-color:#000000;border:1px solid #1A1A1A;" class="email-container">
+
+<!-- Logo / Brand Header -->
+<tr><td style="padding:40px 32px 32px 32px;text-align:center;background-color:#000000;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+  <tr><td style="text-align:center;">
+    <span style="color:#FFFFFF;font-size:18px;letter-spacing:0.2em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">K&#214;FMAN</span>
+  </td></tr>
+  <tr><td style="padding-top:6px;text-align:center;">
+    <span style="color:#9A9A9A;font-size:10px;letter-spacing:0.15em;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">BUSINESS SYSTEMS</span>
+  </td></tr>
+  </table>
 </td></tr>
 
+<!-- Divider -->
+<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+
 <!-- Greeting -->
-<tr><td style="padding:0 0 24px 0;">
-  <p style="color:#FFFFFF;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">
+<tr><td style="padding:28px 32px 8px 32px;background-color:#000000;">
+  <p style="color:#FFFFFF;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;margin:0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">
     ${name ? `HALLO ${name.toUpperCase()},` : "HALLO,"}
   </p>
 </td></tr>
 
 <!-- Intro -->
-<tr><td style="padding:0 0 32px 0;">
-  <p style="color:#A0A0A0;font-size:13px;line-height:1.7;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">
+<tr><td style="padding:12px 32px 28px 32px;background-color:#000000;">
+  <p style="color:#B3B3B3;font-size:14px;line-height:1.7;margin:0;font-family:Arial,Helvetica,sans-serif;">
     Hier ist deine Kurzanalyse basierend auf deinen Angaben.
   </p>
 </td></tr>
 
+<!-- Divider -->
+<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+
 <!-- Main Issue -->
-<tr><td style="border-top:1px solid #1A1A1A;padding:28px 0 8px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px 0;font-family:Inter,Helvetica,Arial,sans-serif;">WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.6;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">${analysis.main_issue}</p>
+<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">WAHRSCHEINLICH GR&#214;SSTE SCHWACHSTELLE</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.main_issue}</p>
 </td></tr>
+
+<!-- Divider -->
+<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Practical Meaning -->
-<tr><td style="border-top:1px solid #1A1A1A;padding:28px 0 8px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px 0;font-family:Inter,Helvetica,Arial,sans-serif;">WAS DAS PRAKTISCH BEDEUTET</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.6;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">${analysis.practical_meaning}</p>
+<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">WAS DAS PRAKTISCH BEDEUTET</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.practical_meaning}</p>
 </td></tr>
+
+<!-- Divider -->
+<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Priorities -->
-<tr><td style="border-top:1px solid #1A1A1A;padding:28px 0 8px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 14px 0;font-family:Inter,Helvetica,Arial,sans-serif;">DEINE NÄCHSTEN 3 HEBEL</p>
-  <table width="100%" cellpadding="0" cellspacing="0">${prioritiesHtml}</table>
+<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">DEINE N&#196;CHSTEN 3 HEBEL</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${prioritiesHtml}</table>
 </td></tr>
+
+<!-- Divider -->
+<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Next Step -->
-<tr><td style="border-top:1px solid #1A1A1A;padding:28px 0 8px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px 0;font-family:Inter,Helvetica,Arial,sans-serif;">NÄCHSTER SINNVOLLER SCHRITT</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.6;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">${analysis.next_step}</p>
+<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">N&#196;CHSTER SINNVOLLER SCHRITT</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.next_step}</p>
 </td></tr>
+
+<!-- Divider -->
+<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Decision Block -->
-<tr><td style="border-top:1px solid #1A1A1A;padding:36px 0 12px 0;">
-  <p style="color:#A0A0A0;font-size:11px;line-height:1.7;margin:0 0 24px 0;text-align:center;font-family:Inter,Helvetica,Arial,sans-serif;">
-    Du hast zwei Optionen:<br/>
-    Weitermachen wie bisher – oder herausfinden, was sich konkret ändern lässt.
+<tr><td style="padding:32px 32px 12px 32px;background-color:#000000;">
+  <p style="color:#B3B3B3;font-size:13px;line-height:1.7;margin:0 0 8px 0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+    Du hast zwei Optionen:
   </p>
-</td></tr>
-
-<!-- CTA Button - White BG, Black Text -->
-<tr><td style="padding:0 0 0 0;" align="center">
-  <table cellpadding="0" cellspacing="0" width="100%" style="max-width:400px;">
-    <tr><td align="center">
-      <a href="${ctaUrl}" style="display:block;background-color:#FFFFFF;color:#000000;text-decoration:none;padding:18px 32px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Inter,Helvetica,Arial,sans-serif;text-align:center;mso-padding-alt:0;">KOSTENLOSE STRATEGIE-SESSION BUCHEN</a>
-    </td></tr>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 0 0;">
+    <tr>
+      <td style="padding:10px 0;color:#9A9A9A;font-size:13px;line-height:1.6;font-family:Arial,Helvetica,sans-serif;text-align:center;">
+        1. Die Analyse f&#252;r dich nutzen und selbst umsetzen.
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:4px 0 10px 0;color:#FFFFFF;font-size:13px;line-height:1.6;font-family:Arial,Helvetica,sans-serif;text-align:center;font-weight:600;">
+        2. Mit uns herausfinden, was sich konkret &#228;ndern l&#228;sst.
+      </td>
+    </tr>
   </table>
 </td></tr>
 
+<!-- CTA Button -->
+<tr><td style="padding:12px 32px 8px 32px;background-color:#000000;" align="center">
+  <!--[if mso]>
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:56px;v-text-anchor:middle;width:100%;" arcsize="0%" fillcolor="#FFFFFF">
+  <w:anchorlock/>
+  <center style="color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:0.14em;">STRATEGIE-SESSION BUCHEN</center>
+  </v:roundrect>
+  <![endif]-->
+  <!--[if !mso]><!-->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr><td align="center" style="background-color:#FFFFFF;">
+      <a href="${ctaUrl}" target="_blank" style="display:block;background-color:#FFFFFF;color:#000000;text-decoration:none;padding:20px 32px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-align:center;line-height:1;mso-padding-alt:0;">STRATEGIE-SESSION BUCHEN</a>
+    </td></tr>
+  </table>
+  <!--<![endif]-->
+</td></tr>
+
 <!-- Sub-CTA text -->
-<tr><td style="padding:28px 0 0 0;">
-  <p style="color:#A0A0A0;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Inter,Helvetica,Arial,sans-serif;">
-    Wir zeigen dir konkret, wo du Geld verlierst – und wie du es fixst.
+<tr><td style="padding:20px 32px 0 32px;background-color:#000000;">
+  <p style="color:#9A9A9A;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+    Wir zeigen dir konkret, wo du Geld verlierst &#8211; und wie du es fixst.
   </p>
 </td></tr>
 
+<!-- Footer divider -->
+<tr><td style="padding:32px 32px 0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+
 <!-- Footer -->
-<tr><td style="padding:48px 0 0 0;border-top:1px solid #1A1A1A;margin-top:32px;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.14em;text-align:center;margin:24px 0 0 0;text-transform:uppercase;font-family:Inter,Helvetica,Arial,sans-serif;">KÖFMAN</p>
+<tr><td style="padding:24px 32px 40px 32px;background-color:#000000;">
+  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.18em;text-align:center;margin:0;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;font-weight:600;">K&#214;FMAN</p>
 </td></tr>
 
 </table>
+<!-- /Inner container -->
+
 </td></tr>
 </table>
+<!-- /Outer wrapper -->
+
 </body>
 </html>`;
 }
