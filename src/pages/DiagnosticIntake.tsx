@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 type Answer = string;
+
+interface AnalysisResult {
+  headline: string;
+  main_issue: string;
+  practical_meaning: string;
+  priorities: string[];
+  next_step: string;
+}
 
 interface StepConfig {
   id: string;
@@ -55,7 +63,7 @@ const steps: StepConfig[] = [
   {
     id: 'tension',
     type: 'dynamic',
-    headline: '', // set dynamically
+    headline: '',
   },
   {
     id: 'pain_point',
@@ -76,7 +84,7 @@ const steps: StepConfig[] = [
   {
     id: 'result',
     type: 'result',
-    headline: 'DEIN ERGEBNIS IST KLAR.',
+    headline: 'DEINE KURZANALYSE IST BEREIT.',
   },
 ];
 
@@ -89,10 +97,13 @@ export default function DiagnosticIntake() {
   const [email, setEmail] = useState('');
   const [company, setCompany] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analysisFailed, setAnalysisFailed] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const sessionIdRef = useRef<string | null>(null);
 
   const step = steps[currentStep];
-  const progress = ((currentStep) / (steps.length - 1)) * 100;
+  const progress = (currentStep / (steps.length - 1)) * 100;
 
   const isWeak = () => {
     return answers.inquiries !== 'ja' || answers.revenue_loss !== 'ja';
@@ -110,21 +121,41 @@ export default function DiagnosticIntake() {
   const handleSubmit = async () => {
     if (!name.trim() || !email.trim()) return;
     setSubmitting(true);
+    setCurrentStep(steps.length - 1); // go to result screen immediately
+
     try {
-      await (supabase as any).from('landing_leads').insert({
-        name: name.trim(),
-        email: email.trim(),
-        company: company.trim() || '',
-        industry: answers.business_type || 'unknown',
-        situation: `Anfragen: ${answers.inquiries || '-'}, Umsatzverlust: ${answers.revenue_loss || '-'}`,
-        needs: [answers.pain_point || 'unknown'],
-        contact_method: 'email',
-        status: 'neu',
-        admin_notes: `QR-Variante: ${variant}. Antworten: ${JSON.stringify(answers)}`,
+      // Try to get qr_session_id from sessionStorage
+      let qrSessionId: string | null = null;
+      try {
+        qrSessionId = sessionStorage.getItem('qr_session_id');
+      } catch {}
+
+      const response = await supabase.functions.invoke('generate-lead-analysis', {
+        body: {
+          name: name.trim(),
+          email: email.trim(),
+          company: company.trim() || null,
+          business_type: answers.business_type || '',
+          lead_flow: answers.inquiries || '',
+          revenue_clarity: answers.revenue_loss || '',
+          main_problem: answers.pain_point || '',
+          variant,
+          qr_session_id: qrSessionId,
+        },
       });
-      setSubmitted(true);
-    } catch {
-      // silent fail
+
+      if (response.error) throw response.error;
+
+      const data = response.data;
+      if (data?.success && data?.analysis) {
+        setAnalysis(data.analysis);
+        setEmailSent(data.email_sent || false);
+      } else {
+        setAnalysisFailed(true);
+      }
+    } catch (err) {
+      console.error('Analysis generation error:', err);
+      setAnalysisFailed(true);
     } finally {
       setSubmitting(false);
     }
@@ -231,7 +262,9 @@ export default function DiagnosticIntake() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">UNTERNEHMEN <span className="text-muted-foreground/50">(OPTIONAL)</span></label>
+                <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">
+                  UNTERNEHMEN <span className="text-muted-foreground/50">(OPTIONAL)</span>
+                </label>
                 <input
                   type="text"
                   value={company}
@@ -251,64 +284,136 @@ export default function DiagnosticIntake() {
         );
 
       case 'result':
-        return (
-          <div className="space-y-10 text-center animate-fade-in">
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">
-              DEIN ERGEBNIS IST KLAR.
-            </h1>
-
-            <div className="space-y-3">
-              <p className="text-base sm:text-lg text-foreground tracking-[0.08em]">
-                DEIN UNTERNEHMEN VERLIERT GELD,
-              </p>
-              <p className="text-base sm:text-lg text-foreground tracking-[0.08em]">
-                WEIL DEIN SYSTEM NICHT SAUBER AUFGEBAUT IST.
-              </p>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <p className="text-sm sm:text-base text-muted-foreground tracking-[0.08em]">
-                DAS IST KEIN ZUFALL.
-              </p>
-              <p className="text-sm sm:text-base text-muted-foreground tracking-[0.08em]">
-                UND ES WIRD NICHT VON ALLEINE BESSER.
+        // Loading state
+        if (submitting) {
+          return (
+            <div className="space-y-8 text-center animate-fade-in">
+              <div className="flex justify-center">
+                <div className="h-6 w-6 border border-foreground border-t-transparent rounded-full animate-spin" />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.1em]">
+                DEINE ANALYSE WIRD ERSTELLT.
+              </h1>
+              <p className="text-sm text-muted-foreground tracking-[0.08em]">
+                DAS DAUERT NUR EINEN MOMENT.
               </p>
             </div>
+          );
+        }
 
-            <div className="pt-6">
-              <button
-                onClick={() => window.location.href = '/landing'}
-                className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
-              >
-                [ KOSTENLOSE STRATEGIE-SESSION ]
-              </button>
+        // Failure state
+        if (analysisFailed && !analysis) {
+          return (
+            <div className="space-y-10 text-center animate-fade-in">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">
+                DEIN ERGEBNIS IST KLAR.
+              </h1>
+              <div className="space-y-3">
+                <p className="text-base text-foreground tracking-[0.08em]">
+                  DEINE ANALYSE KONNTE GERADE NICHT VOLLSTÄNDIG GELADEN WERDEN.
+                </p>
+                <p className="text-sm text-muted-foreground tracking-[0.08em]">
+                  DEINE ANGABEN WURDEN GESPEICHERT UND WIR KÜMMERN UNS DARUM.
+                </p>
+              </div>
+              <div className="pt-6">
+                <button
+                  onClick={() => window.location.href = '/landing'}
+                  className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
+                >
+                  [ KOSTENLOSE STRATEGIE-SESSION ]
+                </button>
+              </div>
             </div>
+          );
+        }
 
-            <div className="space-y-2 pt-2">
-              <p className="text-xs text-muted-foreground/70 tracking-[0.08em]">
-                WIR ZEIGEN DIR KONKRET,
-              </p>
-              <p className="text-xs text-muted-foreground/70 tracking-[0.08em]">
-                WO DU GELD VERLIERST – UND WIE DU ES FIXST.
-              </p>
+        // Success state with analysis
+        if (analysis) {
+          return (
+            <div className="space-y-0 animate-fade-in">
+              <div className="text-center pb-10">
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">
+                  DEINE KURZANALYSE IST BEREIT.
+                </h1>
+              </div>
+
+              {/* Main issue */}
+              <div className="border-t border-[#1A1A1A] py-6">
+                <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">
+                  WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE
+                </p>
+                <p className="text-sm sm:text-base text-foreground leading-relaxed">
+                  {analysis.main_issue}
+                </p>
+              </div>
+
+              {/* Practical meaning */}
+              <div className="border-t border-[#1A1A1A] py-6">
+                <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">
+                  WAS DAS PRAKTISCH BEDEUTET
+                </p>
+                <p className="text-sm sm:text-base text-foreground leading-relaxed">
+                  {analysis.practical_meaning}
+                </p>
+              </div>
+
+              {/* Priorities */}
+              <div className="border-t border-[#1A1A1A] py-6">
+                <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-4">
+                  DEINE NÄCHSTEN 3 HEBEL
+                </p>
+                <div className="space-y-3">
+                  {analysis.priorities.filter(p => p).map((priority, i) => (
+                    <div key={i} className="flex gap-3">
+                      <span className="text-muted-foreground text-sm shrink-0">{i + 1}.</span>
+                      <p className="text-sm sm:text-base text-foreground leading-relaxed">{priority}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Next step */}
+              <div className="border-t border-[#1A1A1A] py-6">
+                <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">
+                  NÄCHSTER SINNVOLLER SCHRITT
+                </p>
+                <p className="text-sm sm:text-base text-foreground leading-relaxed">
+                  {analysis.next_step}
+                </p>
+              </div>
+
+              {/* CTA */}
+              <div className="border-t border-[#1A1A1A] pt-10 text-center space-y-6">
+                <button
+                  onClick={() => window.location.href = '/landing'}
+                  className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
+                >
+                  [ KOSTENLOSE STRATEGIE-SESSION ]
+                </button>
+
+                {emailSent && (
+                  <p className="text-xs text-muted-foreground tracking-[0.08em]">
+                    DIE ANALYSE WURDE ZUSÄTZLICH PER E-MAIL AN DICH GESENDET.
+                  </p>
+                )}
+
+                <p className="text-[11px] text-muted-foreground/50 tracking-[0.08em]">
+                  WIR ZEIGEN DIR KONKRET,<br />
+                  WO DU GELD VERLIERST – UND WIE DU ES FIXST.
+                </p>
+              </div>
             </div>
+          );
+        }
 
-            <p className="text-[11px] text-muted-foreground/40 tracking-[0.1em] pt-4">
-              ODER ERHALTE ZUERST DEINE ANALYSE.
-            </p>
-          </div>
-        );
+        // Default/initial result (shouldn't normally appear)
+        return null;
 
       default:
         return null;
     }
   };
-
-  if (submitted && step.type === 'capture') {
-    // Auto-advance to result
-    setCurrentStep(steps.length - 1);
-    setSubmitted(false);
-  }
 
   return (
     <div className="bg-background text-foreground min-h-screen flex flex-col">
