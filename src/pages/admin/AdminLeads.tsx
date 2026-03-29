@@ -14,17 +14,26 @@ import { toast } from 'sonner';
 const INDUSTRY_LABELS: Record<string, string> = {
   cleaning: 'Gebäudereinigung', garage: 'Kfz / Werkstatt', service: 'Dienstleistung',
   trade: 'Handwerk', general: 'Sonstiges', dienstleistung: 'Dienstleistung',
-  lokal: 'Lokales Geschäft', online: 'Online Business', andere: 'Andere', unknown: 'Unbekannt',
+  lokal: 'Lokales Geschäft', online: 'Online Business', andere: 'Andere', handwerk: 'Handwerk', unknown: 'Unbekannt',
 };
 const NEED_LABELS: Record<string, string> = {
   wenig_anfragen: 'Zu wenig Anfragen', unklare_ablaeufe: 'Unklare Abläufe',
   keine_conversion: 'Keine Conversion', unsicher: 'Unsicher',
+  schlechte_umwandlung: 'Schlechte Umwandlung', zeitverlust: 'Zeitverlust',
+  keine_struktur: 'Keine Struktur',
 };
 const LEAD_FLOW_LABELS: Record<string, string> = {
   ja: 'Ja', unregelmaessig: 'Unregelmäßig', nein: 'Nein',
+  kaum: 'Kaum', stabil: 'Stabil', stark: 'Stark',
 };
 const REVENUE_LABELS: Record<string, string> = {
   ja: 'Ja', teilweise: 'Teilweise', nein: 'Nein',
+  unklar: 'Unklar', klar: 'Klar',
+};
+const INTENT_BADGES: Record<string, { label: string; className: string }> = {
+  high: { label: 'HIGH', className: 'bg-green-900/50 text-green-400 border-green-800' },
+  medium: { label: 'MEDIUM', className: 'bg-yellow-900/50 text-yellow-400 border-yellow-800' },
+  low: { label: 'LOW', className: 'bg-red-900/50 text-red-400 border-red-800' },
 };
 
 interface LeadAnalysis {
