@@ -79,9 +79,11 @@ serve(async (req) => {
       next_step: string;
     };
     let analysisStatus = "completed";
+    let errorMessage: string | null = null;
 
     if (!LOVABLE_API_KEY) {
       analysisStatus = "failed";
+      errorMessage = "LOVABLE_API_KEY not configured";
       analysis = {
         headline: "Kurzanalyse",
         main_issue: "Analyse konnte nicht generiert werden.",
@@ -116,7 +118,32 @@ serve(async (req) => {
             messages: [
               {
                 role: "system",
-                content: `Du bist ein erfahrener Business-Analyst für kleine Unternehmen in Deutschland. Erstelle eine kurze, scharfe Kurzanalyse basierend auf den Intake-Antworten. Ton: direkt, professionell, klar – keine leeren Versprechen, keine übertriebene Dramatik, keine generischen Startup-Phrasen. Jedes Feld kurz und prägnant halten (maximal 2 Sätze pro Feld). Keine Markdown-Formatierung verwenden.`,
+                content: `Du bist ein präziser deutscher B2B Analyse-Assistent für Köfman.
+
+Deine Aufgabe: Erstelle auf Basis der Intake-Antworten eine kurze, glaubwürdige und hochwertige Mini-Analyse auf Deutsch.
+
+Wichtige Regeln:
+- Schreibe nur auf Basis der tatsächlichen Angaben.
+- Erfinde keine Fakten.
+- Gib keine absolute Sicherheit vor, wenn sie aus den Angaben nicht ableitbar ist.
+- Klinge klar, hochwertig und professionell.
+- Klinge nicht generisch, nicht verspielt und nicht wie leeres Marketing.
+- Die Analyse soll kurz, verständlich und nützlich sein.
+- Die Analyse soll dem Lead das Gefühl geben, verstanden worden zu sein.
+- Die Analyse soll Interesse an einer Strategie-Session verstärken.
+- Gib keine vollständige Beratung oder vollständige Lösung.
+- Keine Markdown-Formatierung.
+- Jedes Feld maximal 2 Sätze.
+
+Stil: direkt, seriös, klar, premium, knapp, menschlich, glaubwürdig.
+
+Formuliere vorsichtig bei begrenzten Informationen:
+- "wirkt aktuell so, als ob ..."
+- "es spricht dafür, dass ..."
+- "wahrscheinlich ..."
+- "ein möglicher Engpass ist ..."
+
+Vermeide: Übertreibung, künstliche Dramatik, Fachjargon ohne Nutzen, leere Motivationssätze, Behauptungen die nicht aus den Daten folgen.`,
               },
               {
                 role: "user",
@@ -126,8 +153,9 @@ serve(async (req) => {
 - Weiß, wo Umsatz verloren geht: ${revenue_clarity || "keine Angabe"}
 - Hauptproblem: ${problemLabels[main_problem] || main_problem || "keine Angabe"}
 - Firma: ${company || "nicht angegeben"}
+- Variante: ${variant || "direct"}
 
-Erstelle eine Kurzanalyse mit konkreten, umsetzbaren Empfehlungen.`,
+Erstelle eine strukturierte Mini-Analyse.`,
               },
             ],
             tools: [
@@ -185,13 +213,15 @@ Erstelle eine Kurzanalyse mit konkreten, umsetzbaren Empfehlungen.`,
       );
 
       if (!aiResponse.ok) {
-        console.error("AI gateway error:", aiResponse.status, await aiResponse.text());
+        const errText = await aiResponse.text();
+        console.error("AI gateway error:", aiResponse.status, errText);
         analysisStatus = "failed";
+        errorMessage = `AI gateway ${aiResponse.status}: ${errText.slice(0, 200)}`;
         analysis = {
           headline: "Kurzanalyse",
           main_issue: "Analyse konnte gerade nicht generiert werden.",
           practical_meaning: "Deine Angaben wurden gespeichert und wir kümmern uns darum.",
-          priorities: ["Wir werden deine Situation manuell prüfen."],
+          priorities: ["Wir werden deine Situation manuell prüfen.", "", ""],
           next_step: "Wir melden uns in Kürze bei dir.",
         };
       } else {
@@ -199,7 +229,6 @@ Erstelle eine Kurzanalyse mit konkreten, umsetzbaren Empfehlungen.`,
         try {
           const toolCall = aiData.choices[0].message.tool_calls[0];
           analysis = JSON.parse(toolCall.function.arguments);
-          // Ensure priorities is an array of 3
           if (!Array.isArray(analysis.priorities)) {
             analysis.priorities = [];
           }
@@ -209,6 +238,7 @@ Erstelle eine Kurzanalyse mit konkreten, umsetzbaren Empfehlungen.`,
         } catch (parseErr) {
           console.error("AI parse error:", parseErr);
           analysisStatus = "failed";
+          errorMessage = `Parse error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`;
           analysis = {
             headline: "Kurzanalyse",
             main_issue: "Analyse konnte nicht vollständig erstellt werden.",
@@ -234,6 +264,7 @@ Erstelle eine Kurzanalyse mit konkreten, umsetzbaren Empfehlungen.`,
         priority_3: analysis.priorities[2] || "",
         next_step: analysis.next_step || "",
         full_analysis_json: analysis,
+        error_message: errorMessage,
       })
       .select()
       .single();
