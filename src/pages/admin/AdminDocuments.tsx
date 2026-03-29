@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDateDE } from '@/lib/utils';
-import { FileText, Download, Search, Send, ChevronDown, CheckCircle2, AlertTriangle, Sparkles, Eye } from 'lucide-react';
+import { FileText, Download, Search, Send, ChevronDown, CheckCircle2, AlertTriangle, Sparkles, Eye, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DOCUMENT_GROUPS, ALL_SUBCATEGORIES, getCategoryInfo, STATUS_OPTIONS, getStatusInfo } from '@/lib/documentCategories';
+import { DOCUMENT_GROUPS, getCategoryInfo, STATUS_OPTIONS, getStatusInfo } from '@/lib/documentCategories';
+import { normalizeExtracted, formatAmountDE, isAnalysisIncomplete } from '@/lib/extractedDataUtils';
+import DocumentPreviewModal from '@/components/documents/DocumentPreviewModal';
 import JSZip from 'jszip';
 
 const getStoragePath = (fileUrl: string): string => {
@@ -28,9 +30,11 @@ const AdminDocuments = () => {
   const [search, setSearch] = useState('');
   const [filterGroup, setFilterGroup] = useState('alle');
   const [filterStatus, setFilterStatus] = useState('alle');
+  const [filterAnalysis, setFilterAnalysis] = useState<'alle' | 'incomplete'>('alle');
   const [downloading, setDownloading] = useState(false);
   const [notifyUserId, setNotifyUserId] = useState<string | null>(null);
   const [notifyMessage, setNotifyMessage] = useState('');
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['admin-doc-clients'],
@@ -134,17 +138,18 @@ const AdminDocuments = () => {
       a.click();
       URL.revokeObjectURL(url);
       toast.success('Download gestartet');
-    } catch {
-      toast.error('Download fehlgeschlagen');
-    } finally {
-      setDownloading(false);
-    }
+    } catch { toast.error('Download fehlgeschlagen'); }
+    finally { setDownloading(false); }
   };
 
   const filteredDocs = documents.filter((doc: any) => {
+    if (filterAnalysis === 'incomplete' && !isAnalysisIncomplete(doc.extracted_data)) return false;
     if (!search) return true;
     const s = search.toLowerCase();
-    return doc.file_name?.toLowerCase().includes(s) || doc.description?.toLowerCase().includes(s);
+    const norm = normalizeExtracted(doc.extracted_data);
+    return doc.file_name?.toLowerCase().includes(s)
+      || doc.description?.toLowerCase().includes(s)
+      || norm.vendor?.toLowerCase().includes(s);
   });
 
   const grouped = filteredDocs.reduce((acc: Record<string, any[]>, doc: any) => {
@@ -158,7 +163,6 @@ const AdminDocuments = () => {
 
   const sortedMonths = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
-  // Completeness check per month
   const getMonthCompleteness = (docs: any[]) => {
     const hasExpense = docs.some((d: any) => {
       const info = getCategoryInfo(d.category);
@@ -168,19 +172,28 @@ const AdminDocuments = () => {
       const info = getCategoryInfo(d.category);
       return info.group === 'bank';
     });
-    if (hasExpense && hasBank) return 'complete';
-    return 'incomplete';
+    return hasExpense && hasBank ? 'complete' : 'incomplete';
   };
 
+  // Client list view
   if (!selectedClient) {
     return (
       <div className="p-4 md:p-6 animate-fade-in">
         <h1 className="mb-4 text-xl font-bold text-foreground">Belege & Dokumente – Kunden</h1>
+        <div className="mb-4 relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input type="text" placeholder="Kunde suchen…" value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground" />
+        </div>
         <div className="space-y-2">
-          {clients.map((c: any) => (
+          {clients.filter((c: any) => {
+            if (!search) return true;
+            const s = search.toLowerCase();
+            return c.businessName.toLowerCase().includes(s) || c.email.toLowerCase().includes(s);
+          }).map((c: any) => (
             <button
               key={c.userId}
-              onClick={() => setSelectedClient(c.userId)}
+              onClick={() => { setSelectedClient(c.userId); setSearch(''); }}
               className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-4 text-start transition hover:border-primary/30"
             >
               <div>
@@ -188,8 +201,7 @@ const AdminDocuments = () => {
                 <p className="text-xs text-muted-foreground">{c.email}</p>
                 {!c.hasBank && c.docCount > 0 && (
                   <p className="mt-1 flex items-center gap-1 text-[10px] text-warning">
-                    <AlertTriangle className="h-3 w-3" />
-                    Keine Bankbelege
+                    <AlertTriangle className="h-3 w-3" /> Keine Bankbelege
                   </p>
                 )}
               </div>
@@ -217,7 +229,7 @@ const AdminDocuments = () => {
   return (
     <div className="p-4 md:p-6 animate-fade-in">
       <div className="mb-4 flex items-center gap-2 flex-wrap">
-        <button onClick={() => setSelectedClient(null)} className="text-sm text-primary hover:underline">← Zurück</button>
+        <button onClick={() => { setSelectedClient(null); setSearch(''); setFilterAnalysis('alle'); }} className="text-sm text-primary hover:underline">← Zurück</button>
         <h1 className="text-lg font-bold text-foreground">{selectedClientInfo?.businessName}</h1>
       </div>
 
@@ -228,8 +240,7 @@ const AdminDocuments = () => {
           {downloading ? 'Lädt...' : `Alle herunterladen (${filteredDocs.length})`}
         </Button>
         <Button size="sm" variant="outline" onClick={() => setNotifyUserId(selectedClient)}>
-          <Send className="mr-1 h-4 w-4" />
-          Benachrichtigung
+          <Send className="mr-1 h-4 w-4" /> Benachrichtigung
         </Button>
       </div>
 
@@ -272,12 +283,19 @@ const AdminDocuments = () => {
           ))}
         </div>
         <div className="flex gap-2 overflow-x-auto">
+          <Filter className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
           {[{ value: 'alle', label: 'Alle Status' }, ...STATUS_OPTIONS].map(s => (
             <button key={s.value} onClick={() => setFilterStatus(s.value)}
               className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${filterStatus === s.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}>
               {s.label}
             </button>
           ))}
+          <span className="border-l border-border mx-1" />
+          <button onClick={() => setFilterAnalysis(filterAnalysis === 'incomplete' ? 'alle' : 'incomplete')}
+            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${filterAnalysis === 'incomplete' ? 'bg-warning/20 text-warning' : 'bg-muted text-muted-foreground hover:bg-accent'}`}>
+            <AlertTriangle className="inline h-3 w-3 mr-1" />
+            Analyse unvollständig
+          </button>
         </div>
       </div>
 
@@ -306,117 +324,47 @@ const AdminDocuments = () => {
                   {docs.map((doc: any) => {
                     const catInfo = getCategoryInfo(doc.category);
                     const statusInfo = getStatusInfo(doc.status);
+                    const norm = normalizeExtracted(doc.extracted_data);
+                    const incomplete = isAnalysisIncomplete(doc.extracted_data);
                     return (
-                      <div key={doc.id} className="rounded-xl border border-border bg-card p-3 space-y-2">
+                      <div key={doc.id}
+                        className="rounded-xl border border-border bg-card p-3 space-y-2 cursor-pointer hover:border-primary/30 transition"
+                        onClick={() => setPreviewDoc(doc)}>
                         <div className="flex items-center gap-3">
-                          {/* Image preview for receipts */}
-                          {doc.mime_type?.startsWith('image/') ? (
-                            <button
-                              onClick={async () => {
-                                const path = getStoragePath(doc.file_url);
-                                const { data } = await supabase.storage.from('client-documents').createSignedUrl(path, 300);
-                                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                              }}
-                              className="relative h-12 w-12 shrink-0 rounded-lg bg-muted overflow-hidden group"
-                            >
-                              <Eye className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition z-10" />
-                              <img
-                                src=""
-                                alt=""
-                                className="h-full w-full object-cover opacity-60 group-hover:opacity-40 transition"
-                                ref={(el) => {
-                                  if (!el) return;
-                                  const path = getStoragePath(doc.file_url);
-                                  supabase.storage.from('client-documents').createSignedUrl(path, 300).then(({ data }) => {
-                                    if (data?.signedUrl) el.src = data.signedUrl;
-                                  });
-                                }}
-                              />
-                            </button>
-                          ) : (
-                            <FileText className="h-7 w-7 shrink-0 text-muted-foreground" />
-                          )}
+                          <FileText className="h-7 w-7 shrink-0 text-muted-foreground" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
                             <div className="flex flex-wrap items-center gap-2 mt-1">
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${catInfo.color}`}>{catInfo.label}</span>
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
                               <span className="text-[10px] text-muted-foreground">{formatDateDE(doc.created_at)}</span>
+                              {norm.vendor && <span className="text-[10px] text-muted-foreground">· {norm.vendor}</span>}
+                              {norm.gross_amount != null && (
+                                <span className="text-[10px] font-medium text-foreground">{formatAmountDE(norm.gross_amount)}</span>
+                              )}
+                              {norm.date && <span className="text-[10px] text-muted-foreground">📅 {norm.date}</span>}
                               {doc.extracted_data && (
                                 <span className="flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                                   <Sparkles className="h-2.5 w-2.5" /> Analysiert
                                 </span>
                               )}
-                            </div>
-                            {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
-                          </div>
-                          <button onClick={async () => {
-                              const path = getStoragePath(doc.file_url);
-                              const { data } = await supabase.storage.from('client-documents').createSignedUrl(path, 300);
-                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                              else toast.error('Download fehlgeschlagen');
-                            }}
-                            className="rounded-md p-2 text-muted-foreground hover:text-foreground shrink-0">
-                            <Download className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        {/* Extracted data display */}
-                        {doc.extracted_data && (
-                          <div className="rounded-lg border border-primary/20 bg-primary/5 p-2.5 space-y-1.5">
-                            <p className="flex items-center gap-1 text-[11px] font-semibold text-primary">
-                              <Sparkles className="h-3 w-3" /> KI-Analyse
-                              {doc.extracted_data.confidence && (
-                                <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
-                                  doc.extracted_data.confidence === 'high' ? 'bg-success/15 text-success' :
-                                  doc.extracted_data.confidence === 'medium' ? 'bg-warning/15 text-warning' :
-                                  'bg-destructive/15 text-destructive'
-                                }`}>
-                                  {doc.extracted_data.confidence === 'high' ? 'Sicher' :
-                                   doc.extracted_data.confidence === 'medium' ? 'Mittel' : 'Unsicher'}
+                              {incomplete && doc.extracted_data && (
+                                <span className="flex items-center gap-0.5 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+                                  <AlertTriangle className="h-2.5 w-2.5" /> Unvollständig
                                 </span>
                               )}
-                            </p>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                              {doc.extracted_data.vendor_name && (
-                                <>
-                                  <span className="text-muted-foreground">Aussteller</span>
-                                  <span className="font-medium text-foreground">{doc.extracted_data.vendor_name}</span>
-                                </>
-                              )}
-                              {doc.extracted_data.receipt_date && (
-                                <>
-                                  <span className="text-muted-foreground">Datum</span>
-                                  <span className="font-medium text-foreground">{formatDateDE(doc.extracted_data.receipt_date)}</span>
-                                </>
-                              )}
-                              {doc.extracted_data.total_amount != null && (
-                                <>
-                                  <span className="text-muted-foreground">Betrag</span>
-                                  <span className="font-medium text-foreground">{Number(doc.extracted_data.total_amount).toFixed(2).replace('.', ',')} €</span>
-                                </>
-                              )}
-                              {doc.extracted_data.vat_amount != null && doc.extracted_data.vat_amount > 0 && (
-                                <>
-                                  <span className="text-muted-foreground">USt</span>
-                                  <span className="font-medium text-foreground">{Number(doc.extracted_data.vat_amount).toFixed(2).replace('.', ',')} €</span>
-                                </>
-                              )}
-                              {doc.extracted_data.net_amount != null && doc.extracted_data.net_amount > 0 && (
-                                <>
-                                  <span className="text-muted-foreground">Netto</span>
-                                  <span className="font-medium text-foreground">{Number(doc.extracted_data.net_amount).toFixed(2).replace('.', ',')} €</span>
-                                </>
-                              )}
                             </div>
-                            {doc.extracted_data.notes && (
-                              <p className="text-[10px] text-muted-foreground italic">{doc.extracted_data.notes}</p>
-                            )}
                           </div>
-                        )}
+                          <div className="flex shrink-0 gap-1" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => setPreviewDoc(doc)}
+                              className="rounded-md p-2 text-muted-foreground hover:text-primary" title="Vorschau">
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
 
-                        {/* Admin controls */}
-                        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2">
+                        {/* Inline admin controls */}
+                        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2" onClick={e => e.stopPropagation()}>
                           <select value={doc.category}
                             onChange={(e) => updateDocMutation.mutate({ id: doc.id, updates: { category: e.target.value } })}
                             className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground">
@@ -442,9 +390,6 @@ const AdminDocuments = () => {
                             }}
                             className="flex-1 min-w-[120px] rounded border border-border bg-background px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground" />
                         </div>
-                        {doc.admin_note && (
-                          <p className="text-[11px] text-muted-foreground italic">📝 {doc.admin_note}</p>
-                        )}
                       </div>
                     );
                   })}
@@ -454,6 +399,18 @@ const AdminDocuments = () => {
           })}
         </div>
       )}
+
+      {/* Preview Modal */}
+      <DocumentPreviewModal
+        open={!!previewDoc}
+        onOpenChange={(open) => { if (!open) setPreviewDoc(null); }}
+        document={previewDoc}
+        onUpdate={() => {
+          queryClient.invalidateQueries({ queryKey: ['admin-client-docs'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-doc-clients'] });
+          setPreviewDoc(null);
+        }}
+      />
     </div>
   );
 };
