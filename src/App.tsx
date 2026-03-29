@@ -46,6 +46,8 @@ import AdminTemplates from "@/pages/admin/AdminTemplates";
 import AdminLeads from "@/pages/admin/AdminLeads";
 import LandingPage from "@/pages/LandingPage";
 import Truth from "@/pages/Truth";
+import TruthA from "@/pages/TruthA";
+import TruthB from "@/pages/TruthB";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
