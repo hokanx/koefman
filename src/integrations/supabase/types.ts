@@ -407,6 +407,48 @@ export type Database = {
         }
         Relationships: []
       }
+      diagnostic_submissions: {
+        Row: {
+          business_type: string
+          company: string | null
+          created_at: string
+          email: string
+          id: string
+          lead_flow: string
+          main_problem: string
+          name: string
+          qr_session_id: string | null
+          revenue_clarity: string
+          variant: string | null
+        }
+        Insert: {
+          business_type?: string
+          company?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          lead_flow?: string
+          main_problem?: string
+          name?: string
+          qr_session_id?: string | null
+          revenue_clarity?: string
+          variant?: string | null
+        }
+        Update: {
+          business_type?: string
+          company?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          lead_flow?: string
+          main_problem?: string
+          name?: string
+          qr_session_id?: string | null
+          revenue_clarity?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
       document_emails: {
         Row: {
           document_id: string
@@ -868,6 +910,65 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      lead_analyses: {
+        Row: {
+          analysis_status: string
+          created_at: string
+          email_sent: boolean
+          email_sent_at: string | null
+          full_analysis_json: Json | null
+          headline: string
+          id: string
+          main_issue: string
+          next_step: string
+          practical_meaning: string
+          priority_1: string
+          priority_2: string
+          priority_3: string
+          submission_id: string
+        }
+        Insert: {
+          analysis_status?: string
+          created_at?: string
+          email_sent?: boolean
+          email_sent_at?: string | null
+          full_analysis_json?: Json | null
+          headline?: string
+          id?: string
+          main_issue?: string
+          next_step?: string
+          practical_meaning?: string
+          priority_1?: string
+          priority_2?: string
+          priority_3?: string
+          submission_id: string
+        }
+        Update: {
+          analysis_status?: string
+          created_at?: string
+          email_sent?: boolean
+          email_sent_at?: string | null
+          full_analysis_json?: Json | null
+          headline?: string
+          id?: string
+          main_issue?: string
+          next_step?: string
+          practical_meaning?: string
+          priority_1?: string
+          priority_2?: string
+          priority_3?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_analyses_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostic_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
