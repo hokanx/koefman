@@ -21,16 +21,14 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* NAV */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="text-xl font-bold tracking-tight">
-            <span className="text-primary">KÖF</span>MAN
-          </span>
+          <span className="text-xl font-bold tracking-[0.1em]">KÖFMAN</span>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+            <Button variant="ghost" size="sm" className="uppercase tracking-[0.08em] text-xs" onClick={() => navigate('/login')}>
               Anmelden
             </Button>
-            <Button size="sm" onClick={() => setIntakeOpen(true)}>
+            <Button size="sm" className="uppercase tracking-[0.08em] text-xs" onClick={() => setIntakeOpen(true)}>
               Jetzt starten
             </Button>
           </div>
@@ -39,10 +37,8 @@ const LandingPage = () => {
 
       {/* HERO */}
       <section className="relative py-20 md:py-32 px-4">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3" />
         <div className="max-w-4xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8">
-            <Zap className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-border text-muted-foreground text-xs font-medium mb-8 tracking-[0.1em] uppercase">
             Büroarbeit abgeben. Geschäft aufbauen.
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6">
@@ -55,7 +51,7 @@ const LandingPage = () => {
             Rechnungen, Angebote, Verträge und Belege – alles digital organisiert und persönlich betreut.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => setIntakeOpen(true)}>
+            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 uppercase tracking-[0.08em]" onClick={() => setIntakeOpen(true)}>
               Kostenloses Erstgespräch buchen
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
@@ -244,7 +240,7 @@ const LandingPage = () => {
             </Card>
 
             {/* Monthly */}
-            <Card className="relative overflow-hidden border-primary shadow-lg gold-glow ring-2 ring-primary/20">
+            <Card className="relative overflow-hidden border-primary ring-1 ring-primary/20">
               <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-center text-xs font-semibold py-1.5">
                 Laufende Betreuung
               </div>
@@ -339,7 +335,7 @@ const LandingPage = () => {
             Starte jetzt und lass uns dein Büro organisieren – persönlich, digital und stressfrei.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 shadow-lg gold-glow" onClick={() => setIntakeOpen(true)}>
+            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 uppercase tracking-[0.08em]" onClick={() => setIntakeOpen(true)}>
               Kostenloses Erstgespräch
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
@@ -353,9 +349,7 @@ const LandingPage = () => {
       {/* FOOTER */}
       <footer className="border-t border-border py-10 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">
-            <span className="text-primary">KÖF</span>MAN
-          </span>
+          <span className="font-semibold text-foreground tracking-[0.1em]">KÖFMAN</span>
           <p>© {new Date().getFullYear()} KÖFMAN. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
