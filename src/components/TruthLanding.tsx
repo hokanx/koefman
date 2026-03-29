@@ -48,8 +48,8 @@ const FadeInLine = ({ line, index }: { line: LineData; index: number }) => {
 
 export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campaignId }: TruthLandingProps) {
   const navigate = useNavigate();
-  const diagnosisRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const variant = campaignId || 'direct';
 
   const sections = [
     {
@@ -93,20 +93,15 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
       ],
     },
     {
-      id: 'interaction',
-      lines: [],
-      cta: { label: '[ ZEIG MIR DEN BEWEIS ]', action: 'scroll' as const },
-    },
-    {
-      id: 'diagnosis',
+      id: 'decision',
       lines: [
-        { text: 'WENN EINES DAVON AUF DICH ZUTRIFFT:', size: 'text-lg sm:text-xl', weight: 'font-semibold' },
+        { text: 'DU HAST ZWEI OPTIONEN.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
         { text: '', spacer: true },
-        { text: '— DU BEKOMMST KEINE KONSTANTEN ANFRAGEN', size: 'text-sm sm:text-base', weight: 'font-normal' },
-        { text: '— DEIN UMSATZ IST NICHT PLANBAR', size: 'text-sm sm:text-base', weight: 'font-normal' },
-        { text: '— DU WEISST NICHT, WO KUNDEN VERLOREN GEHEN', size: 'text-sm sm:text-base', weight: 'font-normal' },
+        { text: 'DU IGNORIERST ES.', size: 'text-base sm:text-lg', weight: 'font-normal' },
+        { text: 'UND VERLIERST WEITER.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
         { text: '', spacer: true },
-        { text: 'DANN HAST DU KEIN SYSTEM.', size: 'text-lg sm:text-xl', weight: 'font-semibold' },
+        { text: 'ODER DU FINDEST HERAUS,', size: 'text-base sm:text-lg', weight: 'font-normal' },
+        { text: 'WO DAS PROBLEM LIEGT.', size: 'text-base sm:text-lg', weight: 'font-semibold' },
       ],
     },
     {
@@ -115,20 +110,19 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
         { text: 'FINDE HERAUS,', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
         { text: 'WO DEIN SYSTEM VERSAGT.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
       ],
-      cta: { label: '[ KOSTENLOSE ANALYSE STARTEN ]', action: 'navigate' as const },
+      cta: true,
     },
   ];
 
   useEffect(() => {
-    const campaign = campaignId || 'direct';
     const trackVisit = async () => {
       try {
-        const { data } = await (supabase as any).from('qr_sessions').insert({ campaign_id: campaign, converted: false }).select('id').single();
+        const { data } = await (supabase as any).from('qr_sessions').insert({ campaign_id: variant, converted: false }).select('id').single();
         if (data) sessionIdRef.current = data.id;
       } catch {}
     };
     trackVisit();
-  }, [campaignId]);
+  }, [variant]);
 
   const handleCTA = async () => {
     if (sessionIdRef.current) {
@@ -136,7 +130,7 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
         await (supabase as any).from('qr_sessions').update({ converted: true }).eq('id', sessionIdRef.current);
       } catch {}
     }
-    navigate('/landing');
+    navigate(`/diagnose?v=${variant}`);
   };
 
   return (
@@ -144,7 +138,6 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
       {sections.map((section) => (
         <section
           key={section.id}
-          ref={section.id === 'diagnosis' ? diagnosisRef : undefined}
           className={`flex flex-col items-center justify-center px-6 ${section.fullScreen ? 'min-h-screen' : 'min-h-[70vh] py-24 sm:py-32'}`}
         >
           <div className="w-full max-w-[480px] space-y-4 text-center">
@@ -152,16 +145,16 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
               <FadeInLine key={li} line={line} index={li} />
             ))}
             {section.cta && (
-              <div className="pt-12">
+              <div className="pt-12 space-y-6">
                 <button
-                  onClick={section.cta.action === 'scroll'
-                    ? () => diagnosisRef.current?.scrollIntoView({ behavior: 'smooth' })
-                    : handleCTA
-                  }
-                  className="border border-foreground px-8 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300"
+                  onClick={handleCTA}
+                  className="border border-foreground px-8 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
                 >
-                  {section.cta.label}
+                  [ KOSTENLOSE ANALYSE STARTEN ]
                 </button>
+                <p className="text-xs text-muted-foreground tracking-[0.1em]">
+                  DAUERT 2 MINUTEN. KEINE VERPFLICHTUNG.
+                </p>
               </div>
             )}
           </div>
