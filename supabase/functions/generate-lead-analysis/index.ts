@@ -62,9 +62,9 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;background-color:#000000;border:1px solid #1A1A1A;" class="email-container">
 
 <!-- Logo / Brand Header -->
-<tr><td style="padding:40px 32px 32px 32px;text-align:center;background-color:#000000;">
-  <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="K&#214;FMAN" width="48" height="48" style="display:block;margin:0 auto 12px auto;width:48px;height:48px;border:0;outline:none;" />
-  <span style="color:#FFFFFF;font-size:16px;letter-spacing:0.2em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">K&#214;FMAN</span>
+<tr><td style="padding:48px 32px 36px 32px;text-align:center;background-color:#000000;">
+  <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="K&#214;FMAN" width="112" height="112" style="display:block;margin:0 auto 16px auto;width:112px;height:112px;border:0;outline:none;" />
+  <span style="color:#FFFFFF;font-size:18px;letter-spacing:0.22em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">K&#214;FMAN</span>
 </td></tr>
 
 <!-- Divider -->
@@ -143,17 +143,17 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 </td></tr>
 
 <!-- CTA Button -->
-<tr><td style="padding:12px 32px 8px 32px;background-color:#000000;" align="center">
+<tr><td style="padding:24px 32px 12px 32px;background-color:#000000;" align="center">
   <!--[if mso]>
-  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:56px;v-text-anchor:middle;width:100%;" arcsize="0%" fillcolor="#FFFFFF">
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:60px;v-text-anchor:middle;width:100%;" arcsize="0%" fillcolor="#FFFFFF">
   <w:anchorlock/>
-  <center style="color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:0.14em;">STRATEGIE-SESSION BUCHEN</center>
+  <center style="color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;letter-spacing:0.14em;">STRATEGIE-SESSION BUCHEN</center>
   </v:roundrect>
   <![endif]-->
   <!--[if !mso]><!-->
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr><td align="center" style="background-color:#FFFFFF;">
-      <a href="${ctaUrl}" target="_blank" style="display:block;background-color:#FFFFFF;color:#000000;text-decoration:none;padding:20px 32px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-align:center;line-height:1;mso-padding-alt:0;">STRATEGIE-SESSION BUCHEN</a>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:separate;">
+    <tr><td align="center" style="background-color:#FFFFFF;padding:0;">
+      <a href="${ctaUrl}" target="_blank" style="display:block;background-color:#FFFFFF;color:#000000;text-decoration:none;padding:22px 32px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-align:center;line-height:1;mso-padding-alt:0;border:2px solid #FFFFFF;">STRATEGIE-SESSION BUCHEN</a>
     </td></tr>
   </table>
   <!--<![endif]-->
@@ -161,8 +161,8 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 
 <!-- Sub-CTA text -->
 <tr><td style="padding:20px 32px 0 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
-    Wir zeigen dir konkret, wo du Geld verlierst &#8211; und wie du es fixst.
+  <p style="color:#A0A0A0;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+    Wir zeigen dir konkret, wo du Geld verlierst &#8211; und wie du es behebst.
   </p>
 </td></tr>
 

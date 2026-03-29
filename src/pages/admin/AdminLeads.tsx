@@ -160,9 +160,9 @@ const AdminLeads = () => {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;width:100%;background-color:#000000;border:1px solid #1A1A1A;margin:0 auto;">
 
       <!-- Logo -->
-      <tr><td style="padding:40px 32px 32px 32px;text-align:center;background-color:#000000;">
-        <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="KÖFMAN" width="48" height="48" style="display:block;margin:0 auto 12px auto;width:48px;height:48px;" />
-        <span style="color:#FFFFFF;font-size:16px;letter-spacing:0.2em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">KÖFMAN</span>
+      <tr><td style="padding:48px 32px 36px 32px;text-align:center;background-color:#000000;">
+        <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="KÖFMAN" width="112" height="112" style="display:block;margin:0 auto 16px auto;width:112px;height:112px;" />
+        <span style="color:#FFFFFF;font-size:18px;letter-spacing:0.22em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">KÖFMAN</span>
       </td></tr>
 
       <tr><td style="padding:0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
@@ -216,12 +216,14 @@ const AdminLeads = () => {
         <p style="color:#FFFFFF;font-size:13px;margin:4px 0 16px 0;font-weight:600;font-family:Arial,Helvetica,sans-serif;">2. Mit uns herausfinden, was sich konkret ändern lässt.</p>
       </td></tr>
 
-      <tr><td style="padding:12px 32px 8px 32px;background-color:#000000;">
-        <div style="background:#FFFFFF;color:#000000;text-align:center;padding:20px 32px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Arial,Helvetica,sans-serif;">STRATEGIE-SESSION BUCHEN</div>
+      <tr><td style="padding:24px 32px 12px 32px;background-color:#000000;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="background-color:#FFFFFF;padding:0;">
+          <div style="background-color:#FFFFFF;color:#000000;text-align:center;padding:22px 32px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Arial,Helvetica,sans-serif;line-height:1;border:2px solid #FFFFFF;">STRATEGIE-SESSION BUCHEN</div>
+        </td></tr></table>
       </td></tr>
 
       <tr><td style="padding:20px 32px 0 32px;background-color:#000000;">
-        <p style="color:#9A9A9A;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">Wir zeigen dir konkret, wo du Geld verlierst – und wie du es fixst.</p>
+        <p style="color:#A0A0A0;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">Wir zeigen dir konkret, wo du Geld verlierst – und wie du es behebst.</p>
       </td></tr>
 
       <tr><td style="padding:32px 32px 0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
