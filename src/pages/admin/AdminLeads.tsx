@@ -56,6 +56,13 @@ interface DiagnosticSubmission {
   variant: string | null;
   qr_session_id: string | null;
   created_at: string;
+  company_size?: string;
+  problems?: string[];
+  free_text?: string;
+  importance?: string;
+  commitment?: string;
+  urgency?: string;
+  intent_score?: string;
   lead_analyses?: LeadAnalysis[];
 }
 
