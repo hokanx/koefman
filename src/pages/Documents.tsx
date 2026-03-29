@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Download, FolderOpen, Search, Info, Sparkles } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, FolderOpen, Search, Info, Sparkles, Eye, Filter } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,7 +7,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDateDE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { DOCUMENT_GROUPS, getCategoryInfo, getStatusInfo } from '@/lib/documentCategories';
+import { DOCUMENT_GROUPS, getCategoryInfo, getStatusInfo, STATUS_OPTIONS } from '@/lib/documentCategories';
+import DocumentPreviewModal from '@/components/documents/DocumentPreviewModal';
+import DocumentStats from '@/components/documents/DocumentStats';
 
 const getStoragePath = (fileUrl: string): string => {
   if (fileUrl.includes('/client-documents/')) {
@@ -22,11 +24,13 @@ const Documents = () => {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [filterGroup, setFilterGroup] = useState<string>('alle');
+  const [filterStatus, setFilterStatus] = useState<string>('alle');
   const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('eingangsrechnungen');
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
 
   const targetUserId = effectiveUserId || user?.id;
 
@@ -40,11 +44,9 @@ const Documents = () => {
         .order('created_at', { ascending: false });
 
       if (filterGroup !== 'alle') {
-        // Get all subcategory values for this group
         const group = DOCUMENT_GROUPS.find(g => g.group === filterGroup);
         if (group) {
           const values = group.subcategories.map(s => s.value);
-          // Also include legacy value
           values.push(filterGroup);
           query = query.in('category', values);
         }
@@ -77,14 +79,8 @@ const Documents = () => {
     if (!file || !targetUserId) return;
 
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Nur PDF und Bilder erlaubt');
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error('Maximale Dateigröße: 20 MB');
-      return;
-    }
+    if (!allowedTypes.includes(file.type)) { toast.error('Nur PDF und Bilder erlaubt'); return; }
+    if (file.size > 20 * 1024 * 1024) { toast.error('Maximale Dateigröße: 20 MB'); return; }
 
     setUploading(true);
     try {
@@ -109,17 +105,13 @@ const Documents = () => {
       setDescription('');
       setShowUpload(false);
 
-      // Trigger AI analysis for images in background
       const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
       if (isImage && insertData?.id) {
         toast.info('Beleg wird analysiert…');
         supabase.functions.invoke('analyze-receipt', {
           body: { documentId: insertData.id, fileUrl: path },
         }).then(({ data, error }) => {
-          if (error) {
-            console.error('Receipt analysis failed:', error);
-            return;
-          }
+          if (error) { console.error('Receipt analysis failed:', error); return; }
           if (data?.extracted) {
             queryClient.invalidateQueries({ queryKey: ['documents'] });
             toast.success('Beleg wurde automatisch analysiert');
@@ -142,9 +134,13 @@ const Documents = () => {
   };
 
   const filtered = documents.filter((doc: any) => {
+    if (filterStatus !== 'alle' && doc.status !== filterStatus) return false;
     if (!search) return true;
     const s = search.toLowerCase();
-    return doc.file_name?.toLowerCase().includes(s) || doc.description?.toLowerCase().includes(s);
+    const extracted = doc.extracted_data || {};
+    return doc.file_name?.toLowerCase().includes(s)
+      || doc.description?.toLowerCase().includes(s)
+      || extracted.vendor?.toLowerCase().includes(s);
   });
 
   const grouped = filtered.reduce((acc: Record<string, any[]>, doc: any) => {
@@ -158,6 +154,27 @@ const Documents = () => {
 
   const sortedMonths = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
+  const handleDownload = async (doc: any) => {
+    try {
+      const path = getStoragePath(doc.file_url);
+      const { data, error } = await supabase.storage.from('client-documents').createSignedUrl(path, 600);
+      if (error || !data?.signedUrl) { toast.error('Datei konnte nicht geladen werden.'); return; }
+      const resp = await fetch(data.signedUrl);
+      if (!resp.ok) { toast.error('Datei nicht verfügbar'); return; }
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name || 'dokument';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Download fehlgeschlagen');
+    }
+  };
+
   return (
     <div className="animate-fade-in p-4 md:p-6">
       {isImpersonating && (
@@ -169,16 +186,20 @@ const Documents = () => {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground">Belege & Dokumente</h1>
         <Button onClick={() => setShowUpload(!showUpload)} size="sm">
-          <Upload className="mr-1 h-4 w-4" />
-          Beleg hochladen
+          <Upload className="mr-1 h-4 w-4" /> Beleg hochladen
         </Button>
       </div>
 
-      {/* Guidance hints */}
+      {/* Stats */}
+      <div className="mb-4">
+        <DocumentStats documents={documents} />
+      </div>
+
+      {/* Guidance */}
       <div className="mb-4 flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
         <div className="text-xs text-muted-foreground space-y-0.5">
-          <p>Angebote und Ausgangsrechnungen werden automatisch erfasst und müssen nicht hochgeladen werden.</p>
+          <p>Angebote und Ausgangsrechnungen werden automatisch erfasst.</p>
           <p>Laden Sie hier Belege, Kontoauszüge und Eingangsrechnungen hoch.</p>
         </div>
       </div>
@@ -189,11 +210,8 @@ const Documents = () => {
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Kategorie</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-              >
+              <select value={category} onChange={(e) => setCategory(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
                 {DOCUMENT_GROUPS.filter(g => g.group !== 'einnahmen').map(g => (
                   <optgroup key={g.group} label={g.label}>
                     {g.subcategories.map(s => (
@@ -205,13 +223,9 @@ const Documents = () => {
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Beschreibung (optional)</label>
-              <input
-                type="text"
-                placeholder="z.B. Telefonrechnung März"
-                value={description}
+              <input type="text" placeholder="z.B. Telefonrechnung März" value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
-              />
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
             </div>
           </div>
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/30 px-4 py-6 text-sm text-muted-foreground transition hover:border-primary hover:text-primary">
@@ -222,42 +236,43 @@ const Documents = () => {
         </div>
       )}
 
-      {/* Search + Group Filter */}
+      {/* Filters */}
       <div className="mb-4 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Beleg suchen..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground"
-          />
+          <input type="text" placeholder="Beleg suchen…" value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground" />
         </div>
+        {/* Category filter */}
         <div className="flex gap-2 overflow-x-auto">
-          <button
-            onClick={() => setFilterGroup('alle')}
-            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              filterGroup === 'alle' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
-            }`}
-          >
+          <button onClick={() => setFilterGroup('alle')}
+            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${filterGroup === 'alle' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}>
             Alle
           </button>
           {DOCUMENT_GROUPS.map(g => (
-            <button
-              key={g.group}
-              onClick={() => setFilterGroup(g.group)}
-              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                filterGroup === g.group ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
-              }`}
-            >
+            <button key={g.group} onClick={() => setFilterGroup(g.group)}
+              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${filterGroup === g.group ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}>
               {g.label}
+            </button>
+          ))}
+        </div>
+        {/* Status filter */}
+        <div className="flex gap-2 overflow-x-auto">
+          <Filter className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+          <button onClick={() => setFilterStatus('alle')}
+            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${filterStatus === 'alle' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}>
+            Alle Status
+          </button>
+          {STATUS_OPTIONS.map(s => (
+            <button key={s.value} onClick={() => setFilterStatus(s.value)}
+              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${filterStatus === s.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'}`}>
+              {s.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Document list grouped by month */}
+      {/* Document list */}
       {isLoading ? (
         <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>
       ) : filtered.length === 0 ? (
@@ -277,8 +292,11 @@ const Documents = () => {
                   {docs.map((doc: any) => {
                     const catInfo = getCategoryInfo(doc.category);
                     const statusInfo = getStatusInfo(doc.status);
+                    const extracted = doc.extracted_data || {};
                     return (
-                      <div key={doc.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+                      <div key={doc.id}
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 cursor-pointer hover:border-primary/40 transition"
+                        onClick={() => setPreviewDoc(doc)}>
                         <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
@@ -286,6 +304,12 @@ const Documents = () => {
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${catInfo.color}`}>{catInfo.label}</span>
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
                             <span className="text-[10px] text-muted-foreground">{formatDateDE(doc.created_at)}</span>
+                            {extracted.vendor && (
+                              <span className="text-[10px] text-muted-foreground">· {extracted.vendor}</span>
+                            )}
+                            {extracted.gross_amount != null && (
+                              <span className="text-[10px] font-medium text-foreground">{extracted.gross_amount.toFixed(2)} €</span>
+                            )}
                             {doc.extracted_data && (
                               <span className="flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                                 <Sparkles className="h-2.5 w-2.5" /> Analysiert
@@ -295,41 +319,20 @@ const Documents = () => {
                           </div>
                           {doc.description && <p className="mt-1 text-xs text-muted-foreground truncate">{doc.description}</p>}
                         </div>
-                        <div className="flex shrink-0 gap-1">
-                          <button onClick={async () => {
-                              try {
-                                const path = getStoragePath(doc.file_url);
-                                const { data, error } = await supabase.storage.from('client-documents').createSignedUrl(path, 600);
-                                if (error || !data?.signedUrl) {
-                                  console.error('Signed URL error:', error);
-                                  toast.error('Datei konnte nicht geladen werden. Bitte versuchen Sie es erneut.');
-                                  return;
-                                }
-                                // Force download via fetch + blob
-                                const resp = await fetch(data.signedUrl);
-                                if (!resp.ok) {
-                                  toast.error('Datei nicht verfügbar');
-                                  return;
-                                }
-                                const blob = await resp.blob();
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = doc.file_name || 'dokument';
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(url);
-                              } catch (err) {
-                                console.error('Download failed:', err);
-                                toast.error('Download fehlgeschlagen');
-                              }
-                            }}
-                            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground">
+                        <div className="flex shrink-0 gap-1" onClick={e => e.stopPropagation()}>
+                          <button onClick={() => setPreviewDoc(doc)}
+                            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-primary"
+                            title="Vorschau">
+                            <Eye className="h-5 w-5" />
+                          </button>
+                          <button onClick={() => handleDownload(doc)}
+                            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground"
+                            title="Herunterladen">
                             <Download className="h-5 w-5" />
                           </button>
                           <button onClick={() => { if (confirm('Beleg wirklich löschen?')) deleteMutation.mutate(doc); }}
-                            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-destructive">
+                            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-destructive"
+                            title="Löschen">
                             <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
@@ -342,6 +345,17 @@ const Documents = () => {
           })}
         </div>
       )}
+
+      {/* Preview Modal */}
+      <DocumentPreviewModal
+        open={!!previewDoc}
+        onOpenChange={(open) => { if (!open) setPreviewDoc(null); }}
+        document={previewDoc}
+        onUpdate={() => {
+          queryClient.invalidateQueries({ queryKey: ['documents'] });
+          setPreviewDoc(null);
+        }}
+      />
     </div>
   );
 };
