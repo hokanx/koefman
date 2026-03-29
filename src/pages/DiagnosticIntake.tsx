@@ -306,22 +306,17 @@ export default function DiagnosticIntake() {
           return (
             <div className="space-y-10 text-center animate-fade-in">
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">
-                DEIN ERGEBNIS IST KLAR.
+                DEINE ANALYSE KONNTE GERADE NICHT VOLLSTÄNDIG GELADEN WERDEN.
               </h1>
-              <div className="space-y-3">
-                <p className="text-base text-foreground tracking-[0.08em]">
-                  DEINE ANALYSE KONNTE GERADE NICHT VOLLSTÄNDIG GELADEN WERDEN.
-                </p>
-                <p className="text-sm text-muted-foreground tracking-[0.08em]">
-                  DEINE ANGABEN WURDEN GESPEICHERT UND WIR KÜMMERN UNS DARUM.
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground tracking-[0.08em]">
+                DEINE ANGABEN WURDEN GESPEICHERT UND WIR KÜMMERN UNS DARUM.
+              </p>
               <div className="pt-6">
                 <button
                   onClick={() => window.location.href = '/landing'}
                   className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
                 >
-                  [ KOSTENLOSE STRATEGIE-SESSION ]
+                  [ KOSTENLOSE STRATEGIE-SESSION BUCHEN ]
                 </button>
               </div>
             </div>
@@ -331,74 +326,78 @@ export default function DiagnosticIntake() {
         // Success state with analysis
         if (analysis) {
           return (
-            <div className="space-y-0 animate-fade-in">
-              <div className="text-center pb-10">
-                <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">
+            <div className="animate-fade-in">
+              {/* Header */}
+              <div className="text-center pb-8">
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em] mb-4">
                   DEINE KURZANALYSE IST BEREIT.
                 </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground tracking-[0.08em] leading-relaxed max-w-[360px] mx-auto">
+                  BASIEREND AUF DEINEN ANGABEN ZEIGT SICH AKTUELL VOR ALLEM EIN SYSTEMPROBLEM.
+                </p>
               </div>
 
               {/* Main issue */}
-              <div className="border-t border-[#1A1A1A] py-6">
-                <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">
-                  WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE
+              <div className="border-t border-[#1A1A1A] py-7">
+                <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">
+                  GRÖSSTE SCHWACHSTELLE
                 </p>
-                <p className="text-sm sm:text-base text-foreground leading-relaxed">
+                <p className="text-sm sm:text-base text-foreground leading-[1.7]">
                   {analysis.main_issue}
                 </p>
               </div>
 
               {/* Practical meaning */}
-              <div className="border-t border-[#1A1A1A] py-6">
-                <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">
+              <div className="border-t border-[#1A1A1A] py-7">
+                <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">
                   WAS DAS PRAKTISCH BEDEUTET
                 </p>
-                <p className="text-sm sm:text-base text-foreground leading-relaxed">
+                <p className="text-sm sm:text-base text-foreground leading-[1.7]">
                   {analysis.practical_meaning}
                 </p>
               </div>
 
               {/* Priorities */}
-              <div className="border-t border-[#1A1A1A] py-6">
-                <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-4">
-                  DEINE NÄCHSTEN 3 HEBEL
+              <div className="border-t border-[#1A1A1A] py-7">
+                <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-5">
+                  DIE 3 WICHTIGSTEN HEBEL
                 </p>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {analysis.priorities.filter(p => p).map((priority, i) => (
-                    <div key={i} className="flex gap-3">
-                      <span className="text-muted-foreground text-sm shrink-0">{i + 1}.</span>
-                      <p className="text-sm sm:text-base text-foreground leading-relaxed">{priority}</p>
+                    <div key={i} className="flex gap-4 items-baseline">
+                      <span className="text-muted-foreground text-xs font-semibold tracking-[0.1em] shrink-0 w-5 text-right">{i + 1}.</span>
+                      <p className="text-sm sm:text-base text-foreground leading-[1.7]">{priority}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Next step */}
-              <div className="border-t border-[#1A1A1A] py-6">
-                <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">
+              <div className="border-t border-[#1A1A1A] py-7">
+                <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">
                   NÄCHSTER SINNVOLLER SCHRITT
                 </p>
-                <p className="text-sm sm:text-base text-foreground leading-relaxed">
+                <p className="text-sm sm:text-base text-foreground leading-[1.7]">
                   {analysis.next_step}
                 </p>
               </div>
 
               {/* CTA */}
-              <div className="border-t border-[#1A1A1A] pt-10 text-center space-y-6">
+              <div className="border-t border-[#1A1A1A] pt-10 pb-4 text-center">
                 <button
                   onClick={() => window.location.href = '/landing'}
                   className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
                 >
-                  [ KOSTENLOSE STRATEGIE-SESSION ]
+                  [ KOSTENLOSE STRATEGIE-SESSION BUCHEN ]
                 </button>
 
                 {emailSent && (
-                  <p className="text-xs text-muted-foreground tracking-[0.08em]">
-                    DIE ANALYSE WURDE ZUSÄTZLICH PER E-MAIL AN DICH GESENDET.
+                  <p className="text-xs text-muted-foreground tracking-[0.08em] mt-8">
+                    DIE KURZANALYSE WURDE ZUSÄTZLICH PER E-MAIL AN DICH GESENDET.
                   </p>
                 )}
 
-                <p className="text-[11px] text-muted-foreground/50 tracking-[0.08em]">
+                <p className="text-[11px] text-muted-foreground/40 tracking-[0.08em] mt-6">
                   WIR ZEIGEN DIR KONKRET,<br />
                   WO DU GELD VERLIERST – UND WIE DU ES FIXST.
                 </p>
@@ -407,7 +406,6 @@ export default function DiagnosticIntake() {
           );
         }
 
-        // Default/initial result (shouldn't normally appear)
         return null;
 
       default:
