@@ -116,7 +116,7 @@ const IntakeForm = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4">
-        <h1 className="text-lg font-bold tracking-tight text-primary">KÖFMAN</h1>
+        <img src="/logo-wordmark-white.png" alt="KÖFMAN" className="h-6 w-auto" />
       </header>
 
       <div className="mx-auto max-w-lg p-4">
