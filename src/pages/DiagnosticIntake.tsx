@@ -382,25 +382,52 @@ export default function DiagnosticIntake() {
                 </p>
               </div>
 
-              {/* CTA */}
-              <div className="border-t border-[#1A1A1A] pt-10 pb-4 text-center">
-                <button
-                  onClick={() => window.location.href = '/landing'}
-                  className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
-                >
-                  [ KOSTENLOSE STRATEGIE-SESSION BUCHEN ]
-                </button>
+              {/* Decision Section */}
+              <div className="border-t border-[#1A1A1A] pt-10 pb-4">
+                <h2 className="text-lg sm:text-xl font-semibold tracking-[0.1em] text-center mb-10">
+                  DU HAST JETZT ZWEI MÖGLICHKEITEN.
+                </h2>
 
-                {emailSent && (
-                  <p className="text-xs text-muted-foreground tracking-[0.08em] mt-8">
-                    DIE KURZANALYSE WURDE ZUSÄTZLICH PER E-MAIL AN DICH GESENDET.
+                {/* Option 1 — Passive */}
+                <div className="mb-6">
+                  <p className="text-sm font-semibold tracking-[0.08em] text-muted-foreground mb-2">
+                    1. DU SETZT ES SELBST UM.
                   </p>
-                )}
+                  <p className="text-sm text-muted-foreground/70 leading-[1.7]">
+                    Du kannst die Analyse nutzen und versuchen, die Probleme eigenständig zu lösen.
+                  </p>
+                </div>
 
-                <p className="text-[11px] text-muted-foreground/40 tracking-[0.08em] mt-6">
-                  WIR ZEIGEN DIR KONKRET,<br />
-                  WO DU GELD VERLIERST – UND WIE DU ES FIXST.
-                </p>
+                {/* Option 2 — Primary */}
+                <div className="mb-12">
+                  <p className="text-base sm:text-lg font-bold tracking-[0.08em] text-foreground mb-2">
+                    2. WIR ZEIGEN DIR KONKRET, WAS DU ÄNDERN MUSST.
+                  </p>
+                  <p className="text-sm sm:text-base text-foreground leading-[1.7]">
+                    Im Gespräch identifizieren wir die genauen Punkte, an denen du aktuell Umsatz verlierst – und setzen direkt an.
+                  </p>
+                </div>
+
+                {/* Primary CTA */}
+                <div className="text-center">
+                  <button
+                    onClick={() => window.location.href = '/landing'}
+                    className="border-2 border-foreground px-10 py-5 text-sm sm:text-base tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase"
+                  >
+                    [ KOSTENLOSE STRATEGIE-SESSION BUCHEN ]
+                  </button>
+
+                  {emailSent && (
+                    <p className="text-xs text-muted-foreground tracking-[0.08em] mt-8">
+                      DIE KURZANALYSE WURDE ZUSÄTZLICH PER E-MAIL AN DICH GESENDET.
+                    </p>
+                  )}
+
+                  {/* Soft exit */}
+                  <p className="text-[11px] text-muted-foreground/40 tracking-[0.08em] mt-10 cursor-default">
+                    Ich schaue mir das erstmal selbst an.
+                  </p>
+                </div>
               </div>
             </div>
           );
