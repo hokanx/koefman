@@ -101,6 +101,8 @@ const AppWithImpersonation = () => {
               <Route path="/offer/view/:token" element={<PublicOfferView />} />
               <Route path="/contract/view/:token" element={<PublicContractView />} />
               <Route path="/truth" element={<Truth />} />
+              <Route path="/truth-a" element={<TruthA />} />
+              <Route path="/truth-b" element={<TruthB />} />
               <Route path="/truth-:campaignId" element={<Truth />} />
               <Route path="*" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
