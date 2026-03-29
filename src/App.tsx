@@ -46,6 +46,8 @@ import AdminTemplates from "@/pages/admin/AdminTemplates";
 import AdminLeads from "@/pages/admin/AdminLeads";
 import LandingPage from "@/pages/LandingPage";
 import Truth from "@/pages/Truth";
+import TruthA from "@/pages/TruthA";
+import TruthB from "@/pages/TruthB";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -99,6 +101,8 @@ const AppWithImpersonation = () => {
               <Route path="/offer/view/:token" element={<PublicOfferView />} />
               <Route path="/contract/view/:token" element={<PublicContractView />} />
               <Route path="/truth" element={<Truth />} />
+              <Route path="/truth-a" element={<TruthA />} />
+              <Route path="/truth-b" element={<TruthB />} />
               <Route path="/truth-:campaignId" element={<Truth />} />
               <Route path="*" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />

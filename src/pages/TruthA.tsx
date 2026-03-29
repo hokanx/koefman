@@ -1,14 +1,12 @@
-import { useParams } from 'react-router-dom';
 import TruthLanding from '@/components/TruthLanding';
 
-export default function Truth() {
-  const { campaignId } = useParams();
+export default function TruthA() {
   return (
     <TruthLanding
       entryLine1="DU WOLLTEST DEN BEWEIS SEHEN."
       entryLine2="HIER IST ER."
       entryLine3="ES GEHT NICHT UM EINE BEZIEHUNG."
-      campaignId={campaignId || 'direct'}
+      campaignId="variant-a"
     />
   );
 }
