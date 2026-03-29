@@ -328,11 +328,11 @@ serve(async (req) => {
       email,
       company: company || "",
       industry: business_type || "unknown",
-      situation: `Anfragen: ${lead_flow || "-"}, Umsatzverlust: ${revenue_clarity || "-"}`,
-      needs: [main_problem || "unknown"],
+      situation: `Anfragen: ${lead_flow || "-"}, Umsatzverlust: ${revenue_clarity || "-"}, Größe: ${company_size || "-"}`,
+      needs: problems && problems.length > 0 ? problems : [main_problem || "unknown"],
       contact_method: "email",
       status: "neu",
-      admin_notes: `QR-Variante: ${variant || "direct"}. Submission-ID: ${submission.id}`,
+      admin_notes: `QR-Variante: ${variant || "direct"}. Intent: ${intent_score || "medium"}. Submission-ID: ${submission.id}`,
     });
 
     // 3. Generate AI analysis
