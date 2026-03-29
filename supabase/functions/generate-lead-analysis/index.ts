@@ -360,7 +360,10 @@ serve(async (req) => {
     } else {
       const problemLabels: Record<string, string> = {
         wenig_anfragen: "Zu wenig qualifizierte Anfragen",
+        schlechte_umwandlung: "Schlechte Umwandlung von Anfragen",
         unklare_ablaeufe: "Unklare Abläufe",
+        zeitverlust: "Zeitverlust durch fehlende Struktur",
+        keine_struktur: "Keine klare Struktur",
         keine_conversion: "Keine klare Conversion-Struktur",
         unsicher: "Nicht sicher, wo das Problem liegt",
       };
