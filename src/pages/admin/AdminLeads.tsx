@@ -310,12 +310,17 @@ const AdminLeads = () => {
                         {analysis?.email_sent && <span className="text-[10px] text-muted-foreground">✉</span>}
                       </div>
                       <p className="text-xs text-muted-foreground">{sub.email}</p>
-                      <p className="text-[11px] text-muted-foreground/60">
+                       <p className="text-[11px] text-muted-foreground/60">
                         {INDUSTRY_LABELS[sub.business_type] || sub.business_type}
                         {sub.variant && <> · V{sub.variant.toUpperCase()}</>}
                         {' · '}
                         {format(new Date(sub.created_at), 'dd.MM.yy', { locale: de })}
                       </p>
+                      {sub.intent_score && INTENT_BADGES[sub.intent_score] && (
+                        <span className={`inline-block text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded border ${INTENT_BADGES[sub.intent_score].className}`}>
+                          {INTENT_BADGES[sub.intent_score].label}
+                        </span>
+                      )}
                       {analysis?.main_issue && (
                         <p className="text-xs text-muted-foreground/80 line-clamp-1 mt-1">{analysis.main_issue}</p>
                       )}
