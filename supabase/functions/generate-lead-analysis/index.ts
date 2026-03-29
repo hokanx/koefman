@@ -213,13 +213,15 @@ Erstelle eine strukturierte Mini-Analyse.`,
       );
 
       if (!aiResponse.ok) {
-        console.error("AI gateway error:", aiResponse.status, await aiResponse.text());
+        const errText = await aiResponse.text();
+        console.error("AI gateway error:", aiResponse.status, errText);
         analysisStatus = "failed";
+        errorMessage = `AI gateway ${aiResponse.status}: ${errText.slice(0, 200)}`;
         analysis = {
           headline: "Kurzanalyse",
           main_issue: "Analyse konnte gerade nicht generiert werden.",
           practical_meaning: "Deine Angaben wurden gespeichert und wir kümmern uns darum.",
-          priorities: ["Wir werden deine Situation manuell prüfen."],
+          priorities: ["Wir werden deine Situation manuell prüfen.", "", ""],
           next_step: "Wir melden uns in Kürze bei dir.",
         };
       } else {
@@ -227,7 +229,6 @@ Erstelle eine strukturierte Mini-Analyse.`,
         try {
           const toolCall = aiData.choices[0].message.tool_calls[0];
           analysis = JSON.parse(toolCall.function.arguments);
-          // Ensure priorities is an array of 3
           if (!Array.isArray(analysis.priorities)) {
             analysis.priorities = [];
           }
@@ -237,6 +238,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
         } catch (parseErr) {
           console.error("AI parse error:", parseErr);
           analysisStatus = "failed";
+          errorMessage = `Parse error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`;
           analysis = {
             headline: "Kurzanalyse",
             main_issue: "Analyse konnte nicht vollständig erstellt werden.",
