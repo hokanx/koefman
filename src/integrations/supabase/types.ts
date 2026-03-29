@@ -917,6 +917,7 @@ export type Database = {
           created_at: string
           email_sent: boolean
           email_sent_at: string | null
+          error_message: string | null
           full_analysis_json: Json | null
           headline: string
           id: string
@@ -933,6 +934,7 @@ export type Database = {
           created_at?: string
           email_sent?: boolean
           email_sent_at?: string | null
+          error_message?: string | null
           full_analysis_json?: Json | null
           headline?: string
           id?: string
@@ -949,6 +951,7 @@ export type Database = {
           created_at?: string
           email_sent?: boolean
           email_sent_at?: string | null
+          error_message?: string | null
           full_analysis_json?: Json | null
           headline?: string
           id?: string
