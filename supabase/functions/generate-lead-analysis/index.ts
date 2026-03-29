@@ -7,6 +7,143 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const EMAIL_FROM = "Köfman <onboarding@resend.dev>";
+const STRATEGY_SESSION_URL = "https://koefman.lovable.app/landing";
+
+function buildEmailHtml(
+  name: string,
+  analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
+  variant?: string
+) {
+  const ctaUrl = `${STRATEGY_SESSION_URL}?source=email${variant ? `&variant=${variant}` : ""}`;
+
+  const prioritiesHtml = analysis.priorities
+    .filter((p: string) => p)
+    .map(
+      (p: string, i: number) =>
+        `<tr><td style="padding:10px 12px 10px 0;color:#A0A0A0;vertical-align:top;font-size:13px;width:24px;font-family:Inter,Helvetica,Arial,sans-serif;">${i + 1}.</td><td style="padding:10px 0;color:#FFFFFF;font-size:14px;line-height:1.6;font-family:Inter,Helvetica,Arial,sans-serif;">${p}</td></tr>`
+    )
+    .join("");
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:Inter,Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;padding:40px 20px;">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+
+<!-- Brand -->
+<tr><td style="padding:0 0 32px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.14em;margin:0;text-transform:uppercase;font-family:Inter,Helvetica,Arial,sans-serif;">KÖFMAN</p>
+</td></tr>
+
+<!-- Greeting -->
+<tr><td style="padding:0 0 24px 0;">
+  <p style="color:#FFFFFF;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">
+    ${name ? `HALLO ${name.toUpperCase()},` : "HALLO,"}
+  </p>
+</td></tr>
+
+<!-- Intro -->
+<tr><td style="padding:0 0 32px 0;">
+  <p style="color:#A0A0A0;font-size:13px;line-height:1.7;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">
+    Hier ist deine Kurzanalyse basierend auf deinen Angaben.
+  </p>
+</td></tr>
+
+<!-- Main Issue -->
+<tr><td style="border-top:1px solid #1A1A1A;padding:28px 0 8px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px 0;font-family:Inter,Helvetica,Arial,sans-serif;">WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.6;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">${analysis.main_issue}</p>
+</td></tr>
+
+<!-- Practical Meaning -->
+<tr><td style="border-top:1px solid #1A1A1A;padding:28px 0 8px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px 0;font-family:Inter,Helvetica,Arial,sans-serif;">WAS DAS PRAKTISCH BEDEUTET</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.6;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">${analysis.practical_meaning}</p>
+</td></tr>
+
+<!-- Priorities -->
+<tr><td style="border-top:1px solid #1A1A1A;padding:28px 0 8px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 14px 0;font-family:Inter,Helvetica,Arial,sans-serif;">DEINE NÄCHSTEN 3 HEBEL</p>
+  <table width="100%" cellpadding="0" cellspacing="0">${prioritiesHtml}</table>
+</td></tr>
+
+<!-- Next Step -->
+<tr><td style="border-top:1px solid #1A1A1A;padding:28px 0 8px 0;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px 0;font-family:Inter,Helvetica,Arial,sans-serif;">NÄCHSTER SINNVOLLER SCHRITT</p>
+  <p style="color:#FFFFFF;font-size:15px;line-height:1.6;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;">${analysis.next_step}</p>
+</td></tr>
+
+<!-- Decision Block -->
+<tr><td style="border-top:1px solid #1A1A1A;padding:36px 0 12px 0;">
+  <p style="color:#A0A0A0;font-size:11px;line-height:1.7;margin:0 0 24px 0;text-align:center;font-family:Inter,Helvetica,Arial,sans-serif;">
+    Du hast zwei Optionen:<br/>
+    Weitermachen wie bisher – oder herausfinden, was sich konkret ändern lässt.
+  </p>
+</td></tr>
+
+<!-- CTA Button - White BG, Black Text -->
+<tr><td style="padding:0 0 0 0;" align="center">
+  <table cellpadding="0" cellspacing="0" width="100%" style="max-width:400px;">
+    <tr><td align="center">
+      <a href="${ctaUrl}" style="display:block;background-color:#FFFFFF;color:#000000;text-decoration:none;padding:18px 32px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Inter,Helvetica,Arial,sans-serif;text-align:center;mso-padding-alt:0;">KOSTENLOSE STRATEGIE-SESSION BUCHEN</a>
+    </td></tr>
+  </table>
+</td></tr>
+
+<!-- Sub-CTA text -->
+<tr><td style="padding:28px 0 0 0;">
+  <p style="color:#A0A0A0;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Inter,Helvetica,Arial,sans-serif;">
+    Wir zeigen dir konkret, wo du Geld verlierst – und wie du es fixst.
+  </p>
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="padding:48px 0 0 0;border-top:1px solid #1A1A1A;margin-top:32px;">
+  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.14em;text-align:center;margin:24px 0 0 0;text-transform:uppercase;font-family:Inter,Helvetica,Arial,sans-serif;">KÖFMAN</p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+async function sendAnalysisEmail(
+  email: string,
+  name: string,
+  analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
+  variant?: string
+): Promise<boolean> {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY || !email) return false;
+
+  const emailHtml = buildEmailHtml(name, analysis, variant);
+
+  const emailRes = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Deine Köfman Kurzanalyse",
+      html: emailHtml,
+    }),
+  });
+
+  if (!emailRes.ok) {
+    console.error("Email send failed:", emailRes.status, await emailRes.text());
+    return false;
+  }
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders });
@@ -23,19 +160,62 @@ serve(async (req) => {
       main_problem,
       variant,
       qr_session_id,
+      // Resend-only mode: just re-send email for existing submission
+      resend_submission_id,
     } = body;
 
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // ── RESEND MODE: re-send email for existing analysis ──
+    if (resend_submission_id) {
+      const { data: sub } = await supabase
+        .from("diagnostic_submissions")
+        .select("*")
+        .eq("id", resend_submission_id)
+        .single();
+      if (!sub) throw new Error("Submission not found");
+
+      const { data: existingAnalysis } = await supabase
+        .from("lead_analyses")
+        .select("*")
+        .eq("submission_id", resend_submission_id)
+        .eq("analysis_status", "completed")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (!existingAnalysis) throw new Error("No completed analysis found");
+
+      const analysis = {
+        main_issue: existingAnalysis.main_issue,
+        practical_meaning: existingAnalysis.practical_meaning,
+        priorities: [existingAnalysis.priority_1, existingAnalysis.priority_2, existingAnalysis.priority_3],
+        next_step: existingAnalysis.next_step,
+      };
+
+      const sent = await sendAnalysisEmail(sub.email, sub.name, analysis, sub.variant);
+      if (sent) {
+        await supabase
+          .from("lead_analyses")
+          .update({ email_sent: true, email_sent_at: new Date().toISOString() })
+          .eq("id", existingAnalysis.id);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, email_sent: sent }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── STANDARD MODE: generate new analysis ──
     if (!name || !email) {
       return new Response(
         JSON.stringify({ success: false, error: "Name und E-Mail sind erforderlich." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // 1. Store diagnostic submission
     const { data: submission, error: subErr } = await supabase
@@ -271,100 +451,9 @@ Erstelle eine strukturierte Mini-Analyse.`,
 
     // 5. Send email
     let emailSent = false;
-    try {
-      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-      if (RESEND_API_KEY && email && analysisStatus === "completed") {
-        const prioritiesHtml = analysis.priorities
-          .filter((p: string) => p)
-          .map(
-            (p: string, i: number) =>
-              `<tr><td style="padding:8px 12px;color:#A0A0A0;vertical-align:top;font-size:13px;width:24px;">${i + 1}.</td><td style="padding:8px 0;color:#FFFFFF;font-size:14px;line-height:1.5;">${p}</td></tr>`
-          )
-          .join("");
-
-        const emailHtml = `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background-color:#000000;font-family:Inter,Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;padding:40px 20px;">
-<tr><td align="center">
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-
-<tr><td style="padding:0 0 32px 0;">
-  <p style="color:#A0A0A0;font-size:11px;letter-spacing:0.12em;margin:0;text-transform:uppercase;">KÖFMAN</p>
-</td></tr>
-
-<tr><td style="padding:0 0 24px 0;">
-  <p style="color:#FFFFFF;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin:0;">
-    ${name ? `HALLO ${name.toUpperCase()},` : "HALLO,"}
-  </p>
-</td></tr>
-
-<tr><td style="padding:0 0 32px 0;">
-  <p style="color:#A0A0A0;font-size:13px;line-height:1.6;margin:0;">
-    Hier ist deine Kurzanalyse basierend auf deinen Angaben.
-  </p>
-</td></tr>
-
-<tr><td style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 8px 0;">WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.5;margin:0;">${analysis.main_issue}</p>
-</td></tr>
-
-<tr><td style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 8px 0;">WAS DAS PRAKTISCH BEDEUTET</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.5;margin:0;">${analysis.practical_meaning}</p>
-</td></tr>
-
-<tr><td style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 12px 0;">DEINE NÄCHSTEN 3 HEBEL</p>
-  <table width="100%" cellpadding="0" cellspacing="0">${prioritiesHtml}</table>
-</td></tr>
-
-<tr><td style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 8px 0;">NÄCHSTER SINNVOLLER SCHRITT</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.5;margin:0;">${analysis.next_step}</p>
-</td></tr>
-
-<tr><td style="padding:40px 0 0 0;" align="center">
-  <a href="https://koefman.lovable.app/landing" style="display:inline-block;border:1px solid #FFFFFF;color:#FFFFFF;text-decoration:none;padding:14px 32px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;font-family:Inter,Helvetica,Arial,sans-serif;">KOSTENLOSE STRATEGIE-SESSION</a>
-</td></tr>
-
-<tr><td style="padding:40px 0 0 0;">
-  <p style="color:#A0A0A0;font-size:11px;line-height:1.5;margin:0;text-align:center;">
-    Wir zeigen dir konkret, wo du Geld verlierst – und wie du es fixst.
-  </p>
-</td></tr>
-
-<tr><td style="padding:40px 0 0 0;border-top:1px solid #1A1A1A;">
-  <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-align:center;margin:16px 0 0 0;text-transform:uppercase;">KÖFMAN</p>
-</td></tr>
-
-</table>
-</td></tr>
-</table>
-</body>
-</html>`;
-
-        const emailRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: "Köfman <onboarding@resend.dev>",
-            to: email,
-            subject: "Deine Köfman Kurzanalyse",
-            html: emailHtml,
-          }),
-        });
-
-        emailSent = emailRes.ok;
-        if (!emailSent) {
-          console.error("Email send failed:", emailRes.status, await emailRes.text());
-        }
-
+    if (analysisStatus === "completed") {
+      try {
+        emailSent = await sendAnalysisEmail(email, name, analysis, variant);
         if (emailSent && savedAnalysis) {
           await supabase
             .from("lead_analyses")
@@ -374,9 +463,9 @@ Erstelle eine strukturierte Mini-Analyse.`,
             })
             .eq("id", savedAnalysis.id);
         }
+      } catch (emailErr) {
+        console.error("Email error:", emailErr);
       }
-    } catch (emailErr) {
-      console.error("Email error:", emailErr);
     }
 
     return new Response(

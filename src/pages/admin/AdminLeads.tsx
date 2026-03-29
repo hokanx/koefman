@@ -4,13 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Mail, UserPlus, Clock, Search, ChevronRight, Brain, CheckCircle2, XCircle } from 'lucide-react';
+import { Mail, UserPlus, Search, ChevronRight, CheckCircle2, XCircle, RefreshCw, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const INDUSTRY_LABELS: Record<string, string> = {
   cleaning: 'Gebäudereinigung', garage: 'Kfz / Werkstatt', service: 'Dienstleistung',
@@ -66,6 +65,8 @@ const AdminLeads = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('alle');
   const [selected, setSelected] = useState<DiagnosticSubmission | null>(null);
+  const [resending, setResending] = useState(false);
+  const [emailPreview, setEmailPreview] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const fetchSubmissions = async () => {
@@ -119,6 +120,75 @@ const AdminLeads = () => {
     }).select().single();
     if (error || !customer) { alert('Fehler beim Erstellen'); return; }
     navigate(`/customers/${customer.id}`);
+  };
+
+  const resendAnalysisEmail = async (sub: DiagnosticSubmission) => {
+    setResending(true);
+    try {
+      const response = await supabase.functions.invoke('generate-lead-analysis', {
+        body: { resend_submission_id: sub.id },
+      });
+      if (response.error) throw response.error;
+      if (response.data?.email_sent) {
+        toast.success('Analyse-E-Mail erneut gesendet');
+        await fetchSubmissions();
+        // Update selected with fresh data
+        const updated = submissions.find(s => s.id === sub.id);
+        if (updated) setSelected({ ...updated });
+      } else {
+        toast.error('E-Mail konnte nicht gesendet werden');
+      }
+    } catch (err) {
+      console.error('Resend error:', err);
+      toast.error('Fehler beim erneuten Senden');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const showEmailPreview = (sub: DiagnosticSubmission) => {
+    const analysis = sub.lead_analyses?.[0];
+    if (!analysis || analysis.analysis_status !== 'completed') return;
+
+    // Build a simplified preview of the email content
+    const priorities = [analysis.priority_1, analysis.priority_2, analysis.priority_3].filter(Boolean);
+    const html = `
+      <div style="background:#000;color:#fff;padding:32px 24px;font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;">
+        <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 24px 0;">KÖFMAN</p>
+        <p style="color:#fff;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 20px 0;">HALLO ${sub.name.toUpperCase()},</p>
+        <p style="color:#A0A0A0;font-size:13px;line-height:1.7;margin:0 0 28px 0;">Hier ist deine Kurzanalyse basierend auf deinen Angaben.</p>
+        
+        <div style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
+          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 8px 0;">WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE</p>
+          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0;">${analysis.main_issue}</p>
+        </div>
+        
+        <div style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
+          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 8px 0;">WAS DAS PRAKTISCH BEDEUTET</p>
+          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0;">${analysis.practical_meaning}</p>
+        </div>
+        
+        <div style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
+          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 12px 0;">DEINE NÄCHSTEN 3 HEBEL</p>
+          ${priorities.map((p, i) => `<p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 8px 0;">${i + 1}. ${p}</p>`).join('')}
+        </div>
+        
+        <div style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
+          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 8px 0;">NÄCHSTER SINNVOLLER SCHRITT</p>
+          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0;">${analysis.next_step}</p>
+        </div>
+        
+        <div style="border-top:1px solid #1A1A1A;padding:28px 0 0 0;text-align:center;">
+          <p style="color:#A0A0A0;font-size:11px;line-height:1.7;margin:0 0 20px 0;">Du hast zwei Optionen:<br/>Weitermachen wie bisher – oder herausfinden, was sich konkret ändern lässt.</p>
+          <div style="background:#fff;color:#000;padding:16px 24px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;text-align:center;">KOSTENLOSE STRATEGIE-SESSION BUCHEN</div>
+        </div>
+        
+        <div style="border-top:1px solid #1A1A1A;margin-top:32px;padding-top:20px;text-align:center;">
+          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;">KÖFMAN</p>
+        </div>
+      </div>
+    `;
+    setEmailPreview(html);
   };
 
   return (
@@ -198,6 +268,7 @@ const AdminLeads = () => {
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0">
           {selected && (() => {
             const analysis = selected.lead_analyses?.[0];
+            const hasCompletedAnalysis = analysis?.analysis_status === 'completed';
             return (
               <div>
                 {/* Header */}
@@ -300,11 +371,52 @@ const AdminLeads = () => {
                     <Button variant="outline" size="sm" className="text-xs" onClick={() => convertToCustomer(selected)}>
                       <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Kunde erstellen
                     </Button>
+                    {hasCompletedAnalysis && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          disabled={resending}
+                          onClick={() => resendAnalysisEmail(selected)}
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${resending ? 'animate-spin' : ''}`} />
+                          {resending ? 'Wird gesendet…' : 'Analyse erneut senden'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => showEmailPreview(selected)}
+                        >
+                          <Eye className="w-3.5 h-3.5 mr-1.5" /> E-Mail Vorschau
+                        </Button>
+                      </>
+                    )}
                   </div>
+                  {analysis?.email_sent && analysis.email_sent_at && (
+                    <p className="text-[10px] text-muted-foreground mt-3">
+                      Letzte E-Mail gesendet: {format(new Date(analysis.email_sent_at), 'dd.MM.yyyy · HH:mm', { locale: de })}
+                    </p>
+                  )}
                 </div>
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Preview Modal */}
+      <Dialog open={!!emailPreview} onOpenChange={v => { if (!v) setEmailPreview(null); }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="text-sm font-semibold tracking-wide">E-MAIL VORSCHAU</DialogTitle>
+          </DialogHeader>
+          <div className="border-t border-border">
+            {emailPreview && (
+              <div dangerouslySetInnerHTML={{ __html: emailPreview }} />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
