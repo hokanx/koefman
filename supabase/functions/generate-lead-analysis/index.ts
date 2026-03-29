@@ -233,6 +233,14 @@ serve(async (req) => {
       qr_session_id,
       // Resend-only mode: just re-send email for existing submission
       resend_submission_id,
+      // New qualification fields
+      company_size,
+      problems,
+      free_text,
+      importance,
+      commitment,
+      urgency,
+      intent_score,
     } = body;
 
     const supabase = createClient(
