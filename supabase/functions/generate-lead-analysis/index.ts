@@ -142,29 +142,19 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
   </table>
 </td></tr>
 
-<!-- CTA Button -->
-<tr><td style="padding:24px 32px 12px 32px;background-color:#000000;" align="center">
-  <!--[if mso]>
-  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:60px;v-text-anchor:middle;width:496px;" arcsize="0%" strokecolor="#FFFFFF" strokeweight="2px" fillcolor="#000000">
-  <w:anchorlock/>
-  <center style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;line-height:22px;letter-spacing:0.08em;text-transform:uppercase;">STRATEGIE-SESSION BUCHEN</center>
-  </v:roundrect>
-  <![endif]-->
-  <!--[if !mso]><!-->
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-    <tr>
-      <td align="center" style="padding:0;background-color:#000000 !important;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-          <tr>
-            <td bgcolor="#000000" style="background-color:#000000 !important;border:2px solid #FFFFFF;">
-              <a href="${ctaUrl}" target="_blank" style="display:block;padding:18px 24px;font-family:Arial, Helvetica, sans-serif;font-size:18px;line-height:22px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;text-align:center;color:#FFFFFF !important;background-color:#000000 !important;-webkit-text-fill-color:#FFFFFF;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">STRATEGIE-SESSION BUCHEN</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-  <!--<![endif]-->
+<!-- CTA Text Link -->
+<tr><td style="padding:32px 32px 0 32px;background-color:#000000;" align="center">
+  <a href="${ctaUrl}" target="_blank" style="color:#FFFFFF !important;-webkit-text-fill-color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:28px;font-weight:700;letter-spacing:0.04em;text-decoration:underline;text-transform:uppercase;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">&#8594; STRATEGIE-SESSION BUCHEN</a>
+</td></tr>
+
+<!-- Fallback URL -->
+<tr><td style="padding:16px 32px 0 32px;background-color:#000000;">
+  <p style="color:#9A9A9A;font-size:11px;line-height:1.5;margin:0 0 6px 0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+    Falls der Link nicht direkt funktioniert, kopiere ihn in deinen Browser:
+  </p>
+  <p style="color:#A0A0A0;font-size:11px;line-height:1.5;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;word-break:break-all;">
+    ${ctaUrl}
+  </p>
 </td></tr>
 
 <!-- Sub-CTA text -->
