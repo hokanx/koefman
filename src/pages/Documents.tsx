@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { formatDateDE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DOCUMENT_GROUPS, getCategoryInfo, getStatusInfo, STATUS_OPTIONS } from '@/lib/documentCategories';
+import { normalizeExtracted, formatAmountDE } from '@/lib/extractedDataUtils';
 import DocumentPreviewModal from '@/components/documents/DocumentPreviewModal';
 import DocumentStats from '@/components/documents/DocumentStats';
 
@@ -292,7 +293,7 @@ const Documents = () => {
                   {docs.map((doc: any) => {
                     const catInfo = getCategoryInfo(doc.category);
                     const statusInfo = getStatusInfo(doc.status);
-                    const extracted = doc.extracted_data || {};
+                    const norm = normalizeExtracted(doc.extracted_data);
                     return (
                       <div key={doc.id}
                         className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 cursor-pointer hover:border-primary/40 transition"
@@ -304,11 +305,11 @@ const Documents = () => {
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${catInfo.color}`}>{catInfo.label}</span>
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
                             <span className="text-[10px] text-muted-foreground">{formatDateDE(doc.created_at)}</span>
-                            {extracted.vendor && (
-                              <span className="text-[10px] text-muted-foreground">· {extracted.vendor}</span>
+                            {norm.vendor && (
+                              <span className="text-[10px] text-muted-foreground">· {norm.vendor}</span>
                             )}
-                            {extracted.gross_amount != null && (
-                              <span className="text-[10px] font-medium text-foreground">{extracted.gross_amount.toFixed(2)} €</span>
+                            {norm.gross_amount != null && (
+                              <span className="text-[10px] font-medium text-foreground">{formatAmountDE(norm.gross_amount)}</span>
                             )}
                             {doc.extracted_data && (
                               <span className="flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
