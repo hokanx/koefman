@@ -150,42 +150,87 @@ const AdminLeads = () => {
     const analysis = sub.lead_analyses?.[0];
     if (!analysis || analysis.analysis_status !== 'completed') return;
 
-    // Build a simplified preview of the email content
     const priorities = [analysis.priority_1, analysis.priority_2, analysis.priority_3].filter(Boolean);
+    const prioritiesHtml = priorities.map((p, i) =>
+      `<tr><td style="padding:8px 12px 8px 0;color:#9A9A9A;vertical-align:top;font-size:14px;width:28px;font-family:Arial,Helvetica,sans-serif;">${i + 1}.</td><td style="padding:8px 0;color:#FFFFFF;font-size:15px;line-height:1.65;font-family:Arial,Helvetica,sans-serif;">${p}</td></tr>`
+    ).join('');
+
     const html = `
-      <div style="background:#000;color:#fff;padding:32px 24px;font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;">
-        <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 24px 0;">KÖFMAN</p>
-        <p style="color:#fff;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 20px 0;">HALLO ${sub.name.toUpperCase()},</p>
-        <p style="color:#A0A0A0;font-size:13px;line-height:1.7;margin:0 0 28px 0;">Hier ist deine Kurzanalyse basierend auf deinen Angaben.</p>
-        
-        <div style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
-          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 8px 0;">WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE</p>
-          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0;">${analysis.main_issue}</p>
-        </div>
-        
-        <div style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
-          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 8px 0;">WAS DAS PRAKTISCH BEDEUTET</p>
-          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0;">${analysis.practical_meaning}</p>
-        </div>
-        
-        <div style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
-          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 12px 0;">DEINE NÄCHSTEN 3 HEBEL</p>
-          ${priorities.map((p, i) => `<p style="color:#fff;font-size:14px;line-height:1.6;margin:0 0 8px 0;">${i + 1}. ${p}</p>`).join('')}
-        </div>
-        
-        <div style="border-top:1px solid #1A1A1A;padding:24px 0 8px 0;">
-          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 8px 0;">NÄCHSTER SINNVOLLER SCHRITT</p>
-          <p style="color:#fff;font-size:14px;line-height:1.6;margin:0;">${analysis.next_step}</p>
-        </div>
-        
-        <div style="border-top:1px solid #1A1A1A;padding:28px 0 0 0;text-align:center;">
-          <p style="color:#A0A0A0;font-size:11px;line-height:1.7;margin:0 0 20px 0;">Du hast zwei Optionen:<br/>Weitermachen wie bisher – oder herausfinden, was sich konkret ändern lässt.</p>
-          <div style="background:#fff;color:#000;padding:16px 24px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;text-align:center;">KOSTENLOSE STRATEGIE-SESSION BUCHEN</div>
-        </div>
-        
-        <div style="border-top:1px solid #1A1A1A;margin-top:32px;padding-top:20px;text-align:center;">
-          <p style="color:#A0A0A0;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;">KÖFMAN</p>
-        </div>
+      <div style="background:#000;padding:0;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;width:100%;background-color:#000000;border:1px solid #1A1A1A;margin:0 auto;">
+
+      <!-- Logo -->
+      <tr><td style="padding:40px 32px 32px 32px;text-align:center;background-color:#000000;">
+        <span style="color:#FFFFFF;font-size:18px;letter-spacing:0.2em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">KÖFMAN</span><br/>
+        <span style="color:#9A9A9A;font-size:10px;letter-spacing:0.15em;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">BUSINESS SYSTEMS</span>
+      </td></tr>
+
+      <tr><td style="padding:0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
+
+      <!-- Greeting -->
+      <tr><td style="padding:28px 32px 8px 32px;background-color:#000000;">
+        <p style="color:#FFFFFF;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;margin:0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">HALLO ${sub.name.toUpperCase()},</p>
+      </td></tr>
+      <tr><td style="padding:12px 32px 28px 32px;background-color:#000000;">
+        <p style="color:#B3B3B3;font-size:14px;line-height:1.7;margin:0;font-family:Arial,Helvetica,sans-serif;">Hier ist deine Kurzanalyse basierend auf deinen Angaben.</p>
+      </td></tr>
+
+      <tr><td style="padding:0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
+
+      <!-- Main Issue -->
+      <tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+        <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">WAHRSCHEINLICH GRÖSSTE SCHWACHSTELLE</p>
+        <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.main_issue}</p>
+      </td></tr>
+
+      <tr><td style="padding:0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
+
+      <!-- Practical Meaning -->
+      <tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+        <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">WAS DAS PRAKTISCH BEDEUTET</p>
+        <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.practical_meaning}</p>
+      </td></tr>
+
+      <tr><td style="padding:0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
+
+      <!-- Priorities -->
+      <tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+        <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">DEINE NÄCHSTEN 3 HEBEL</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${prioritiesHtml}</table>
+      </td></tr>
+
+      <tr><td style="padding:0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
+
+      <!-- Next Step -->
+      <tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+        <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">NÄCHSTER SINNVOLLER SCHRITT</p>
+        <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.next_step}</p>
+      </td></tr>
+
+      <tr><td style="padding:0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
+
+      <!-- Decision + CTA -->
+      <tr><td style="padding:32px 32px 12px 32px;background-color:#000000;text-align:center;">
+        <p style="color:#B3B3B3;font-size:13px;line-height:1.7;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">Du hast zwei Optionen:</p>
+        <p style="color:#9A9A9A;font-size:13px;margin:8px 0;font-family:Arial,Helvetica,sans-serif;">1. Die Analyse für dich nutzen und selbst umsetzen.</p>
+        <p style="color:#FFFFFF;font-size:13px;margin:4px 0 16px 0;font-weight:600;font-family:Arial,Helvetica,sans-serif;">2. Mit uns herausfinden, was sich konkret ändern lässt.</p>
+      </td></tr>
+
+      <tr><td style="padding:12px 32px 8px 32px;background-color:#000000;">
+        <div style="background:#FFFFFF;color:#000000;text-align:center;padding:20px 32px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;font-family:Arial,Helvetica,sans-serif;">STRATEGIE-SESSION BUCHEN</div>
+      </td></tr>
+
+      <tr><td style="padding:20px 32px 0 32px;background-color:#000000;">
+        <p style="color:#9A9A9A;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">Wir zeigen dir konkret, wo du Geld verlierst – und wie du es fixst.</p>
+      </td></tr>
+
+      <tr><td style="padding:32px 32px 0 32px;background-color:#000000;"><div style="border-top:1px solid #2A2A2A;"></div></td></tr>
+
+      <tr><td style="padding:24px 32px 40px 32px;background-color:#000000;text-align:center;">
+        <span style="color:#9A9A9A;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;font-weight:600;">KÖFMAN</span>
+      </td></tr>
+
+      </table>
       </div>
     `;
     setEmailPreview(html);
