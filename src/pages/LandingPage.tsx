@@ -349,7 +349,7 @@ const LandingPage = () => {
       {/* FOOTER */}
       <footer className="border-t border-border py-10 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground tracking-[0.1em]">KÖFMAN</span>
+          <img src="/logo-wordmark-white.png" alt="KÖFMAN" className="h-5 w-auto" />
           <p>© {new Date().getFullYear()} KÖFMAN. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
