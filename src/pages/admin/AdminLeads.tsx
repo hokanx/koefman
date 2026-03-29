@@ -371,11 +371,38 @@ const AdminLeads = () => {
                     <div><span className="text-[11px] text-muted-foreground block">E-Mail</span>{selected.email}</div>
                     <div><span className="text-[11px] text-muted-foreground block">Firma</span>{selected.company || '–'}</div>
                     <div><span className="text-[11px] text-muted-foreground block">Unternehmenstyp</span>{INDUSTRY_LABELS[selected.business_type] || selected.business_type}</div>
+                    <div><span className="text-[11px] text-muted-foreground block">Größe</span>{selected.company_size || '–'}</div>
                     <div><span className="text-[11px] text-muted-foreground block">Anfrageverhalten</span>{LEAD_FLOW_LABELS[selected.lead_flow] || selected.lead_flow || '–'}</div>
                     <div><span className="text-[11px] text-muted-foreground block">Umsatzklarheit</span>{REVENUE_LABELS[selected.revenue_clarity] || selected.revenue_clarity || '–'}</div>
-                    <div className="col-span-2"><span className="text-[11px] text-muted-foreground block">Hauptproblem</span>{NEED_LABELS[selected.main_problem] || selected.main_problem || '–'}</div>
+                    <div className="col-span-2"><span className="text-[11px] text-muted-foreground block">Hauptprobleme</span>
+                      {(selected.problems && selected.problems.length > 0)
+                        ? selected.problems.map(p => NEED_LABELS[p] || p).join(', ')
+                        : (NEED_LABELS[selected.main_problem] || selected.main_problem || '–')}
+                    </div>
+                    {selected.free_text && (
+                      <div className="col-span-2"><span className="text-[11px] text-muted-foreground block">Eigene Beschreibung</span>{selected.free_text}</div>
+                    )}
                   </div>
                 </div>
+
+                {/* Section: Qualification */}
+                {(selected.importance || selected.commitment || selected.urgency) && (
+                  <div className="border-t border-border px-6 py-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase">QUALIFIKATION</p>
+                      {selected.intent_score && INTENT_BADGES[selected.intent_score] && (
+                        <span className={`text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded border ${INTENT_BADGES[selected.intent_score].className}`}>
+                          {INTENT_BADGES[selected.intent_score].label}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                      <div><span className="text-[11px] text-muted-foreground block">Wichtigkeit</span>{selected.importance || '–'}</div>
+                      <div><span className="text-[11px] text-muted-foreground block">Commitment</span>{selected.commitment || '–'}</div>
+                      <div><span className="text-[11px] text-muted-foreground block">Dringlichkeit</span>{selected.urgency || '–'}</div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Section B: Attribution */}
                 <div className="border-t border-border px-6 py-5">
