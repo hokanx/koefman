@@ -410,41 +410,62 @@ export type Database = {
       diagnostic_submissions: {
         Row: {
           business_type: string
+          commitment: string | null
           company: string | null
+          company_size: string | null
           created_at: string
           email: string
+          free_text: string | null
           id: string
+          importance: string | null
+          intent_score: string | null
           lead_flow: string
           main_problem: string
           name: string
+          problems: string[] | null
           qr_session_id: string | null
           revenue_clarity: string
+          urgency: string | null
           variant: string | null
         }
         Insert: {
           business_type?: string
+          commitment?: string | null
           company?: string | null
+          company_size?: string | null
           created_at?: string
           email?: string
+          free_text?: string | null
           id?: string
+          importance?: string | null
+          intent_score?: string | null
           lead_flow?: string
           main_problem?: string
           name?: string
+          problems?: string[] | null
           qr_session_id?: string | null
           revenue_clarity?: string
+          urgency?: string | null
           variant?: string | null
         }
         Update: {
           business_type?: string
+          commitment?: string | null
           company?: string | null
+          company_size?: string | null
           created_at?: string
           email?: string
+          free_text?: string | null
           id?: string
+          importance?: string | null
+          intent_score?: string | null
           lead_flow?: string
           main_problem?: string
           name?: string
+          problems?: string[] | null
           qr_session_id?: string | null
           revenue_clarity?: string
+          urgency?: string | null
           variant?: string | null
         }
         Relationships: []
