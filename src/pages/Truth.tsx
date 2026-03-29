@@ -1,0 +1,170 @@
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+
+const sections = [
+  {
+    id: 'entry',
+    lines: [
+      { text: 'DU WOLLTEST DEN BEWEIS SEHEN.', size: 'text-2xl sm:text-3xl', weight: 'font-semibold' },
+      { text: 'HIER IST ER.', size: 'text-lg sm:text-xl', weight: 'font-normal', delay: 600 },
+      { text: '', spacer: true },
+      { text: 'ES GEHT NICHT UM EINE BEZIEHUNG.', size: 'text-base', weight: 'font-normal', muted: true, delay: 1200 },
+    ],
+    fullScreen: true,
+  },
+  {
+    id: 'emotional',
+    lines: [
+      { text: 'ABER DIESES GEFÜHL KENNST DU.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
+      { text: '', spacer: true },
+      { text: 'DA IST ETWAS,', size: 'text-base sm:text-lg', weight: 'font-normal' },
+      { text: 'DAS HINTER DEINEM RÜCKEN PASSIERT.', size: 'text-base sm:text-lg', weight: 'font-normal' },
+      { text: '', spacer: true },
+      { text: 'UND DU SIEHST ES NICHT.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
+    ],
+  },
+  {
+    id: 'switch',
+    lines: [
+      { text: 'GENAU DAS PASSIERT IN DEINEM UNTERNEHMEN.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
+      { text: '', spacer: true },
+      { text: 'KUNDEN SPRINGEN AB.', size: 'text-base sm:text-lg', weight: 'font-normal' },
+      { text: 'GELD GEHT VERLOREN.', size: 'text-base sm:text-lg', weight: 'font-normal' },
+      { text: 'UND DU BEMERKST ES NICHT.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
+    ],
+  },
+  {
+    id: 'authority',
+    lines: [
+      { text: 'DAS PROBLEM IST NICHT DEIN ANGEBOT.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
+      { text: 'DAS PROBLEM IST DEIN SYSTEM.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
+      { text: '', spacer: true },
+      { text: 'OHNE SYSTEM VERLIERST DU JEDEN TAG.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
+    ],
+  },
+  {
+    id: 'interaction',
+    lines: [],
+    cta: { label: '[ ZEIG MIR DEN BEWEIS ]', action: 'scroll' },
+  },
+  {
+    id: 'diagnosis',
+    lines: [
+      { text: 'WENN EINES DAVON AUF DICH ZUTRIFFT:', size: 'text-lg sm:text-xl', weight: 'font-semibold' },
+      { text: '', spacer: true },
+      { text: '— DU BEKOMMST KEINE KONSTANTEN ANFRAGEN', size: 'text-sm sm:text-base', weight: 'font-normal' },
+      { text: '— DEIN UMSATZ IST NICHT PLANBAR', size: 'text-sm sm:text-base', weight: 'font-normal' },
+      { text: '— DU WEISST NICHT, WO KUNDEN VERLOREN GEHEN', size: 'text-sm sm:text-base', weight: 'font-normal' },
+      { text: '', spacer: true },
+      { text: 'DANN HAST DU KEIN SYSTEM.', size: 'text-lg sm:text-xl', weight: 'font-semibold' },
+    ],
+  },
+  {
+    id: 'cta',
+    lines: [
+      { text: 'FINDE HERAUS,', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
+      { text: 'WO DEIN SYSTEM VERSAGT.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
+    ],
+    cta: { label: '[ KOSTENLOSE ANALYSE STARTEN ]', action: 'navigate' },
+  },
+];
+
+interface LineData {
+  text: string;
+  size?: string;
+  weight?: string;
+  muted?: boolean;
+  delay?: number;
+  spacer?: boolean;
+}
+
+const FadeInLine = ({ line, index }: { line: LineData; index: number }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  if (line.spacer) return <div className="h-8 sm:h-12" />;
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} ${line.size} ${line.weight} ${line.muted ? 'text-muted-foreground' : 'text-foreground'}`}
+      style={{ transitionDelay: `${(line.delay || index * 150)}ms`, letterSpacing: '0.08em', lineHeight: '1.5' }}
+    >
+      {line.text}
+    </div>
+  );
+};
+
+export default function Truth() {
+  const { campaignId } = useParams();
+  const navigate = useNavigate();
+  const diagnosisRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const campaign = campaignId || 'direct';
+    const trackVisit = async () => {
+      try {
+        const { data } = await supabase.from('qr_sessions').insert({ campaign_id: campaign, converted: false }).select('id').single();
+        if (data) sessionIdRef.current = data.id;
+      } catch {}
+    };
+    trackVisit();
+  }, [campaignId]);
+
+  const handleCTA = async () => {
+    if (sessionIdRef.current) {
+      try {
+        await supabase.from('qr_sessions').update({ converted: true }).eq('id', sessionIdRef.current);
+      } catch {}
+    }
+    navigate('/landing');
+  };
+
+  return (
+    <div className="bg-background text-foreground min-h-screen">
+      {sections.map((section, si) => (
+        <section
+          key={section.id}
+          ref={section.id === 'diagnosis' ? diagnosisRef : undefined}
+          className={`flex flex-col items-center justify-center px-6 ${section.fullScreen ? 'min-h-screen' : 'min-h-[70vh] py-24 sm:py-32'}`}
+        >
+          <div className="w-full max-w-[480px] space-y-4 text-center">
+            {section.lines.map((line, li) => (
+              <FadeInLine key={li} line={line} index={li} />
+            ))}
+            {section.cta && (
+              <div className="pt-12">
+                <button
+                  onClick={section.cta.action === 'scroll'
+                    ? () => diagnosisRef.current?.scrollIntoView({ behavior: 'smooth' })
+                    : handleCTA
+                  }
+                  className="border border-foreground px-8 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300"
+                >
+                  {section.cta.label}
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      ))}
+
+      <footer className="py-16 text-center">
+        <p className="text-xs text-muted-foreground tracking-[0.12em]">KÖFMAN</p>
+      </footer>
+    </div>
+  );
+}
