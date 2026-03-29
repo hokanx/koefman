@@ -5,6 +5,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 
 import FormSection from '@/components/shared/FormSection';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import BrandMark from '@/components/shared/BrandMark';
 
 const IntakeForm = () => {
   const { t } = useLanguage();
@@ -116,7 +117,7 @@ const IntakeForm = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4">
-        <img src="/logo-wordmark-white.png" alt="KÖFMAN" className="h-6 w-auto" />
+        <BrandMark variant="wordmark" size="sm" />
       </header>
 
       <div className="mx-auto max-w-lg p-4">
