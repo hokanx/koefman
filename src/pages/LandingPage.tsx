@@ -33,6 +33,14 @@ const LandingPage = () => {
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    // Homescreen / standalone launch → go straight to login
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true;
+    if (isStandalone && !user && !loading) {
+      navigate('/login', { replace: true });
+      return;
+    }
     if (!loading && user) navigate('/dashboard', { replace: true });
   }, [user, loading, navigate]);
 
