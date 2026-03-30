@@ -9,8 +9,8 @@ interface BrandMarkProps {
 }
 
 const sizeMap = {
-  icon: { sm: 'h-6', md: 'h-10', lg: 'h-16' },
-  wordmark: { sm: 'h-5', md: 'h-7', lg: 'h-12' },
+  icon: { sm: 'h-7', md: 'h-12', lg: 'h-20' },
+  wordmark: { sm: 'h-7', md: 'h-9', lg: 'h-14' },
 };
 
 const BrandMark = ({ variant = 'wordmark', size = 'md', align = 'left', className = '' }: BrandMarkProps) => {

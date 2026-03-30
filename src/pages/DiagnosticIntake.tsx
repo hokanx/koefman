@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import BrandMark from '@/components/shared/BrandMark';
 
 interface AnalysisResult {
   headline: string;
@@ -227,6 +228,9 @@ export default function DiagnosticIntake() {
           {/* INTRO */}
           {phase === 0 && (
             <div className="space-y-8 text-center animate-fade-in">
+              <div className="mb-6">
+                <BrandMark variant="wordmark" size="md" align="center" />
+              </div>
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.08em] leading-relaxed">
                 WO VERLIERST DU GELD?
               </h1>
@@ -511,8 +515,8 @@ export default function DiagnosticIntake() {
         </div>
       </div>
 
-      <footer className="py-8 text-center">
-        <p className="text-xs text-muted-foreground tracking-[0.12em]">KÖFMAN</p>
+      <footer className="py-10 text-center">
+        <BrandMark variant="wordmark" size="sm" align="center" />
       </footer>
     </div>
   );

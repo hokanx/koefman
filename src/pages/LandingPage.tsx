@@ -106,8 +106,8 @@ const LandingPage = () => {
     <div className="min-h-screen bg-background text-foreground">
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <BrandMark variant="wordmark" size="sm" />
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <BrandMark variant="wordmark" size="md" />
           <button
             onClick={() => navigate('/login')}
             className="text-xs text-muted-foreground tracking-[0.1em] uppercase hover:text-foreground transition-colors"
@@ -153,7 +153,7 @@ const LandingPage = () => {
 
       {/* FOOTER */}
       <footer className="py-16 text-center">
-        <p className="text-xs text-muted-foreground tracking-[0.12em]">KÖFMAN</p>
+        <BrandMark variant="wordmark" size="sm" align="center" />
       </footer>
     </div>
   );
