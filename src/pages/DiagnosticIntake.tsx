@@ -515,8 +515,8 @@ export default function DiagnosticIntake() {
         </div>
       </div>
 
-      <footer className="py-8 text-center">
-        <p className="text-xs text-muted-foreground tracking-[0.12em]">KÖFMAN</p>
+      <footer className="py-10 text-center">
+        <BrandMark variant="wordmark" size="sm" align="center" />
       </footer>
     </div>
   );

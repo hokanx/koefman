@@ -153,7 +153,7 @@ const LandingPage = () => {
 
       {/* FOOTER */}
       <footer className="py-16 text-center">
-        <p className="text-xs text-muted-foreground tracking-[0.12em]">KÖFMAN</p>
+        <BrandMark variant="wordmark" size="sm" align="center" />
       </footer>
     </div>
   );
