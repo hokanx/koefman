@@ -569,6 +569,33 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          source: string | null
+          submission_id: string | null
+          variant: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          source?: string | null
+          submission_id?: string | null
+          variant?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          source?: string | null
+          submission_id?: string | null
+          variant?: string | null
+        }
+        Relationships: []
+      }
       global_service_template_items: {
         Row: {
           created_at: string
