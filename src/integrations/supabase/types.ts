@@ -410,18 +410,26 @@ export type Database = {
       diagnostic_submissions: {
         Row: {
           business_type: string
+          call_completed: boolean
+          call_date: string | null
+          call_result: string | null
           commitment: string | null
           company: string | null
           company_size: string | null
           created_at: string
           email: string
+          follow_up_notes: string | null
           free_text: string | null
           id: string
           importance: string | null
           intent_score: string | null
+          internal_notes: string | null
+          last_contacted_at: string | null
           lead_flow: string
+          lead_status: string
           main_problem: string
           name: string
+          next_follow_up_at: string | null
           problems: string[] | null
           qr_session_id: string | null
           revenue_clarity: string
@@ -430,18 +438,26 @@ export type Database = {
         }
         Insert: {
           business_type?: string
+          call_completed?: boolean
+          call_date?: string | null
+          call_result?: string | null
           commitment?: string | null
           company?: string | null
           company_size?: string | null
           created_at?: string
           email?: string
+          follow_up_notes?: string | null
           free_text?: string | null
           id?: string
           importance?: string | null
           intent_score?: string | null
+          internal_notes?: string | null
+          last_contacted_at?: string | null
           lead_flow?: string
+          lead_status?: string
           main_problem?: string
           name?: string
+          next_follow_up_at?: string | null
           problems?: string[] | null
           qr_session_id?: string | null
           revenue_clarity?: string
@@ -450,18 +466,26 @@ export type Database = {
         }
         Update: {
           business_type?: string
+          call_completed?: boolean
+          call_date?: string | null
+          call_result?: string | null
           commitment?: string | null
           company?: string | null
           company_size?: string | null
           created_at?: string
           email?: string
+          follow_up_notes?: string | null
           free_text?: string | null
           id?: string
           importance?: string | null
           intent_score?: string | null
+          internal_notes?: string | null
+          last_contacted_at?: string | null
           lead_flow?: string
+          lead_status?: string
           main_problem?: string
           name?: string
+          next_follow_up_at?: string | null
           problems?: string[] | null
           qr_session_id?: string | null
           revenue_clarity?: string
