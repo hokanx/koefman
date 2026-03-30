@@ -88,8 +88,7 @@ const sections: { id: string; lines: { text: string; muted?: boolean }[] }[] = [
 const SystemPage = () => {
   const navigate = useNavigate();
 
-  const hasCompletedIntake = sessionStorage.getItem('intake_completed') === 'true';
-  const goCta = () => navigate(hasCompletedIntake ? '/start?source=system' : '/diagnose');
+  const goCta = () => navigate('/start?source=system');
 
   return (
     <div className="min-h-screen bg-background text-foreground snap-y snap-mandatory overflow-y-auto h-screen">
