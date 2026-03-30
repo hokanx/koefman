@@ -103,7 +103,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground snap-y snap-mandatory overflow-y-auto h-screen">
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -121,7 +121,7 @@ const LandingPage = () => {
       {sections.map((section, si) => (
         <section
           key={section.id}
-          className={`flex flex-col items-center justify-center px-6 ${si === 0 ? 'min-h-screen pt-14' : 'min-h-[70vh] py-24 sm:py-32'}`}
+          className={`flex flex-col items-center justify-center px-6 snap-start ${si === 0 ? 'min-h-screen pt-14' : 'min-h-screen py-24 sm:py-32'}`}
         >
           <div className="w-full max-w-[520px] space-y-5 text-center">
             {section.lines.map((line, li) => (
@@ -152,7 +152,7 @@ const LandingPage = () => {
       ))}
 
       {/* FOOTER */}
-      <footer className="py-16 text-center">
+      <footer className="py-16 text-center snap-start min-h-[50vh] flex items-center justify-center">
         <BrandMark variant="wordmark" size="sm" align="center" />
       </footer>
     </div>
