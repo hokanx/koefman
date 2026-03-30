@@ -177,6 +177,7 @@ export default function DiagnosticIntake() {
       if (data?.success && data?.analysis) {
         setAnalysis(data.analysis);
         setEmailSent(data.email_sent || false);
+        try { sessionStorage.setItem('intake_completed', 'true'); } catch {}
       } else {
         setAnalysisFailed(true);
       }
