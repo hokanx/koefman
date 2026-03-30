@@ -36,6 +36,8 @@ const LandingPage = () => {
     if (!loading && user) navigate('/dashboard', { replace: true });
   }, [user, loading, navigate]);
 
+  // Also used as root "/" — ensure it works for public visitors
+
   const goIntake = () => navigate('/diagnose');
 
   const sections: { id: string; lines: { text: string; muted?: boolean }[]; cta?: boolean }[] = [
