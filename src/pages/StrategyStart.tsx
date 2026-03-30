@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import BrandMark from '@/components/shared/BrandMark';
+import { trackFunnelEvent } from '@/lib/trackEvent';
 
 const FadeSection = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -32,6 +33,10 @@ export default function StrategyStart() {
   const [searchParams] = useSearchParams();
   const source = searchParams.get('source') || 'direct';
 
+  useEffect(() => {
+    trackFunnelEvent('start_page_view', { source });
+  }, [source]);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [problem, setProblem] = useState('');
@@ -53,6 +58,7 @@ export default function StrategyStart() {
         source,
       });
       setSubmitted(true);
+      trackFunnelEvent('start_submit', { source });
     } catch {
       // silent fail — data stored
     } finally {

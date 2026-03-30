@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import BrandMark from '@/components/shared/BrandMark';
+import { trackFunnelEvent } from '@/lib/trackEvent';
 
 const FadeSection = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -87,6 +88,12 @@ const sections: { id: string; lines: { text: string; muted?: boolean }[] }[] = [
 
 const SystemPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const source = searchParams.get('source') || 'direct';
+
+  useEffect(() => {
+    trackFunnelEvent('system_page_view', { source });
+  }, [source]);
 
   const goCta = () => navigate('/start?source=system');
 
