@@ -1,360 +1,160 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import LeadIntakeModal from '@/components/landing/LeadIntakeModal';
-import {
-  FileText, Upload, Users, Shield, Clock, ArrowRight,
-  CheckCircle2, Star, Zap, HeartHandshake, ChevronRight,
-  Receipt, FileSignature, FolderOpen, UserPlus
-} from 'lucide-react';
 import BrandMark from '@/components/shared/BrandMark';
+
+const FadeSection = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.25 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [intakeOpen, setIntakeOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate('/dashboard', { replace: true });
   }, [user, loading, navigate]);
+
+  const goIntake = () => navigate('/diagnose');
+
+  const sections: { id: string; lines: { text: string; muted?: boolean }[]; cta?: boolean }[] = [
+    {
+      id: 'hook',
+      lines: [
+        { text: 'DEIN PROBLEM IST NICHT DEIN ANGEBOT.' },
+        { text: 'ES IST DEIN SYSTEM.' },
+        { text: 'Du verlierst gerade Anfragen oder Umsatz.', muted: true },
+        { text: 'Und du merkst es nicht einmal.', muted: true },
+      ],
+      cta: true,
+    },
+    {
+      id: 'diagnosis',
+      lines: [
+        { text: 'DIE MEISTEN UNTERNEHMER SUCHEN NACH MEHR KUNDEN.' },
+        { text: 'DAS IST NICHT DAS PROBLEM.', muted: true },
+      ],
+    },
+    {
+      id: 'recognition',
+      lines: [
+        { text: 'DEIN ABLAUF IST NICHT SAUBER.' },
+        { text: 'DEINE STRUKTUR FEHLT.' },
+        { text: 'DEIN SYSTEM VERLIERT GELD.', muted: true },
+      ],
+    },
+    {
+      id: 'reframe',
+      lines: [
+        { text: 'ES GEHT NICHT DARUM, MEHR ZU TUN.' },
+        { text: 'ES GEHT DARUM, DAS RICHTIGE SAUBER ZU MACHEN.' },
+      ],
+    },
+    {
+      id: 'positioning',
+      lines: [
+        { text: 'WIR FINDEN HERAUS, WO DEIN SYSTEM VERSAGT.' },
+        { text: 'UND ZEIGEN DIR, WIE DU ES BEHEBST.', muted: true },
+      ],
+    },
+    {
+      id: 'proof',
+      lines: [
+        { text: 'KEINE THEORIE.' },
+        { text: 'KEIN COACHING.' },
+        { text: 'EINE KLARE ANALYSE. FÜR DEIN UNTERNEHMEN.' },
+      ],
+    },
+    {
+      id: 'decision',
+      lines: [
+        { text: 'DU KANNST WEITER RATEN.' },
+        { text: 'ODER DU FINDEST ES HERAUS.' },
+      ],
+    },
+    {
+      id: 'cta',
+      lines: [
+        { text: 'FINDE HERAUS, WO DU VERLIERST.' },
+      ],
+      cta: true,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground">
       {/* NAV */}
-      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <BrandMark variant="wordmark" size="md" />
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="uppercase tracking-[0.08em] text-xs" onClick={() => navigate('/login')}>
-              Anmelden
-            </Button>
-            <Button size="sm" className="uppercase tracking-[0.08em] text-xs" onClick={() => setIntakeOpen(true)}>
-              Jetzt starten
-            </Button>
-          </div>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <BrandMark variant="wordmark" size="sm" />
+          <button
+            onClick={() => navigate('/login')}
+            className="text-xs text-muted-foreground tracking-[0.1em] uppercase hover:text-foreground transition-colors"
+          >
+            Anmelden
+          </button>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="relative py-20 md:py-32 px-4">
-        <div className="max-w-4xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-border text-muted-foreground text-xs font-medium mb-8 tracking-[0.1em] uppercase">
-            Büroarbeit abgeben. Geschäft aufbauen.
-          </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6">
-            Wir übernehmen dein{' '}
-            <span className="text-primary">Büromanagement.</span>
-            <br className="hidden sm:block" />
-            {' '}Du kümmerst dich nur noch um dein Geschäft.
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            Rechnungen, Angebote, Verträge und Belege – alles digital organisiert und persönlich betreut.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 uppercase tracking-[0.08em]" onClick={() => setIntakeOpen(true)}>
-              Kostenloses Erstgespräch buchen
-              <ArrowRight className="w-5 h-5 ml-1" />
-            </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => setIntakeOpen(true)}>
-              Jetzt starten
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground mt-6">
-            Keine Kreditkarte nötig · Persönliche Einrichtung · Sofort einsatzbereit
-          </p>
-        </div>
-      </section>
-
-      {/* PROBLEM */}
-      <section className="py-20 md:py-28 px-4 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-2xl md:text-4xl font-bold mb-4">
-              Kommt dir das bekannt vor?
-            </h2>
-            <p className="text-muted-foreground text-lg">Die gleichen Probleme bei fast jedem Unternehmer.</p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              { icon: Clock, text: 'Rechnungen dauern viel zu lange' },
-              { icon: FolderOpen, text: 'Belege liegen unsortiert in Schubladen' },
-              { icon: FileText, text: 'Keine klare Struktur im Büro' },
-              { icon: Receipt, text: 'Steuerberater braucht ständig Unterlagen' },
-              { icon: Users, text: 'Zeitverlust durch administrative Arbeit' },
-              { icon: Shield, text: 'Angst, Fristen oder Pflichten zu verpassen' },
-            ].map((item, i) => (
-              <Card key={i} className="bg-card border-destructive/20 card-hover">
-                <CardContent className="p-5 flex items-start gap-4">
-                  <div className="p-2 rounded-lg bg-destructive/10 text-destructive shrink-0">
-                    <item.icon className="w-5 h-5" />
-                  </div>
-                  <p className="font-medium text-sm">{item.text}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SOLUTION */}
-      <section className="py-20 md:py-28 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-2xl md:text-4xl font-bold mb-4">
-              Wir kümmern uns darum – einfach und strukturiert
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              KÖFMAN ist System und persönlicher Service in einem. Keine komplizierte Software, sondern echte Unterstützung.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: Upload,
-                title: 'Dokumente hochladen',
-                desc: 'Belege, Quittungen und Unterlagen einfach per Foto oder Datei hochladen. Wir kümmern uns um die Sortierung.',
-              },
-              {
-                icon: FileText,
-                title: 'Rechnungen & Angebote',
-                desc: 'Professionelle Dokumente in Sekunden erstellen. Fertige Vorlagen für deine Branche sind schon da.',
-              },
-              {
-                icon: HeartHandshake,
-                title: 'Persönliche Betreuung',
-                desc: 'Kein Support-Ticket, kein Chatbot. Wir betreuen dich persönlich und richten alles für dich ein.',
-              },
-            ].map((item, i) => (
-              <Card key={i} className="bg-card border-primary/10 card-hover group">
-                <CardContent className="p-8 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-5 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <item.icon className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-lg font-bold mb-3">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="py-20 md:py-28 px-4 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-2xl md:text-4xl font-bold mb-4">So einfach funktioniert es</h2>
-            <p className="text-muted-foreground text-lg">In 3 Schritten zum stressfreien Büro.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { step: '1', title: 'Wir richten alles ein', desc: 'Persönliche Einrichtung deines Kontos mit Vorlagen, die zu deiner Branche passen.' },
-              { step: '2', title: 'Du lädst Belege hoch', desc: 'Einfach Fotos oder Dateien hochladen – vom Handy oder Computer.' },
-              { step: '3', title: 'Wir übernehmen den Rest', desc: 'Sortierung, Vorbereitung für den Steuerberater und laufende Betreuung.' },
-            ].map((item, i) => (
-              <div key={i} className="text-center relative">
-                <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold mx-auto mb-5">
-                  {item.step}
-                </div>
-                {i < 2 && (
-                  <ChevronRight className="hidden md:block absolute top-5 -right-4 w-8 h-8 text-muted-foreground/30" />
-                )}
-                <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PRODUCT */}
-      <section className="py-20 md:py-28 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-2xl md:text-4xl font-bold mb-4">Alles, was dein Büro braucht</h2>
-            <p className="text-muted-foreground text-lg">Einfach. Übersichtlich. Immer dabei.</p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {[
-              { icon: UserPlus, title: 'Kunden verwalten', desc: 'Alle Kontakte an einem Ort' },
-              { icon: Receipt, title: 'Rechnungen erstellen', desc: 'Professionell in Sekunden' },
-              { icon: FileSignature, title: 'Verträge unterschreiben', desc: 'Digital und rechtssicher' },
-              { icon: Upload, title: 'Belege hochladen', desc: 'Vom Handy direkt ins System' },
-            ].map((item, i) => (
-              <Card key={i} className="bg-card card-hover">
-                <CardContent className="p-6">
-                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary w-fit mb-4">
-                    <item.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-bold mb-1">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section className="py-20 md:py-28 px-4 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-2xl md:text-4xl font-bold mb-4">Klare Preise. Voller Service.</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Weniger Aufwand als ein Mitarbeiter – aber mit klarer Struktur und persönlicher Betreuung.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
-            {/* Setup */}
-            <Card className="bg-card border-border card-hover">
-              <CardContent className="p-8 flex flex-col h-full">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-semibold w-fit mb-5">
-                  Einmalig
-                </div>
-                <h3 className="text-xl font-bold mb-2">Einrichtungspaket</h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Wir richten alles für dich ein – damit du sofort loslegen kannst.
+      {/* SECTIONS */}
+      {sections.map((section, si) => (
+        <section
+          key={section.id}
+          className={`flex flex-col items-center justify-center px-6 ${si === 0 ? 'min-h-screen pt-14' : 'min-h-[70vh] py-24 sm:py-32'}`}
+        >
+          <div className="w-full max-w-[520px] space-y-5 text-center">
+            {section.lines.map((line, li) => (
+              <FadeSection key={li}>
+                <p
+                  className={`uppercase tracking-[0.08em] leading-[1.5] ${
+                    line.muted
+                      ? 'text-sm sm:text-base font-normal text-muted-foreground'
+                      : 'text-xl sm:text-2xl font-semibold text-foreground'
+                  }`}
+                >
+                  {line.text}
                 </p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">699 €</span>
-                  <span className="text-muted-foreground text-sm"> einmalig</span>
-                </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {[
-                    'Einrichtung des KÖFMAN Systems',
-                    'Erstellung einer Website',
-                    '200 Visitenkarten',
-                    'Individuelle Einrichtung der Leistungen und Abläufe',
-                  ].map((f, j) => (
-                    <li key={j} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button variant="outline" className="w-full" onClick={() => setIntakeOpen(true)}>
-                  Erstgespräch buchen
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Monthly */}
-            <Card className="relative overflow-hidden border-primary ring-1 ring-primary/20">
-              <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-center text-xs font-semibold py-1.5">
-                Laufende Betreuung
-              </div>
-              <CardContent className="p-8 pt-12 flex flex-col h-full">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold w-fit mb-5">
-                  Monatlich
-                </div>
-                <h3 className="text-xl font-bold mb-2">Monatliche Betreuung</h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Wir übernehmen dein laufendes Büromanagement – persönlich und zuverlässig.
-                </p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">399 €</span>
-                  <span className="text-muted-foreground text-sm"> / Monat</span>
-                </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {[
-                    'Laufendes Büromanagement',
-                    'Organisation von Belegen',
-                    'Unterstützung bei Rechnungen und Verträgen',
-                    'Erinnerungen und Struktur',
-                    'Persönlicher Ansprechpartner',
-                  ].map((f, j) => (
-                    <li key={j} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button className="w-full" onClick={() => setIntakeOpen(true)}>
-                  Jetzt starten
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Why it's worth it */}
-          <div className="rounded-2xl border border-border bg-card p-8 md:p-10">
-            <h3 className="text-lg md:text-xl font-bold text-center mb-8">Warum sich das lohnt</h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { icon: Clock, label: 'Zeit sparen', desc: 'Weniger Büroarbeit, mehr Kerngeschäft' },
-                { icon: Shield, label: 'Fehler vermeiden', desc: 'Professionelle Struktur statt Chaos' },
-                { icon: FileText, label: 'Steuerberater-ready', desc: 'Saubere Vorbereitung aller Unterlagen' },
-                { icon: Zap, label: 'Fokus behalten', desc: 'Konzentrier dich auf das, was du kannst' },
-              ].map((item, i) => (
-                <div key={i} className="flex flex-col items-center text-center">
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
-                    <item.icon className="w-5 h-5" />
-                  </div>
-                  <h4 className="font-semibold text-sm mb-1">{item.label}</h4>
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TRUST */}
-      <section className="py-20 md:py-28 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl md:text-4xl font-bold mb-14">Warum Unternehmer KÖFMAN vertrauen</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { icon: HeartHandshake, label: 'Persönlich', desc: 'Echte Menschen, kein Chatbot' },
-              { icon: Zap, label: 'Einfach', desc: 'Keine Einarbeitung nötig' },
-              { icon: Shield, label: 'Strukturiert', desc: 'Alles an einem Ort' },
-              { icon: Clock, label: 'Zeitsparend', desc: 'Mehr Zeit für dein Geschäft' },
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col items-center">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-                  <item.icon className="w-7 h-7" />
-                </div>
-                <h3 className="font-bold mb-1">{item.label}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
-              </div>
+              </FadeSection>
             ))}
+            {section.cta && (
+              <FadeSection className="pt-10">
+                <button
+                  onClick={goIntake}
+                  className="text-sm sm:text-base tracking-[0.12em] font-semibold text-foreground hover:text-muted-foreground transition-colors uppercase"
+                >
+                  → KOSTENLOSE ANALYSE STARTEN
+                </button>
+              </FadeSection>
+            )}
           </div>
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="py-20 md:py-28 px-4 bg-primary/5">
-        <div className="max-w-3xl mx-auto text-center">
-          <Star className="w-10 h-10 text-primary mx-auto mb-6" />
-          <h2 className="text-2xl md:text-4xl font-bold mb-4">
-            Bereit, dein Büromanagement abzugeben?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-            Starte jetzt und lass uns dein Büro organisieren – persönlich, digital und stressfrei.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto text-base px-8 h-13 uppercase tracking-[0.08em]" onClick={() => setIntakeOpen(true)}>
-              Kostenloses Erstgespräch
-              <ArrowRight className="w-5 h-5 ml-1" />
-            </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8 h-13" onClick={() => setIntakeOpen(true)}>
-              Jetzt starten
-            </Button>
-          </div>
-        </div>
-      </section>
+        </section>
+      ))}
 
       {/* FOOTER */}
-      <footer className="border-t border-border py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <BrandMark variant="wordmark" size="sm" />
-          <p>© {new Date().getFullYear()} KÖFMAN. Alle Rechte vorbehalten.</p>
-        </div>
+      <footer className="py-16 text-center">
+        <p className="text-xs text-muted-foreground tracking-[0.12em]">KÖFMAN</p>
       </footer>
-      <LeadIntakeModal open={intakeOpen} onOpenChange={setIntakeOpen} />
     </div>
   );
 };
