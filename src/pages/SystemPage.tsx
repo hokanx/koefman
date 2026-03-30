@@ -88,7 +88,8 @@ const sections: { id: string; lines: { text: string; muted?: boolean }[] }[] = [
 const SystemPage = () => {
   const navigate = useNavigate();
 
-  const goCta = () => navigate('/diagnose');
+  const hasCompletedIntake = sessionStorage.getItem('intake_completed') === 'true';
+  const goCta = () => navigate(hasCompletedIntake ? '/onboarding' : '/diagnose');
 
   return (
     <div className="min-h-screen bg-background text-foreground">
