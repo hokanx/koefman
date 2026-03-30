@@ -161,7 +161,7 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
           </div>
         </section>
       ))}
-      <footer className="py-16 text-center">
+      <footer className="py-16 text-center snap-start min-h-[50vh] flex items-center justify-center">
         <p className="text-xs text-muted-foreground tracking-[0.12em]">KÖFMAN</p>
       </footer>
     </div>
