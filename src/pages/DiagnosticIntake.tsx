@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -47,15 +47,15 @@ const PROBLEMS = [
 ];
 
 const IMPORTANCE_LEVELS = [
-  { label: 'NIEDRIG', value: 'niedrig' },
-  { label: 'MITTEL', value: 'mittel' },
-  { label: 'HOCH', value: 'hoch' },
+  { label: 'NICHT DRINGEND', value: 'niedrig' },
+  { label: 'SOLLTE BALD BESSER WERDEN', value: 'mittel' },
+  { label: 'DRINGEND', value: 'hoch' },
 ];
 
 const COMMITMENT_OPTIONS = [
   { label: 'JA', value: 'ja' },
   { label: 'VIELLEICHT', value: 'vielleicht' },
-  { label: 'NEIN', value: 'nein' },
+  { label: 'EHER NICHT', value: 'nein' },
 ];
 
 const URGENCY_OPTIONS = [
@@ -64,27 +64,47 @@ const URGENCY_OPTIONS = [
   { label: 'IRGENDWANN', value: 'irgendwann' },
 ];
 
-function computeIntentScore(importance: string, commitment: string, urgency: string): string {
+function computeIntentScore(importance: string, commitment: string, urgency: string): { score: number; level: string } {
   let score = 0;
-  if (importance === 'hoch') score += 3;
-  else if (importance === 'mittel') score += 2;
-  else score += 1;
-  if (commitment === 'ja') score += 3;
-  else if (commitment === 'vielleicht') score += 2;
-  else score += 0;
-  if (urgency === 'sofort') score += 3;
-  else if (urgency === 'wochen') score += 2;
-  else score += 1;
-  if (score >= 8) return 'high';
-  if (score >= 5) return 'medium';
-  return 'low';
+
+  // Importance: dringend +2, bald +1, nicht dringend 0
+  if (importance === 'hoch') score += 2;
+  else if (importance === 'mittel') score += 1;
+
+  // Commitment: ja +2, vielleicht +1, eher nicht 0
+  if (commitment === 'ja') score += 2;
+  else if (commitment === 'vielleicht') score += 1;
+
+  // Urgency: sofort +2, wochen +1, irgendwann 0
+  if (urgency === 'sofort') score += 2;
+  else if (urgency === 'wochen') score += 1;
+
+  // Company size bonus
+  // (handled externally if needed)
+
+  let level = 'low';
+  if (score >= 5) level = 'high';
+  else if (score >= 3) level = 'medium';
+
+  return { score, level };
+}
+
+function getCtaText(level: string): string {
+  if (level === 'high') return 'JETZT STRATEGIE KLAR FESTLEGEN';
+  if (level === 'medium') return 'STRATEGIE GEMEINSAM KLÄREN';
+  return 'OPTIONAL: STRATEGIE BESPRECHEN';
+}
+
+function getCtaSubtext(level: string): string {
+  if (level === 'high') return 'Das solltest du jetzt konkret angehen.';
+  if (level === 'medium') return 'Lass uns gemeinsam schauen, wo du ansetzt.';
+  return 'Du kannst dir das erstmal in Ruhe anschauen.';
 }
 
 export default function DiagnosticIntake() {
   const [searchParams] = useSearchParams();
   const variant = searchParams.get('v') || 'direct';
 
-  // Wizard: 0=intro, 1=step1, 2=step2, 3=step3+capture, 4=result
   const [phase, setPhase] = useState(0);
 
   // Step 1
@@ -110,6 +130,7 @@ export default function DiagnosticIntake() {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [analysisFailed, setAnalysisFailed] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [intentLevel, setIntentLevel] = useState('medium');
 
   const canStep1 = industry && companySize && inquiries && revenueClarity;
   const canStep2 = problems.length > 0;
@@ -123,7 +144,8 @@ export default function DiagnosticIntake() {
     setSubmitting(true);
     setPhase(4);
 
-    const intentScore = computeIntentScore(importance, commitment, urgency);
+    const { score, level } = computeIntentScore(importance, commitment, urgency);
+    setIntentLevel(level);
 
     try {
       let qrSessionId: string | null = null;
@@ -146,7 +168,7 @@ export default function DiagnosticIntake() {
           importance,
           commitment,
           urgency,
-          intent_score: intentScore,
+          intent_score: level,
         },
       });
 
@@ -219,7 +241,7 @@ export default function DiagnosticIntake() {
           {phase === 1 && (
             <div className="space-y-10 animate-fade-in">
               <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
-                ERZÄHL UNS KURZ, WO DU GERADE STEHST.
+                WIR SCHAUEN UNS KURZ AN, WO AKTUELL POTENZIAL VERLOREN GEHT.
               </h1>
 
               <div className="space-y-8">
@@ -270,9 +292,14 @@ export default function DiagnosticIntake() {
           {/* STEP 2 — PROBLEM DEPTH */}
           {phase === 2 && (
             <div className="space-y-10 animate-fade-in">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
-                WO VERLIERST DU AKTUELL AM MEISTEN GELD?
-              </h1>
+              <div className="text-center space-y-3">
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] leading-relaxed">
+                  AN WELCHER STELLE VERLIERST DU AKTUELL DIE MEISTEN ANFRAGEN ODER UMSÄTZE?
+                </h1>
+                <p className="text-[11px] text-muted-foreground/60 tracking-[0.08em]">
+                  Die meisten Unternehmen verlieren hier jeden Monat messbar Umsatz.
+                </p>
+              </div>
 
               <div className="space-y-8">
                 <div>
@@ -285,14 +312,14 @@ export default function DiagnosticIntake() {
                 </div>
 
                 <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-2">BESCHREIB KURZ, WAS AKTUELL NICHT FUNKTIONIERT.</p>
+                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-2">WAS GENAU LÄUFT AKTUELL NICHT SO, WIE ES SOLLTE?</p>
                   <p className="text-[10px] text-muted-foreground/50 tracking-[0.08em] mb-3">Je genauer du bist, desto konkreter wird deine Analyse.</p>
                   <textarea
                     value={freeText}
                     onChange={e => setFreeText(e.target.value)}
                     rows={4}
                     className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide resize-none"
-                    placeholder="Optional, aber empfohlen..."
+                    placeholder="z. B. viele Anfragen, aber wenig Abschlüsse / Chaos im Ablauf / keine Struktur…"
                   />
                 </div>
               </div>
@@ -314,12 +341,12 @@ export default function DiagnosticIntake() {
           {phase === 3 && (
             <div className="space-y-10 animate-fade-in">
               <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
-                LETZTER SCHRITT.
+                NUR NOCH EIN SCHRITT, DANN IST DEINE ANALYSE FERTIG.
               </h1>
 
               <div className="space-y-8">
                 <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WIE WICHTIG IST ES DIR, DAS AKTUELL ZU LÖSEN?</p>
+                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WIE DRINGEND IST ES FÜR DICH, DAS AKTUELL ZU LÖSEN?</p>
                   <div className="space-y-2">
                     {IMPORTANCE_LEVELS.map(o => (
                       <button key={o.value} onClick={() => setImportance(o.value)} className={optionBtn(importance === o.value)}>{o.label}</button>
@@ -328,7 +355,7 @@ export default function DiagnosticIntake() {
                 </div>
 
                 <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WENN WIR DIR KONKRET ZEIGEN KÖNNEN, WO DEIN PROBLEM LIEGT – BIST DU OFFEN FÜR EINE UMSETZUNG?</p>
+                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WENN DU KONKRET SIEHST, WO DEIN PROBLEM LIEGT – WÄRST DU BEREIT, DAS STRUKTURIERT ZU LÖSEN?</p>
                   <div className="space-y-2">
                     {COMMITMENT_OPTIONS.map(o => (
                       <button key={o.value} onClick={() => setCommitment(o.value)} className={optionBtn(commitment === o.value)}>{o.label}</button>
@@ -365,6 +392,11 @@ export default function DiagnosticIntake() {
                     </div>
                   </div>
                 </div>
+
+                {/* Soft pressure */}
+                <p className="text-[10px] text-muted-foreground/40 tracking-[0.08em] text-center">
+                  Wir arbeiten nur mit einer begrenzten Anzahl an Anfragen gleichzeitig.
+                </p>
               </div>
 
               <div className="flex gap-3">
@@ -454,17 +486,21 @@ export default function DiagnosticIntake() {
                       <p className="text-sm sm:text-base text-foreground leading-[1.7]">Im Gespräch identifizieren wir die genauen Punkte, an denen du aktuell Umsatz verlierst – und setzen direkt an.</p>
                     </div>
 
-                    <div className="text-center">
+                    <div className="text-center space-y-4">
+                      <p className="text-xs text-muted-foreground tracking-[0.08em]">
+                        {getCtaSubtext(intentLevel).toUpperCase()}
+                      </p>
+
                       <button onClick={() => window.location.href = '/landing'}
                         className="border-2 border-foreground px-10 py-5 text-sm sm:text-base tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
-                        [ KOSTENLOSE STRATEGIE-SESSION BUCHEN ]
+                        [ {getCtaText(intentLevel)} ]
                       </button>
 
                       {emailSent && (
-                        <p className="text-xs text-muted-foreground tracking-[0.08em] mt-8">DIE KURZANALYSE WURDE ZUSÄTZLICH PER E-MAIL AN DICH GESENDET.</p>
+                        <p className="text-xs text-muted-foreground tracking-[0.08em] mt-4">DIE KURZANALYSE WURDE ZUSÄTZLICH PER E-MAIL AN DICH GESENDET.</p>
                       )}
 
-                      <p className="text-[11px] text-muted-foreground/40 tracking-[0.08em] mt-10 cursor-default">Ich schaue mir das erstmal selbst an.</p>
+                      <p className="text-[11px] text-muted-foreground/40 tracking-[0.08em] mt-6 cursor-default">Ich schaue mir das erstmal selbst an.</p>
                     </div>
                   </div>
                 </div>
