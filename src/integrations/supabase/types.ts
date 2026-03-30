@@ -1462,6 +1462,33 @@ export type Database = {
         }
         Relationships: []
       }
+      strategy_requests: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          main_problem: string | null
+          name: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          id?: string
+          main_problem?: string | null
+          name?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          main_problem?: string | null
+          name?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
