@@ -100,6 +100,8 @@ const AdminLeads = () => {
     fetchSubmissions().then(() => setLoading(false));
   }, []);
 
+  const INTENT_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
   const filtered = submissions.filter(s => {
     if (statusFilter !== 'alle') {
       const analysis = s.lead_analyses?.[0];
@@ -113,6 +115,11 @@ const AdminLeads = () => {
       return s.name.toLowerCase().includes(q) || (s.company || '').toLowerCase().includes(q) || s.email.toLowerCase().includes(q);
     }
     return true;
+  }).sort((a, b) => {
+    const aOrder = INTENT_ORDER[a.intent_score || 'low'] ?? 2;
+    const bOrder = INTENT_ORDER[b.intent_score || 'low'] ?? 2;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   const counts = {
