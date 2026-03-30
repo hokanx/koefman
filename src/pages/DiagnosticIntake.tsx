@@ -434,7 +434,7 @@ export default function DiagnosticIntake() {
                 <div className="space-y-10 text-center animate-fade-in">
                   <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">DEINE ANALYSE KONNTE GERADE NICHT VOLLSTÄNDIG GELADEN WERDEN.</h1>
                   <p className="text-sm text-muted-foreground tracking-[0.08em]">DEINE ANGABEN WURDEN GESPEICHERT UND WIR KÜMMERN UNS DARUM.</p>
-                  <button onClick={() => window.location.href = '/system'}
+                  <button onClick={() => window.location.href = '/start?source=analysis_fail'}
                     className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
                     [ KOSTENLOSE STRATEGIE-SESSION BUCHEN ]
                   </button>
@@ -496,7 +496,7 @@ export default function DiagnosticIntake() {
                         {getCtaSubtext(intentLevel).toUpperCase()}
                       </p>
 
-                      <button onClick={() => window.location.href = '/system'}
+                      <button onClick={() => window.location.href = '/start?source=analysis'}
                         className="border-2 border-foreground px-10 py-5 text-sm sm:text-base tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
                         [ {getCtaText(intentLevel)} ]
                       </button>
