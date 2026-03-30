@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const EMAIL_FROM = "Köfman <no-reply@koefman.de>";
-const STRATEGY_SESSION_URL = "https://koefman.lovable.app/landing";
+const STRATEGY_SESSION_URL = "https://koefman.lovable.app/system";
 
 function buildEmailHtml(
   name: string,
