@@ -22,7 +22,7 @@ const TEMPLATE_TYPES = [
   { key: 'generic_document', label: 'Allgemein' },
 ];
 
-const TYPE_LABELS: Record<string, string> = Object.fromEntries(TEMPLATE_TYPES.map(t => [t.key, t.label]));
+
 
 interface Props {
   organizationId: string;
