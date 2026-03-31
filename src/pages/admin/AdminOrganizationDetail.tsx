@@ -233,6 +233,9 @@ const AdminOrganizationDetail = () => {
         ))}
       </div>
 
+      {/* Commercial Settings */}
+      <CommercialSettings organizationId={id!} />
+
       {/* Add member dialog */}
       <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
         <DialogContent>
