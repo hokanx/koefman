@@ -48,6 +48,7 @@ import AdminDocuments from "@/pages/admin/AdminDocuments";
 import AdminTemplates from "@/pages/admin/AdminTemplates";
 import AdminDocumentTemplates from "@/pages/admin/AdminDocumentTemplates";
 import AdminOrgDocuments from "@/pages/admin/AdminOrgDocuments";
+import AdminOrgExpenses from "@/pages/admin/AdminOrgExpenses";
 import AdminLeads from "@/pages/admin/AdminLeads";
 import LandingPage from "@/pages/LandingPage";
 import Truth from "@/pages/Truth";
