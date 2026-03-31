@@ -120,7 +120,8 @@ const AppWithImpersonation = () => {
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
-      </ImpersonationProvider>
+    </ImpersonationProvider>
+    </WorkspaceProvider>
   );
 };
 
