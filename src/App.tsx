@@ -86,6 +86,7 @@ const AppWithImpersonation = () => {
                 <Route path="/admin/leads" element={<AdminLeads />} />
                 <Route path="/admin/organizations" element={<AdminOrganizations />} />
                 <Route path="/admin/organizations/:id" element={<AdminOrganizationDetail />} />
+                <Route path="/admin/org-documents" element={<AdminOrgDocuments />} />
               </Route>
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
