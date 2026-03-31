@@ -1305,6 +1305,87 @@ export type Database = {
           },
         ]
       }
+      org_documents: {
+        Row: {
+          amount_total: number | null
+          created_at: string
+          created_by_user_id: string | null
+          currency: string
+          document_number: string | null
+          document_payload_json: Json | null
+          document_type: string
+          id: string
+          notes: string | null
+          organization_id: string
+          recipient_email: string | null
+          recipient_name: string | null
+          rendered_content_json: Json | null
+          rendered_html: string | null
+          status: string
+          template_id: string | null
+          template_snapshot_json: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount_total?: number | null
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string
+          document_number?: string | null
+          document_payload_json?: Json | null
+          document_type?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          recipient_email?: string | null
+          recipient_name?: string | null
+          rendered_content_json?: Json | null
+          rendered_html?: string | null
+          status?: string
+          template_id?: string | null
+          template_snapshot_json?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_total?: number | null
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string
+          document_number?: string | null
+          document_payload_json?: Json | null
+          document_type?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          recipient_email?: string | null
+          recipient_name?: string | null
+          rendered_content_json?: Json | null
+          rendered_html?: string | null
+          status?: string
+          template_id?: string | null
+          template_snapshot_json?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_commercials: {
         Row: {
           commercial_status: string
