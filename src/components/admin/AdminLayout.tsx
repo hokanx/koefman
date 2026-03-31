@@ -11,6 +11,7 @@ const navItems = [
   { to: '/admin/templates', icon: FileStack, label: 'Vorlagen' },
   { to: '/admin/subscriptions', icon: CreditCard, label: 'Abos' },
   { to: '/admin/workspaces', icon: Building2, label: 'Firmen' },
+  { to: '/admin/organizations', icon: Landmark, label: 'Organisationen' },
 ];
 
 const AdminLayout = () => {
