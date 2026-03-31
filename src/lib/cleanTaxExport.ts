@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 import { generatePdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
-import { formatDateDE, formatNumber } from '@/lib/utils';
+import { formatDateDE } from '@/lib/utils';
 
 export interface CleanExportOptions {
   userId: string;
