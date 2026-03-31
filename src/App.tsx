@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import AdminRoute from "@/components/shared/AdminRoute";
 import AppLayout from "@/components/layout/AppLayout";
