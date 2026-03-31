@@ -524,6 +524,68 @@ export type Database = {
         }
         Relationships: []
       }
+      document_templates: {
+        Row: {
+          content_html: string | null
+          content_json: Json | null
+          content_text: string | null
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          organization_id: string | null
+          scope_type: string
+          template_type: string
+          updated_at: string
+          updated_by_user_id: string | null
+          version_number: number
+        }
+        Insert: {
+          content_html?: string | null
+          content_json?: Json | null
+          content_text?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          scope_type?: string
+          template_type?: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+          version_number?: number
+        }
+        Update: {
+          content_html?: string | null
+          content_json?: Json | null
+          content_text?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          scope_type?: string
+          template_type?: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           admin_note: string | null
