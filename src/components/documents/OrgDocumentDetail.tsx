@@ -35,6 +35,7 @@ interface Props {
 }
 
 const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
+  const queryClient = useQueryClient();
   const updateMutation = useUpdateOrgDocument();
   const [isSending, setIsSending] = useState(false);
 
