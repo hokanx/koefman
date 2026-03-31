@@ -4,9 +4,9 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatEUR } from '@/lib/utils';
-import { generateTaxExportZip, generateFullArchiveZip } from '@/lib/taxExport';
+import { fetchTaxExportSummary, generateCleanTaxExportZip } from '@/lib/cleanTaxExport';
 import { toast } from 'sonner';
-import { FileArchive, Download, FileText } from 'lucide-react';
+import { FileArchive, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type DateRange = 'month' | 'quarter' | 'year';
@@ -41,31 +41,9 @@ const TaxExport = () => {
   const targetUserId = effectiveUserId || user?.id;
   const { from, to } = useMemo(() => getDateRange(range), [range]);
 
-  const { data: invoices = [] } = useQuery({
-    queryKey: ['tax-invoices', targetUserId, from, to],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('invoices')
-        .select('id, status, grand_total, tax_total, subtotal, date, invoice_number')
-        .eq('user_id', targetUserId!)
-        .gte('date', from)
-        .lte('date', to);
-      return data || [];
-    },
-    enabled: !!targetUserId,
-  });
-
-  const { data: documents = [] } = useQuery({
-    queryKey: ['tax-documents', targetUserId, from, to],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('documents')
-        .select('id, category, status')
-        .eq('user_id', targetUserId!)
-        .gte('created_at', from)
-        .lte('created_at', to + 'T23:59:59');
-      return data || [];
-    },
+  const { data: summary } = useQuery({
+    queryKey: ['tax-export-summary', targetUserId, from, to],
+    queryFn: () => fetchTaxExportSummary(targetUserId!, from, to),
     enabled: !!targetUserId,
   });
 
@@ -82,16 +60,6 @@ const TaxExport = () => {
     enabled: !!targetUserId,
   });
 
-  const stats = useMemo(() => {
-    let totalGross = 0, totalTax = 0;
-    for (const inv of invoices) {
-      if (inv.status === 'cancelled') continue;
-      totalGross += Number(inv.grand_total);
-      totalTax += Number(inv.tax_total);
-    }
-    return { invoiceCount: invoices.filter(i => i.status !== 'cancelled').length, documentCount: documents.length, totalGross, totalTax };
-  }, [invoices, documents]);
-
   const rangeOptions: { value: DateRange; label: string }[] = [
     { value: 'month', label: 'Monat' },
     { value: 'quarter', label: 'Quartal' },
@@ -104,19 +72,19 @@ const TaxExport = () => {
       ? `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`
       : `${new Date().getFullYear()}`;
 
-  const handleTaxExport = async () => {
+  const handleExport = async () => {
     if (!targetUserId || !settings) return;
     setExporting(true);
     setExportProgress('Daten laden…');
     try {
-      const blob = await generateTaxExportZip({
+      const blob = await generateCleanTaxExportZip({
         userId: targetUserId, from, to, businessSettings: settings,
         onProgress: (_p, label) => setExportProgress(label),
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Steuerberater_${from}_${to}.zip`;
+      a.download = `steuer-export-${from}_${to}.zip`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success('Export erstellt');
@@ -129,49 +97,10 @@ const TaxExport = () => {
     }
   };
 
-  const handleFullExport = async () => {
-    if (!targetUserId || !settings) return;
-    setExporting(true);
-    setExportProgress('Daten laden…');
-    try {
-      const blob = await generateFullArchiveZip({
-        userId: targetUserId, from, to, businessSettings: settings,
-        onProgress: (_p, label) => setExportProgress(label),
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Archiv_${from}_${to}.zip`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success('Archiv erstellt');
-    } catch (e) {
-      console.error('Full export failed', e);
-      toast.error('Export fehlgeschlagen');
-    } finally {
-      setExporting(false);
-      setExportProgress('');
-    }
-  };
-
-  const handleCsvExport = () => {
-    const relevant = invoices.filter((inv) => inv.status !== 'cancelled');
-    const header = ['Rechnungsnummer', 'Datum', 'Status', 'Netto', 'USt', 'Brutto'];
-    const rows = relevant.map((inv) => [
-      inv.invoice_number, inv.date, inv.status,
-      Number(inv.subtotal).toFixed(2).replace('.', ','),
-      Number(inv.tax_total).toFixed(2).replace('.', ','),
-      Number(inv.grand_total).toFixed(2).replace('.', ','),
-    ]);
-    const csvContent = [header, ...rows].map((r) => (r as string[]).join(';')).join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Rechnungen_${from}_${to}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const invoiceCount = summary?.paidInvoices.length ?? 0;
+  const expenseCount = summary?.validExpenses.length ?? 0;
+  const isReady = summary?.isReady ?? false;
+  const warnings = summary?.warnings ?? [];
 
   return (
     <div className="animate-fade-in p-4 md:p-6 space-y-5 mx-auto max-w-2xl">
@@ -198,55 +127,69 @@ const TaxExport = () => {
         ))}
       </div>
 
+      {/* Readiness */}
+      <div className={`flex items-center gap-3 rounded-xl border p-4 ${
+        isReady ? 'border-green-500/30 bg-green-500/5' : 'border-yellow-500/30 bg-yellow-500/5'
+      }`}>
+        {isReady ? (
+          <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+        ) : (
+          <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
+        )}
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            {isReady ? 'Bereit für Export' : 'Hinweis'}
+          </p>
+          {warnings.map((w, i) => (
+            <p key={i} className="text-xs text-muted-foreground">{w}</p>
+          ))}
+          {isReady && (
+            <p className="text-xs text-muted-foreground">
+              {invoiceCount} bezahlte Rechnungen, {expenseCount} Ausgaben
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Summary */}
       <div className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Zusammenfassung</h2>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{stats.invoiceCount}</p>
-            <p className="text-xs text-muted-foreground">Rechnungen</p>
+            <p className="text-2xl font-bold text-foreground">{invoiceCount}</p>
+            <p className="text-xs text-muted-foreground">Bezahlte Rechnungen</p>
           </div>
           <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{stats.documentCount}</p>
-            <p className="text-xs text-muted-foreground">Belege</p>
+            <p className="text-2xl font-bold text-foreground">{expenseCount}</p>
+            <p className="text-xs text-muted-foreground">Ausgaben</p>
           </div>
           <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{formatEUR(stats.totalGross)}</p>
-            <p className="text-xs text-muted-foreground">Umsatz brutto</p>
+            <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.totalIncome ?? 0)}</p>
+            <p className="text-xs text-muted-foreground">Einnahmen brutto</p>
           </div>
           <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{formatEUR(stats.totalTax)}</p>
-            <p className="text-xs text-muted-foreground">USt gesamt</p>
+            <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.totalExpenses ?? 0)}</p>
+            <p className="text-xs text-muted-foreground">Ausgaben gesamt</p>
+          </div>
+          <div className="rounded-lg bg-muted/30 p-3 text-center col-span-2">
+            <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.profit ?? 0)}</p>
+            <p className="text-xs text-muted-foreground">Gewinn</p>
           </div>
         </div>
       </div>
 
-      {/* Export actions */}
-      <div className="space-y-3">
-        <Button className="w-full justify-start gap-3 h-auto py-4" onClick={handleTaxExport} disabled={exporting}>
-          <FileArchive className="h-5 w-5 shrink-0" />
-          <div className="text-left">
-            <p className="font-medium">{exporting ? exportProgress : 'Export für Steuerberater'}</p>
-            <p className="text-xs font-normal opacity-75">Rechnungen, Belege & Zusammenfassung als ZIP</p>
-          </div>
-        </Button>
-
-        <Button variant="outline" className="w-full justify-start gap-3 h-auto py-4" onClick={handleFullExport} disabled={exporting}>
-          <Download className="h-5 w-5 shrink-0" />
-          <div className="text-left">
-            <p className="font-medium">{exporting ? exportProgress : 'Vollständiges Archiv'}</p>
-            <p className="text-xs font-normal opacity-75">Alle Dokumente inkl. Angebote</p>
-          </div>
-        </Button>
-
-        <Button variant="outline" className="w-full justify-start gap-3 h-auto py-4" onClick={handleCsvExport}>
-          <FileText className="h-5 w-5 shrink-0" />
-          <div className="text-left">
-            <p className="font-medium">CSV Export</p>
-            <p className="text-xs font-normal opacity-75">Rechnungsdaten als Tabelle</p>
-          </div>
-        </Button>
-      </div>
+      {/* Export action */}
+      <Button
+        className="w-full justify-start gap-3 h-auto py-4"
+        onClick={handleExport}
+        disabled={exporting || !isReady}
+      >
+        <FileArchive className="h-5 w-5 shrink-0" />
+        <div className="text-left">
+          <p className="font-medium">{exporting ? exportProgress : 'Export für Steuerberater'}</p>
+          <p className="text-xs font-normal opacity-75">Bezahlte Rechnungen, Ausgaben & Zusammenfassung als ZIP</p>
+        </div>
+      </Button>
     </div>
   );
 };
