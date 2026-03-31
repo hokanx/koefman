@@ -213,6 +213,14 @@ const OrgTemplateOverrides = ({ organizationId }: Props) => {
               <Textarea value={form.content_json} onChange={(e) => setForm(f => ({ ...f, content_json: e.target.value }))} rows={5} className="font-mono text-xs" />
             </div>
             <div>
+              <label className="mb-1 block text-sm font-medium">HTML (optional)</label>
+              <Textarea value={form.content_html} onChange={(e) => setForm(f => ({ ...f, content_html: e.target.value }))} rows={3} className="font-mono text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Text (optional)</label>
+              <Textarea value={form.content_text} onChange={(e) => setForm(f => ({ ...f, content_text: e.target.value }))} rows={3} />
+            </div>
+            <div>
               <label className="mb-1 block text-sm font-medium">Notizen</label>
               <Textarea value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
             </div>
