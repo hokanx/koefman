@@ -29,6 +29,8 @@ export interface OrgDocument {
   currency: string;
 }
 
+// --- Labels ---
+
 const DOC_TYPE_LABELS: Record<OrgDocumentType, string> = {
   offer: 'Angebot',
   invoice: 'Rechnung',
@@ -48,6 +50,81 @@ const STATUS_LABELS: Record<OrgDocumentStatus, string> = {
 
 export const getDocTypeLabel = (t: OrgDocumentType) => DOC_TYPE_LABELS[t] ?? t;
 export const getDocStatusLabel = (s: OrgDocumentStatus) => STATUS_LABELS[s] ?? s;
+
+// --- Type-specific status rules ---
+
+const TYPE_STATUSES: Record<OrgDocumentType, OrgDocumentStatus[]> = {
+  offer: ['draft', 'sent', 'accepted', 'cancelled', 'archived'],
+  invoice: ['draft', 'sent', 'paid', 'cancelled', 'archived'],
+  contract: ['draft', 'sent', 'accepted', 'archived'],
+  reminder: ['draft', 'sent', 'archived'],
+};
+
+export const getStatusesForType = (type: OrgDocumentType): OrgDocumentStatus[] =>
+  TYPE_STATUSES[type] ?? ['draft', 'sent', 'archived'];
+
+// --- Type-specific create field config ---
+
+export interface TypeFieldConfig {
+  showAmount: boolean;
+  amountLabel: string;
+  descriptionLabel: string;
+  descriptionPlaceholder: string;
+  extraPayloadFields: { key: string; label: string; type: 'date' | 'text'; placeholder: string }[];
+}
+
+const TYPE_FIELD_CONFIGS: Record<OrgDocumentType, TypeFieldConfig> = {
+  offer: {
+    showAmount: true,
+    amountLabel: 'Angebotssumme (optional)',
+    descriptionLabel: 'Leistungsbeschreibung',
+    descriptionPlaceholder: 'Zusammenfassung der angebotenen Leistungen…',
+    extraPayloadFields: [],
+  },
+  invoice: {
+    showAmount: true,
+    amountLabel: 'Rechnungsbetrag',
+    descriptionLabel: 'Leistungsbeschreibung',
+    descriptionPlaceholder: 'Zusammenfassung der erbrachten Leistungen…',
+    extraPayloadFields: [
+      { key: 'due_date', label: 'Fälligkeitsdatum', type: 'date', placeholder: '' },
+    ],
+  },
+  contract: {
+    showAmount: false,
+    amountLabel: '',
+    descriptionLabel: 'Vertragsgegenstand',
+    descriptionPlaceholder: 'Umfang und Gegenstand des Vertrags…',
+    extraPayloadFields: [
+      { key: 'start_date', label: 'Vertragsbeginn', type: 'date', placeholder: '' },
+    ],
+  },
+  reminder: {
+    showAmount: true,
+    amountLabel: 'Offener Betrag (optional)',
+    descriptionLabel: 'Mahngrund',
+    descriptionPlaceholder: 'Grund der Mahnung / Bezug zur Rechnung…',
+    extraPayloadFields: [
+      { key: 'related_invoice', label: 'Bezug Rechnungsnr.', type: 'text', placeholder: 'z.B. RE-2026-001' },
+    ],
+  },
+};
+
+export const getFieldConfigForType = (type: OrgDocumentType): TypeFieldConfig =>
+  TYPE_FIELD_CONFIGS[type];
+
+// --- EUR formatting ---
+
+export const formatEUR = (v: number | null | undefined) =>
+  v != null ? v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '–';
+
+// --- Document summary line ---
+
+export const getDocSummaryLine = (doc: OrgDocument): string => {
+  const parts = [getDocTypeLabel(doc.document_type), getDocStatusLabel(doc.status)];
+  if (doc.amount_total != null && doc.amount_total > 0) parts.push(formatEUR(doc.amount_total));
+  return parts.join(' · ');
+};
 
 /**
  * Fetch all documents for the active organization, with optional type/status filters.
