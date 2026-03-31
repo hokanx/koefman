@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgTemplateStatus } from '@/hooks/useTemplateResolver';
 import { useAuth } from '@/contexts/AuthContext';
-import { Globe, Building2, Plus, Trash2, Edit2, Check } from 'lucide-react';
+import { Globe, Building2, Plus, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
