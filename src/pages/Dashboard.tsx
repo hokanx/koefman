@@ -1,81 +1,16 @@
-import { Users, FileText, Receipt, Plus, ArrowRight, Inbox, RepeatIcon, Upload, FilePlus } from 'lucide-react';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { Users, FileText, Receipt, Plus, ArrowRight, Inbox, Upload, FileArchive } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import StatCard from '@/components/shared/StatCard';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE } from '@/lib/generatePdf';
+import { formatEUR } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-type IndustryKey = 'cleaning' | 'garage' | 'consulting' | 'service' | 'web' | 'general';
-
-interface QuickAction {
-  label: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-}
-
 const Dashboard = () => {
-  const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const { data: businessCategory = 'general' } = useQuery({
-    queryKey: ['business-category'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('business_settings')
-        .select('business_category')
-        .eq('user_id', user!.id)
-        .maybeSingle();
-      return (data?.business_category as IndustryKey) || 'general';
-    },
-    enabled: !!user,
-  });
-
-  const { data: customerCount = 0 } = useQuery({
-    queryKey: ['customer-count'],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from('customers')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user!.id);
-      return count || 0;
-    },
-    enabled: !!user,
-  });
-
-  const { data: offerCount = 0 } = useQuery({
-    queryKey: ['offer-count'],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from('offers')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user!.id);
-      return count || 0;
-    },
-    enabled: !!user,
-  });
-
-  const { data: invoiceCounts = { total: 0, open: 0, paid: 0, overdue: 0 } } = useQuery({
-    queryKey: ['invoice-counts'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('invoices')
-        .select('status')
-        .eq('user_id', user!.id);
-      const invoices = data || [];
-      return {
-        total: invoices.length,
-        open: invoices.filter((i) => i.status === 'open').length,
-        paid: invoices.filter((i) => i.status === 'paid').length,
-        overdue: invoices.filter((i) => i.status === 'overdue').length,
-      };
-    },
-    enabled: !!user,
-  });
 
   const { data: pendingOffers = 0 } = useQuery({
     queryKey: ['pending-offers'],
@@ -84,7 +19,33 @@ const Dashboard = () => {
         .from('offers')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id)
-        .eq('status', 'sent');
+        .in('status', ['draft', 'sent']);
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+
+  const { data: openInvoices = 0 } = useQuery({
+    queryKey: ['open-invoices'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('invoices')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user!.id)
+        .in('status', ['open', 'draft']);
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+
+  const { data: unexportedDocs = 0 } = useQuery({
+    queryKey: ['unexported-docs'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('documents')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user!.id)
+        .in('status', ['neu', 'hochgeladen']);
       return count || 0;
     },
     enabled: !!user,
@@ -103,280 +64,142 @@ const Dashboard = () => {
     enabled: !!user,
   });
 
-  const { data: recentOffers = [] } = useQuery({
-    queryKey: ['recent-offers'],
+  const { data: recentItems = [] } = useQuery({
+    queryKey: ['recent-activity'],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('offers')
-        .select('id, offer_number, status, date, grand_total, customers(name)')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
-      return data || [];
+      const [{ data: offers }, { data: invoices }] = await Promise.all([
+        supabase
+          .from('offers')
+          .select('id, offer_number, status, date, grand_total, customers(name)')
+          .eq('user_id', user!.id)
+          .order('created_at', { ascending: false })
+          .limit(3),
+        supabase
+          .from('invoices')
+          .select('id, invoice_number, status, date, grand_total, customers(name)')
+          .eq('user_id', user!.id)
+          .order('created_at', { ascending: false })
+          .limit(3),
+      ]);
+      const items = [
+        ...(offers || []).map((o: any) => ({ ...o, _type: 'offer', _number: o.offer_number })),
+        ...(invoices || []).map((i: any) => ({ ...i, _type: 'invoice', _number: i.invoice_number })),
+      ];
+      items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return items.slice(0, 5);
     },
     enabled: !!user,
   });
 
-  const { data: recentInvoices = [] } = useQuery({
-    queryKey: ['recent-invoices'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('invoices')
-        .select('id, invoice_number, status, date, grand_total, customers(name)')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
-      return data || [];
-    },
-    enabled: !!user,
-  });
-
-  const { data: nextRecurring } = useQuery({
-    queryKey: ['next-recurring'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('recurring_invoices')
-        .select('next_run_date, customer:customers(name)')
-        .eq('user_id', user!.id)
-        .eq('status', 'active')
-        .order('next_run_date', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  // Industry-specific quick actions
-  const getQuickActions = (): QuickAction[] => {
-    const actions: Record<string, QuickAction> = {
-      newCustomer: { label: t.customers.newCustomer, icon: <Plus className="h-5 w-5 text-primary" />, onClick: () => navigate('/customers/new') },
-      newOffer: { label: t.offers.newOffer, icon: <Plus className="h-5 w-5 text-primary" />, onClick: () => navigate('/offers/new') },
-      newInvoice: { label: t.invoices.newInvoice, icon: <Plus className="h-5 w-5 text-primary" />, onClick: () => navigate('/invoices/new') },
-      newContract: { label: 'Vertrag erstellen', icon: <FilePlus className="h-5 w-5 text-primary" />, onClick: () => navigate('/contracts') },
-      uploadDoc: { label: 'Beleg hochladen', icon: <Upload className="h-5 w-5 text-primary" />, onClick: () => navigate('/documents') },
-    };
-
-    switch (businessCategory) {
-      case 'cleaning':
-        return [actions.newContract, actions.newCustomer, actions.uploadDoc];
-      case 'garage':
-        return [actions.newInvoice, actions.newCustomer, actions.newOffer];
-      case 'consulting':
-        return [actions.newOffer, actions.newInvoice, actions.newCustomer];
-      case 'service':
-        return [actions.newCustomer, actions.newOffer, actions.newInvoice];
-      case 'web':
-        return [actions.newContract, actions.newInvoice, actions.uploadDoc];
-      default:
-        return [actions.newCustomer, actions.newOffer, actions.newInvoice];
-    }
+  const statusLabel: Record<string, string> = {
+    draft: 'Entwurf', sent: 'Gesendet', accepted: 'Angenommen', rejected: 'Abgelehnt',
+    open: 'Offen', paid: 'Bezahlt', overdue: 'Überfällig', cancelled: 'Storniert',
   };
 
-  const quickActions = getQuickActions();
-
-  // Show recurring emphasis for cleaning/web
-  const showRecurringEmphasis = businessCategory === 'cleaning' || businessCategory === 'web';
-
-  const todoItems = [
-    {
-      label: t.dashboard.overdueInvoices,
-      count: invoiceCounts.overdue,
-      variant: 'destructive' as const,
-      onClick: () => navigate('/invoices?status=overdue'),
-    },
-    {
-      label: t.dashboard.openInvoices,
-      count: invoiceCounts.open,
-      variant: 'warning' as const,
-      onClick: () => navigate('/invoices?status=open'),
-    },
-    {
-      label: t.dashboard.pendingOffers,
-      count: pendingOffers,
-      variant: 'info' as const,
-      onClick: () => navigate('/offers?status=sent'),
-    },
-  ].filter((item) => item.count > 0);
-
-  const variantColors: Record<string, string> = {
-    destructive: 'text-destructive bg-destructive/10 border-destructive/20',
-    warning: 'text-warning bg-warning/10 border-warning/20',
-    info: 'text-info bg-info/10 border-info/20',
-  };
+  const indicators = [
+    { label: 'Offene Angebote', count: pendingOffers, onClick: () => navigate('/revenue') },
+    { label: 'Offene Rechnungen', count: openInvoices, onClick: () => navigate('/revenue') },
+    { label: 'Nicht exportierte Belege', count: unexportedDocs, onClick: () => navigate('/expenses') },
+  ].filter(i => i.count > 0);
 
   return (
-    <div className="animate-fade-in p-4 md:p-6 space-y-6">
-      {/* Welcome hint for new users */}
-      {customerCount === 0 && offerCount === 0 && invoiceCounts.total === 0 && (
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 space-y-2">
-          <h2 className="text-base font-semibold text-foreground">👋 Willkommen bei KÖFMAN!</h2>
-          <p className="text-sm text-muted-foreground">
-            Starten Sie am besten so:
-          </p>
-          <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-            <li>Legen Sie Ihren <button onClick={() => navigate('/customers/new')} className="text-primary font-medium hover:underline">ersten Kunden</button> an</li>
-            <li>Erstellen Sie ein <button onClick={() => navigate('/offers/new')} className="text-primary font-medium hover:underline">Angebot</button></li>
-            <li>Laden Sie Ihre <button onClick={() => navigate('/documents')} className="text-primary font-medium hover:underline">Belege hoch</button></li>
-          </ol>
-        </div>
-      )}
+    <div className="animate-fade-in p-4 md:p-6 space-y-6 mx-auto max-w-2xl">
+      {/* Header */}
+      <h1 className="text-2xl font-bold tracking-tight text-foreground">ÜBERSICHT</h1>
+
+      {/* Primary actions */}
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          className="h-auto flex-col gap-2 py-5 text-sm"
+          onClick={() => navigate('/offers/new')}
+        >
+          <FileText className="h-6 w-6" />
+          Angebot erstellen
+        </Button>
+        <Button
+          className="h-auto flex-col gap-2 py-5 text-sm"
+          onClick={() => navigate('/invoices/new')}
+        >
+          <Receipt className="h-6 w-6" />
+          Rechnung erstellen
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto flex-col gap-2 py-5 text-sm"
+          onClick={() => navigate('/expenses')}
+        >
+          <Upload className="h-6 w-6" />
+          Ausgabe hinzufügen
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto flex-col gap-2 py-5 text-sm"
+          onClick={() => navigate('/tax-export')}
+        >
+          <FileArchive className="h-6 w-6" />
+          Export starten
+        </Button>
+      </div>
 
       {/* New Leads Alert */}
       {newLeadsCount > 0 && (
         <button
-          onClick={() => navigate('/leads?status=new')}
+          onClick={() => navigate('/leads')}
           className="w-full flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
-              <Inbox className="h-5 w-5 text-primary" />
-            </div>
-            <div className="text-start">
-              <p className="text-sm font-semibold text-foreground">
-                {newLeadsCount} {t.dashboard.newLeads}
-              </p>
-            </div>
+            <Inbox className="h-5 w-5 text-primary" />
+            <span className="text-sm font-semibold text-foreground">{newLeadsCount} neue Anfragen</span>
           </div>
-          <div className="flex items-center gap-2 text-sm font-medium text-primary">
-            {t.dashboard.viewNow}
-            <ArrowRight className="h-4 w-4" />
-          </div>
+          <ArrowRight className="h-4 w-4 text-primary" />
         </button>
       )}
 
-      {/* Quick Actions — personalized by industry */}
-      <div>
-        <h2 className="mb-3 text-lg font-semibold text-foreground">{t.dashboard.quickActions}</h2>
-        <div className="grid grid-cols-3 gap-2 md:gap-3">
-          {quickActions.map((action, i) => (
-            <Button
-              key={i}
-              variant="outline"
-              className="h-auto flex-col gap-1.5 py-4 text-xs md:text-sm"
-              onClick={action.onClick}
+      {/* Compact indicators */}
+      {indicators.length > 0 && (
+        <div className="space-y-2">
+          {indicators.map((item) => (
+            <button
+              key={item.label}
+              onClick={item.onClick}
+              className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-3.5 transition hover:border-primary/40"
             >
-              {action.icon}
-              {action.label}
-            </Button>
+              <span className="text-sm text-muted-foreground">{item.label}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-foreground">{item.count}</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </button>
           ))}
-        </div>
-      </div>
-
-      {/* Recurring emphasis for cleaning/web — shown before to-do */}
-      {showRecurringEmphasis && nextRecurring && (
-        <button
-          onClick={() => navigate('/recurring-invoices')}
-          className="w-full flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-left transition-colors hover:bg-primary/10"
-        >
-          <RepeatIcon className="h-5 w-5 text-primary shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground">
-              {(t as any).recurring.upcomingRecurring}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {(nextRecurring as any).customer?.name} – {formatDateDE((nextRecurring as any).next_run_date)}
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-        </button>
-      )}
-
-      {/* To-Do / Actions */}
-      {todoItems.length > 0 && (
-        <div>
-          <h2 className="mb-3 text-lg font-semibold text-foreground">{t.dashboard.todoTitle}</h2>
-          <div className="space-y-2">
-            {todoItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={item.onClick}
-                className={`w-full flex items-center justify-between rounded-xl border p-3.5 transition-colors hover:opacity-80 ${variantColors[item.variant]}`}
-              >
-                <span className="text-sm font-medium">{item.label}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold">{item.count}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-              </button>
-            ))}
-          </div>
         </div>
       )}
 
       {/* Recent Activity */}
-      <div>
-        <h2 className="mb-3 text-lg font-semibold text-foreground">{t.dashboard.recentActivity}</h2>
-        {recentOffers.length === 0 && recentInvoices.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t.dashboard.noActivity}</p>
-        ) : (
+      {recentItems.length > 0 && (
+        <div>
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">Letzte Aktivität</h2>
           <div className="space-y-2">
-            {recentOffers.map((offer: any) => (
+            {recentItems.map((item: any) => (
               <button
-                key={offer.id}
-                onClick={() => navigate(`/offers/${offer.id}`)}
-                className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-accent/50"
+                key={item.id}
+                onClick={() => navigate(item._type === 'offer' ? `/offers/${item.id}` : `/invoices/${item.id}`)}
+                className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-3 text-left transition hover:border-primary/40"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {offer.offer_number} – {offer.customers?.name}
+                    {(item.customers as any)?.name || item._number}
                   </p>
-                  <p className="text-xs text-muted-foreground">{formatDateDE(offer.date)}</p>
+                  <p className="text-xs text-muted-foreground">{item._number} · {formatDateDE(item.date)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-2 shrink-0">
-                  <StatusBadge status={offer.status as any} label={(t.status as any)[offer.status] || offer.status} />
-                </div>
-              </button>
-            ))}
-            {recentInvoices.map((inv: any) => (
-              <button
-                key={inv.id}
-                onClick={() => navigate(`/invoices/${inv.id}`)}
-                className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-accent/50"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {inv.invoice_number} – {inv.customers?.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{formatDateDE(inv.date)}</p>
-                </div>
-                <div className="flex items-center gap-2 ml-2 shrink-0">
-                  <StatusBadge status={inv.status as any} label={(t.status as any)[inv.status] || inv.status} />
+                  <span className="text-sm font-medium text-foreground">{formatEUR(item.grand_total)}</span>
+                  <StatusBadge status={item.status as any} label={statusLabel[item.status] || item.status} />
                 </div>
               </button>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Upcoming recurring — for non-emphasized industries, show at bottom */}
-      {!showRecurringEmphasis && nextRecurring && (
-        <button
-          onClick={() => navigate('/recurring-invoices')}
-          className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 text-left transition-colors hover:bg-accent/50"
-        >
-          <RepeatIcon className="h-5 w-5 text-primary shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground">
-              {(t as any).recurring.upcomingRecurring}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {(nextRecurring as any).customer?.name} – {formatDateDE((nextRecurring as any).next_run_date)}
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-        </button>
-      )}
-
-      {/* Stats (secondary) */}
-      <div>
-        <h2 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.dashboard.statsTitle}</h2>
-        <div className="grid grid-cols-3 gap-2 md:gap-3">
-          <StatCard title={t.dashboard.totalCustomers} value={customerCount} icon={Users} />
-          <StatCard title={t.dashboard.totalOffers} value={offerCount} icon={FileText} />
-          <StatCard title={t.dashboard.totalInvoices} value={invoiceCounts.total} icon={Receipt} />
         </div>
-      </div>
+      )}
     </div>
   );
 };
