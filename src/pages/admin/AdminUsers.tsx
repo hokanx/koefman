@@ -1,8 +1,19 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDateDE } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Check, X, Pause, RotateCcw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const statusLabels: Record<string, string> = {
   pending: 'Wartend',
@@ -18,8 +29,21 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-muted text-muted-foreground',
 };
 
+const actionLabels: Record<string, string> = {
+  active: 'Freischalten',
+  suspended: 'Sperren',
+  cancelled: 'Kündigen',
+};
+
+const actionDescriptions: Record<string, string> = {
+  active: 'Der Benutzer erhält vollen Zugriff auf die Plattform.',
+  suspended: 'Der Benutzer wird vorübergehend gesperrt und kann nicht auf die Plattform zugreifen.',
+  cancelled: 'Der Benutzer wird dauerhaft deaktiviert und verliert den Zugriff.',
+};
+
 const AdminUsers = () => {
   const qc = useQueryClient();
+  const [confirmAction, setConfirmAction] = useState<{ userId: string; status: string; email: string } | null>(null);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
@@ -31,7 +55,6 @@ const AdminUsers = () => {
 
       if (!profiles) return [];
 
-      // Get business settings for company names
       const { data: settings } = await supabase
         .from('business_settings')
         .select('user_id, business_name');
@@ -57,9 +80,17 @@ const AdminUsers = () => {
       qc.invalidateQueries({ queryKey: ['admin-users'] });
       qc.invalidateQueries({ queryKey: ['admin-stats'] });
       toast.success('Status aktualisiert');
+      setConfirmAction(null);
     },
-    onError: () => toast.error('Fehler beim Aktualisieren'),
+    onError: () => {
+      toast.error('Fehler beim Aktualisieren');
+      setConfirmAction(null);
+    },
   });
+
+  const requestChange = (userId: string, status: string, email: string) => {
+    setConfirmAction({ userId, status, email });
+  };
 
   if (isLoading) {
     return (
@@ -92,7 +123,7 @@ const AdminUsers = () => {
             <div className="flex flex-wrap gap-2">
               {u.account_status === 'pending' && (
                 <button
-                  onClick={() => updateStatus.mutate({ userId: u.id, status: 'active' })}
+                  onClick={() => requestChange(u.id, 'active', u.email || '')}
                   className="inline-flex items-center gap-1 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/20 transition-colors"
                 >
                   <Check className="h-3.5 w-3.5" /> Freischalten
@@ -100,7 +131,7 @@ const AdminUsers = () => {
               )}
               {u.account_status === 'active' && (
                 <button
-                  onClick={() => updateStatus.mutate({ userId: u.id, status: 'suspended' })}
+                  onClick={() => requestChange(u.id, 'suspended', u.email || '')}
                   className="inline-flex items-center gap-1 rounded-lg bg-warning/10 px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/20 transition-colors"
                 >
                   <Pause className="h-3.5 w-3.5" /> Sperren
@@ -108,7 +139,7 @@ const AdminUsers = () => {
               )}
               {(u.account_status === 'suspended' || u.account_status === 'cancelled') && (
                 <button
-                  onClick={() => updateStatus.mutate({ userId: u.id, status: 'active' })}
+                  onClick={() => requestChange(u.id, 'active', u.email || '')}
                   className="inline-flex items-center gap-1 rounded-lg bg-success/10 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/20 transition-colors"
                 >
                   <RotateCcw className="h-3.5 w-3.5" /> Reaktivieren
@@ -116,7 +147,7 @@ const AdminUsers = () => {
               )}
               {u.account_status !== 'cancelled' && u.account_status !== 'pending' && (
                 <button
-                  onClick={() => updateStatus.mutate({ userId: u.id, status: 'cancelled' })}
+                  onClick={() => requestChange(u.id, 'cancelled', u.email || '')}
                   className="inline-flex items-center gap-1 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/20 transition-colors"
                 >
                   <X className="h-3.5 w-3.5" /> Kündigen
@@ -130,6 +161,34 @@ const AdminUsers = () => {
           <p className="text-center text-sm text-muted-foreground py-8">Keine Benutzer vorhanden.</p>
         )}
       </div>
+
+      <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Status ändern: {confirmAction ? actionLabels[confirmAction.status] || confirmAction.status : ''}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="block mb-2">
+                Benutzer: <strong>{confirmAction?.email}</strong>
+              </span>
+              {confirmAction ? actionDescriptions[confirmAction.status] || '' : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmAction) {
+                  updateStatus.mutate({ userId: confirmAction.userId, status: confirmAction.status });
+                }
+              }}
+            >
+              Bestätigen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
