@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, FileStack, MoreHorizontal, Sun, Moon, RepeatIcon, ScrollText, PiggyBank, FolderOpen, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, Settings, LogOut, Inbox, MoreHorizontal, Sun, Moon, PiggyBank, FolderOpen, Shield } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -46,19 +46,15 @@ const AppLayout = () => {
   });
 
   const primaryNavItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: t.nav.dashboard },
-    { to: '/customers', icon: Users, label: t.nav.customers },
-    { to: '/offers', icon: FileText, label: t.nav.offers },
-    { to: '/invoices', icon: Receipt, label: t.nav.invoices },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Übersicht' },
+    { to: '/revenue', icon: Receipt, label: 'Einnahmen' },
+    { to: '/expenses', icon: FolderOpen, label: 'Ausgaben' },
+    { to: '/tax-export', icon: PiggyBank, label: 'Steuer Export' },
   ];
 
   const secondaryNavItems = [
+    { to: '/customers', icon: Users, label: t.nav.customers, badge: 0 },
     { to: '/leads', icon: Inbox, label: t.nav.leads, badge: newLeadsCount },
-    { to: '/contracts', icon: ScrollText, label: (t as any).contracts?.title || 'Verträge', badge: 0 },
-    { to: '/recurring-invoices', icon: RepeatIcon, label: (t as any).recurring?.title || 'Wiederkehrend', badge: 0 },
-    { to: '/finances', icon: PiggyBank, label: (t as any).finances?.title || 'Steuer & Finanzen', badge: 0 },
-    { to: '/documents', icon: FolderOpen, label: 'Belege & Dokumente', badge: 0 },
-    { to: '/templates', icon: FileStack, label: t.nav.templates, badge: 0 },
     { to: '/settings', icon: Settings, label: t.nav.settings, badge: 0 },
   ];
 

@@ -37,6 +37,9 @@ import RecurringInvoices from "@/pages/RecurringInvoices";
 import Contracts from "@/pages/Contracts";
 import Finances from "@/pages/Finances";
 import Documents from "@/pages/Documents";
+import Revenue from "@/pages/Revenue";
+import Expenses from "@/pages/Expenses";
+import TaxExport from "@/pages/TaxExport";
 import Onboarding from "@/pages/Onboarding";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminUsers from "@/pages/admin/AdminUsers";
@@ -93,6 +96,9 @@ const AppWithImpersonation = () => {
               </Route>
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/revenue" element={<Revenue />} />
+                <Route path="/expenses" element={<Expenses />} />
+                <Route path="/tax-export" element={<TaxExport />} />
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/customers/new" element={<CustomerNew />} />
                 <Route path="/customers/:id" element={<CustomerDetail />} />
@@ -105,13 +111,13 @@ const AppWithImpersonation = () => {
                 <Route path="/invoices/new" element={<InvoiceNew />} />
                 <Route path="/invoices/:id" element={<InvoiceDetail />} />
                 <Route path="/invoices/:id/edit" element={<InvoiceEdit />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/leads" element={<Leads />} />
-              <Route path="/templates" element={<Templates />} />
-              <Route path="/recurring-invoices" element={<RecurringInvoices />} />
-              <Route path="/contracts" element={<Contracts />} />
-              <Route path="/finances" element={<Finances />} />
-              <Route path="/documents" element={<Documents />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/leads" element={<Leads />} />
+                <Route path="/templates" element={<Templates />} />
+                <Route path="/recurring-invoices" element={<RecurringInvoices />} />
+                <Route path="/contracts" element={<Contracts />} />
+                <Route path="/finances" element={<Finances />} />
+                <Route path="/documents" element={<Documents />} />
               </Route>
               <Route path="/intake/:token" element={<IntakeForm />} />
               <Route path="/offer/view/:token" element={<PublicOfferView />} />
