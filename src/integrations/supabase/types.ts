@@ -1386,6 +1386,87 @@ export type Database = {
           },
         ]
       }
+      org_expenses: {
+        Row: {
+          amount_gross: number
+          amount_net: number | null
+          amount_tax: number | null
+          booking_date: string | null
+          category: string
+          created_at: string
+          created_by_user_id: string | null
+          currency: string
+          description: string | null
+          expense_date: string
+          export_status: string
+          id: string
+          linked_document_id: string | null
+          notes: string | null
+          organization_id: string
+          receipt_file_name: string | null
+          receipt_file_url: string | null
+          updated_at: string
+          vendor_name: string
+        }
+        Insert: {
+          amount_gross?: number
+          amount_net?: number | null
+          amount_tax?: number | null
+          booking_date?: string | null
+          category?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string
+          description?: string | null
+          expense_date?: string
+          export_status?: string
+          id?: string
+          linked_document_id?: string | null
+          notes?: string | null
+          organization_id: string
+          receipt_file_name?: string | null
+          receipt_file_url?: string | null
+          updated_at?: string
+          vendor_name?: string
+        }
+        Update: {
+          amount_gross?: number
+          amount_net?: number | null
+          amount_tax?: number | null
+          booking_date?: string | null
+          category?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string
+          description?: string | null
+          expense_date?: string
+          export_status?: string
+          id?: string
+          linked_document_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          receipt_file_name?: string | null
+          receipt_file_url?: string | null
+          updated_at?: string
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_expenses_linked_document_id_fkey"
+            columns: ["linked_document_id"]
+            isOneToOne: false
+            referencedRelation: "org_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_expenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_commercials: {
         Row: {
           commercial_status: string
