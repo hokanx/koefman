@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Building2, ArrowLeft, UserCheck, FolderOpen, FileStack, Inbox, Landmark, FileText, FilePlus2 } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Building2, ArrowLeft, UserCheck, FolderOpen, FileStack, Inbox, Landmark, FileText, FilePlus2, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/admin/workspaces', icon: Building2, label: 'Firmen' },
   { to: '/admin/organizations', icon: Landmark, label: 'Organisationen' },
   { to: '/admin/org-documents', icon: FilePlus2, label: 'Org-Dokumente' },
+  { to: '/admin/org-expenses', icon: Receipt, label: 'Ausgaben' },
 ];
 
 const AdminLayout = () => {
