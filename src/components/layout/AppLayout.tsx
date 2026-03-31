@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Receipt, Settings, LogOut, Inbox, FileStack, MoreHorizontal, Sun, Moon, RepeatIcon, ScrollText, PiggyBank, FolderOpen, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, Settings, LogOut, Inbox, MoreHorizontal, Sun, Moon, PiggyBank, FolderOpen, Shield } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
