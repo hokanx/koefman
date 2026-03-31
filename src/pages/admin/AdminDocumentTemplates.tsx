@@ -108,6 +108,19 @@ const AdminDocumentTemplates = () => {
         updated_by_user_id: user?.id || null,
       };
 
+      // Deactivate other active global templates of same type before saving as active
+      if (payload.is_active) {
+        let deactivateQuery = supabase
+          .from('document_templates' as any)
+          .update({ is_active: false })
+          .eq('template_type', payload.template_type)
+          .eq('scope_type', 'global')
+          .is('organization_id', null)
+          .eq('is_active', true);
+        if (editingId) deactivateQuery = deactivateQuery.neq('id', editingId);
+        await deactivateQuery;
+      }
+
       if (editingId) {
         const { error } = await supabase.from('document_templates' as any).update(payload).eq('id', editingId);
         if (error) throw error;

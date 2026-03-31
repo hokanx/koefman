@@ -39,6 +39,8 @@ const OrgTemplateOverrides = ({ organizationId }: Props) => {
     template_type: 'offer',
     is_active: true,
     content_json: '{}',
+    content_html: '',
+    content_text: '',
     notes: '',
   });
 
