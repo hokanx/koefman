@@ -1,0 +1,1 @@
+ALTER TABLE public.organization_commercials ADD COLUMN discount_scope text NOT NULL DEFAULT 'both';
