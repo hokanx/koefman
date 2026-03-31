@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgTemplateStatus } from '@/hooks/useTemplateResolver';
 import { useAuth } from '@/contexts/AuthContext';
-import { Globe, Building2, Plus, Trash2, Edit2, Check } from 'lucide-react';
+import { Globe, Building2, Plus, Trash2, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,7 +22,7 @@ const TEMPLATE_TYPES = [
   { key: 'generic_document', label: 'Allgemein' },
 ];
 
-const TYPE_LABELS: Record<string, string> = Object.fromEntries(TEMPLATE_TYPES.map(t => [t.key, t.label]));
+
 
 interface Props {
   organizationId: string;
@@ -39,12 +39,14 @@ const OrgTemplateOverrides = ({ organizationId }: Props) => {
     template_type: 'offer',
     is_active: true,
     content_json: '{}',
+    content_html: '',
+    content_text: '',
     notes: '',
   });
 
   const openCreate = (type?: string) => {
     setEditingId(null);
-    setForm({ name: '', template_type: type || 'offer', is_active: true, content_json: '{}', notes: '' });
+    setForm({ name: '', template_type: type || 'offer', is_active: true, content_json: '{}', content_html: '', content_text: '', notes: '' });
     setDialogOpen(true);
   };
 
@@ -55,6 +57,8 @@ const OrgTemplateOverrides = ({ organizationId }: Props) => {
       template_type: t.template_type,
       is_active: t.is_active,
       content_json: JSON.stringify(t.content_json || {}, null, 2),
+      content_html: t.content_html || '',
+      content_text: t.content_text || '',
       notes: t.notes || '',
     });
     setDialogOpen(true);
@@ -73,9 +77,24 @@ const OrgTemplateOverrides = ({ organizationId }: Props) => {
         organization_id: organizationId,
         is_active: form.is_active,
         content_json: parsedJson,
+        content_html: form.content_html || null,
+        content_text: form.content_text || null,
         notes: form.notes || null,
         updated_by_user_id: user?.id || null,
       };
+
+      // Deactivate other active org templates of same type before saving as active
+      if (payload.is_active) {
+        let deactivateQuery = supabase
+          .from('document_templates' as any)
+          .update({ is_active: false })
+          .eq('template_type', payload.template_type)
+          .eq('scope_type', 'organization')
+          .eq('organization_id', organizationId)
+          .eq('is_active', true);
+        if (editingId) deactivateQuery = deactivateQuery.neq('id', editingId);
+        await deactivateQuery;
+      }
 
       if (editingId) {
         const { error } = await supabase.from('document_templates' as any).update(payload).eq('id', editingId);
@@ -192,6 +211,14 @@ const OrgTemplateOverrides = ({ organizationId }: Props) => {
             <div>
               <label className="mb-1 block text-sm font-medium">Inhalt (JSON)</label>
               <Textarea value={form.content_json} onChange={(e) => setForm(f => ({ ...f, content_json: e.target.value }))} rows={5} className="font-mono text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">HTML (optional)</label>
+              <Textarea value={form.content_html} onChange={(e) => setForm(f => ({ ...f, content_html: e.target.value }))} rows={3} className="font-mono text-xs" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Text (optional)</label>
+              <Textarea value={form.content_text} onChange={(e) => setForm(f => ({ ...f, content_text: e.target.value }))} rows={3} />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Notizen</label>

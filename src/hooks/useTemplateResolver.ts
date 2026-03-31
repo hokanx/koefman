@@ -11,30 +11,44 @@ export const useTemplateResolver = (organizationId: string | null, templateType:
   return useQuery({
     queryKey: ['resolved-template', organizationId, templateType],
     queryFn: async () => {
-      // Try org-specific first
+      // Try org-specific first (order by version desc for determinism)
       if (organizationId) {
-        const { data: orgTemplate } = await supabase
+        const { data: orgTemplates } = await supabase
           .from('document_templates' as any)
           .select('*')
           .eq('template_type', templateType)
           .eq('scope_type', 'organization')
           .eq('organization_id', organizationId)
           .eq('is_active', true)
-          .maybeSingle();
-        if (orgTemplate) return { template: orgTemplate as any, source: 'organization' as const };
+          .order('version_number', { ascending: false })
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        const orgTemplate = orgTemplates?.[0];
+        if (orgTemplate) {
+          if ((orgTemplates?.length ?? 0) > 1) {
+            console.warn(`[TemplateResolver] Multiple active org templates for type="${templateType}", org="${organizationId}". Using most recent.`);
+          }
+          return { template: orgTemplate as any, source: 'organization' as const };
+        }
       }
 
-      // Fallback to global
-      const { data: globalTemplate } = await supabase
+      // Fallback to global (order by version desc for determinism)
+      const { data: globalTemplates } = await supabase
         .from('document_templates' as any)
         .select('*')
         .eq('template_type', templateType)
         .eq('scope_type', 'global')
         .is('organization_id', null)
         .eq('is_active', true)
-        .maybeSingle();
+        .order('version_number', { ascending: false })
+        .order('updated_at', { ascending: false })
+        .limit(1);
 
-      return { template: globalTemplate as any ?? null, source: 'global' as const };
+      if ((globalTemplates?.length ?? 0) > 1) {
+        console.warn(`[TemplateResolver] Multiple active global templates for type="${templateType}". Using most recent.`);
+      }
+
+      return { template: (globalTemplates?.[0] as any) ?? null, source: 'global' as const };
     },
     enabled: !!templateType,
   });

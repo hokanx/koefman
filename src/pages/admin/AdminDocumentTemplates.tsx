@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit2, Trash2, Save, X, Globe, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, Globe, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -107,6 +107,19 @@ const AdminDocumentTemplates = () => {
         notes: form.notes || null,
         updated_by_user_id: user?.id || null,
       };
+
+      // Deactivate other active global templates of same type before saving as active
+      if (payload.is_active) {
+        let deactivateQuery = supabase
+          .from('document_templates' as any)
+          .update({ is_active: false })
+          .eq('template_type', payload.template_type)
+          .eq('scope_type', 'global')
+          .is('organization_id', null)
+          .eq('is_active', true);
+        if (editingId) deactivateQuery = deactivateQuery.neq('id', editingId);
+        await deactivateQuery;
+      }
 
       if (editingId) {
         const { error } = await supabase.from('document_templates' as any).update(payload).eq('id', editingId);
