@@ -5,12 +5,14 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import NotificationBell from '@/components/shared/NotificationBell';
 import BrandMark from '@/components/shared/BrandMark';
+import WorkspaceSwitcher from '@/components/admin/WorkspaceSwitcher';
 import {
   Sheet,
   SheetContent,
@@ -24,6 +26,7 @@ const AppLayout = () => {
   const { theme, toggleTheme } = useTheme();
   const { isImpersonating, impersonatedUser, stopImpersonation } = useImpersonation();
   const { isAdmin } = useAdmin();
+  const { isAdminWorkspaceMode, activeOrganization } = useWorkspace();
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -86,6 +89,7 @@ const AppLayout = () => {
           <BrandMark variant="wordmark" size="md" />
         </div>
         <div className="flex items-center gap-1">
+          {isAdmin && !isImpersonating && <WorkspaceSwitcher />}
           <NotificationBell />
           {isAdmin && !isImpersonating && (
             <button
