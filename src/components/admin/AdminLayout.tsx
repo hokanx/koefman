@@ -9,6 +9,7 @@ const navItems = [
   { to: '/admin/clients', icon: UserCheck, label: 'Kunden' },
   { to: '/admin/documents', icon: FolderOpen, label: 'Belege' },
   { to: '/admin/templates', icon: FileStack, label: 'Vorlagen' },
+  { to: '/admin/document-templates', icon: FileText, label: 'Dok.-Vorlagen' },
   { to: '/admin/subscriptions', icon: CreditCard, label: 'Abos' },
   { to: '/admin/workspaces', icon: Building2, label: 'Firmen' },
   { to: '/admin/organizations', icon: Landmark, label: 'Organisationen' },
