@@ -14,6 +14,7 @@ const navItems = [
   { to: '/admin/workspaces', icon: Building2, label: 'Firmen' },
   { to: '/admin/organizations', icon: Landmark, label: 'Organisationen' },
   { to: '/admin/org-documents', icon: FilePlus2, label: 'Org-Dokumente' },
+  { to: '/admin/org-expenses', icon: Receipt, label: 'Ausgaben' },
 ];
 
 const AdminLayout = () => {
