@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import CommercialSettings from '@/components/admin/CommercialSettings';
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Inhaber',
@@ -231,6 +232,9 @@ const AdminOrganizationDetail = () => {
           </div>
         ))}
       </div>
+
+      {/* Commercial Settings */}
+      <CommercialSettings organizationId={id!} />
 
       {/* Add member dialog */}
       <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>

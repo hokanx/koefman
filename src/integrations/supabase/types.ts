@@ -1243,6 +1243,68 @@ export type Database = {
           },
         ]
       }
+      organization_commercials: {
+        Row: {
+          commercial_status: string
+          contract_duration_months: number
+          contract_end_date: string | null
+          contract_start_date: string | null
+          created_at: string
+          discount_type: string | null
+          discount_value: number | null
+          final_monthly_fee: number
+          final_setup_fee: number
+          id: string
+          monthly_fee_default: number
+          notes: string | null
+          organization_id: string
+          setup_fee_default: number
+          updated_at: string
+        }
+        Insert: {
+          commercial_status?: string
+          contract_duration_months?: number
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          final_monthly_fee?: number
+          final_setup_fee?: number
+          id?: string
+          monthly_fee_default?: number
+          notes?: string | null
+          organization_id: string
+          setup_fee_default?: number
+          updated_at?: string
+        }
+        Update: {
+          commercial_status?: string
+          contract_duration_months?: number
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          final_monthly_fee?: number
+          final_setup_fee?: number
+          id?: string
+          monthly_fee_default?: number
+          notes?: string | null
+          organization_id?: string
+          setup_fee_default?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_commercials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_memberships: {
         Row: {
           created_at: string
