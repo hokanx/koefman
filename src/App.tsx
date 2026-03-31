@@ -61,6 +61,7 @@ const queryClient = new QueryClient();
 const AppWithImpersonation = () => {
   const { user } = useAuth();
   return (
+    <WorkspaceProvider>
     <ImpersonationProvider realUserId={user?.id ?? null}>
       <TooltipProvider>
         <Sonner />
