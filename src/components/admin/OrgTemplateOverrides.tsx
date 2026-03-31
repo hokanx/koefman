@@ -77,9 +77,24 @@ const OrgTemplateOverrides = ({ organizationId }: Props) => {
         organization_id: organizationId,
         is_active: form.is_active,
         content_json: parsedJson,
+        content_html: form.content_html || null,
+        content_text: form.content_text || null,
         notes: form.notes || null,
         updated_by_user_id: user?.id || null,
       };
+
+      // Deactivate other active org templates of same type before saving as active
+      if (payload.is_active) {
+        let deactivateQuery = supabase
+          .from('document_templates' as any)
+          .update({ is_active: false })
+          .eq('template_type', payload.template_type)
+          .eq('scope_type', 'organization')
+          .eq('organization_id', organizationId)
+          .eq('is_active', true);
+        if (editingId) deactivateQuery = deactivateQuery.neq('id', editingId);
+        await deactivateQuery;
+      }
 
       if (editingId) {
         const { error } = await supabase.from('document_templates' as any).update(payload).eq('id', editingId);
