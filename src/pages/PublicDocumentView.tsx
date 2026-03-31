@@ -136,6 +136,11 @@ const PublicDocumentView = () => {
             className="rounded-xl border border-border bg-card p-6 prose prose-sm max-w-none dark:prose-invert"
             dangerouslySetInnerHTML={{ __html: doc.rendered_html }}
           />
+        ) : doc.template_snapshot_json?.content_html ? (
+          <div
+            className="rounded-xl border border-border bg-card p-6 prose prose-sm max-w-none dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: doc.template_snapshot_json.content_html }}
+          />
         ) : payload.description ? (
           <div className="rounded-xl border border-border bg-card p-6">
             <p className="text-sm text-foreground whitespace-pre-wrap">{payload.description}</p>
