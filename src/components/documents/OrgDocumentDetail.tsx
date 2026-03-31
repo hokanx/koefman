@@ -1,7 +1,11 @@
-import { FileText, X, Calendar, Mail, User, Hash, Layers, StickyNote } from 'lucide-react';
+import { useState } from 'react';
+import { FileText, Calendar, Mail, User, Hash, Layers, StickyNote, Send, Link, ExternalLink, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import StatusBadge from '@/components/shared/StatusBadge';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   type OrgDocument,
   type OrgDocumentStatus,
@@ -32,15 +36,73 @@ interface Props {
 
 const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
   const updateMutation = useUpdateOrgDocument();
+  const [isSending, setIsSending] = useState(false);
+
+  // Check for acceptance
+  const { data: acceptance } = useQuery({
+    queryKey: ['org-doc-acceptance', doc?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('org_document_acceptances' as any)
+        .select('*')
+        .eq('document_id', doc!.id)
+        .limit(1);
+      if (error) throw error;
+      return (data as any)?.[0] || null;
+    },
+    enabled: !!doc?.id && open,
+  });
 
   if (!doc) return null;
 
   const allowedStatuses = getStatusesForType(doc.document_type);
   const payload = doc.document_payload_json ?? {};
   const hasTemplate = !!doc.template_snapshot_json?.id;
+  const docAny = doc as any;
+  const publicToken = docAny.public_token;
+  const sentAt = docAny.sent_at;
 
   const handleStatusChange = (newStatus: OrgDocumentStatus) => {
     updateMutation.mutate({ id: doc.id, status: newStatus } as any);
+  };
+
+  const handleSend = async () => {
+    if (!doc.recipient_email) {
+      toast.error('Keine Empfänger-E-Mail vorhanden');
+      return;
+    }
+    setIsSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-org-document-email', {
+        body: { document_id: doc.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success('Dokument erfolgreich gesendet');
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Senden');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (!publicToken) {
+      toast.error('Kein öffentlicher Link vorhanden. Bitte zuerst senden.');
+      return;
+    }
+    const url = `${window.location.origin}/document/view/${publicToken}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Link kopiert');
+  };
+
+  const handleOpenPublic = () => {
+    if (!publicToken) {
+      toast.error('Kein öffentlicher Link vorhanden');
+      return;
+    }
+    window.open(`${window.location.origin}/document/view/${publicToken}`, '_blank');
   };
 
   return (
@@ -55,6 +117,30 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
 
         {/* Summary line */}
         <p className="text-sm font-medium text-muted-foreground">{getDocSummaryLine(doc)}</p>
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            onClick={handleSend}
+            disabled={isSending || !doc.recipient_email}
+          >
+            <Send className="mr-1.5 h-3.5 w-3.5" />
+            {isSending ? 'Senden…' : 'Senden'}
+          </Button>
+          {publicToken && (
+            <>
+              <Button size="sm" variant="outline" onClick={handleCopyLink}>
+                <Link className="mr-1.5 h-3.5 w-3.5" />
+                Link kopieren
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleOpenPublic}>
+                <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                Öffnen
+              </Button>
+            </>
+          )}
+        </div>
 
         {/* Meta grid */}
         <div className="grid grid-cols-2 gap-3 text-sm">
@@ -90,6 +176,30 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
             </div>
           )}
         </div>
+
+        {/* Sent metadata */}
+        {sentAt && (
+          <div className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+            <Send className="inline h-3 w-3 mr-1" />
+            Gesendet am {formatDateDE(sentAt)}
+          </div>
+        )}
+
+        {/* Acceptance info */}
+        {acceptance && (
+          <div className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs space-y-1">
+            <div className="flex items-center gap-1 text-primary font-medium">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Angenommen
+            </div>
+            {acceptance.accepted_by_name && (
+              <p className="text-muted-foreground">Von: {acceptance.accepted_by_name}</p>
+            )}
+            {acceptance.accepted_at && (
+              <p className="text-muted-foreground">Am: {formatDateDE(acceptance.accepted_at)}</p>
+            )}
+          </div>
+        )}
 
         {/* Payload extras */}
         {(payload.description || payload.due_date || payload.start_date || payload.related_invoice) && (
