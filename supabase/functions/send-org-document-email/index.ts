@@ -142,8 +142,8 @@ Deno.serve(async (req) => {
         .eq('id', document_id);
     }
 
-    const siteUrl = Deno.env.get('SUPABASE_URL')!.replace('.supabase.co', '.lovable.app').replace('https://ppijwrrzjcbtokoxpctf.supabase.co', 'https://koefman.lovable.app');
-    const signingUrl = `https://koefman.lovable.app/document/view/${publicToken}`;
+    const appUrl = (Deno.env.get('PUBLIC_APP_URL') || 'https://koefman.de').replace(/\/+$/, '');
+    const signingUrl = `${appUrl}/document/view/${publicToken}`;
 
     const senderName = emailSettings?.sender_name || org?.name || 'KÖFMAN';
     const replyTo = emailSettings?.reply_to_email || undefined;

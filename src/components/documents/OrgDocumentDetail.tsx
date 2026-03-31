@@ -80,6 +80,8 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success('Dokument erfolgreich gesendet');
+      queryClient.invalidateQueries({ queryKey: ['org-documents'] });
+      queryClient.invalidateQueries({ queryKey: ['org-doc-acceptance', doc.id] });
       onOpenChange(false);
     } catch (err: any) {
       toast.error(err.message || 'Fehler beim Senden');
