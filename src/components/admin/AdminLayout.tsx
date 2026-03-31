@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Building2, ArrowLeft, UserCheck, FolderOpen, FileStack, Inbox } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Building2, ArrowLeft, UserCheck, FolderOpen, FileStack, Inbox, Landmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
