@@ -40,6 +40,8 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
 import AdminWorkspaces from "@/pages/admin/AdminWorkspaces";
+import AdminOrganizations from "@/pages/admin/AdminOrganizations";
+import AdminOrganizationDetail from "@/pages/admin/AdminOrganizationDetail";
 import AdminClients from "@/pages/admin/AdminClients";
 import AdminDocuments from "@/pages/admin/AdminDocuments";
 import AdminTemplates from "@/pages/admin/AdminTemplates";
