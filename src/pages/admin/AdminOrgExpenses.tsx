@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Receipt, Plus, Trash2, Filter, Search, Paperclip, Eye, Upload } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
+import { Receipt, Plus, Trash2, Filter, Search, Paperclip, Eye, Upload, Download, CheckSquare, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -30,6 +30,15 @@ const EXPORT_BADGE_MAP: Record<string, any> = {
   archived: 'archived',
 };
 
+const formatDateCSV = (d: string | null) => {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}.${m}.${y}`;
+};
+
+const formatNumDE = (n: number | null | undefined) =>
+  n != null ? n.toFixed(2).replace('.', ',') : '';
+
 const AdminOrgExpenses = () => {
   const { activeOrganization, activeOrganizationId } = useWorkspace();
   const [filterCategory, setFilterCategory] = useState<ExpenseCategory | undefined>();
@@ -37,6 +46,12 @@ const AdminOrgExpenses = () => {
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<OrgExpense | null>(null);
+
+  // Export state
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
 
   // Create form
   const [form, setForm] = useState({
@@ -58,6 +73,43 @@ const AdminOrgExpenses = () => {
   const deleteMutation = useDeleteOrgExpense();
   const updateMutation = useUpdateOrgExpense();
 
+  // Apply search + date range filters
+  const filtered = useMemo(() => {
+    return expenses.filter((e) => {
+      if (search) {
+        const s = search.toLowerCase();
+        if (!e.vendor_name?.toLowerCase().includes(s) && !e.description?.toLowerCase().includes(s)) return false;
+      }
+      if (dateFrom && e.expense_date < dateFrom) return false;
+      if (dateTo && e.expense_date > dateTo) return false;
+      return true;
+    });
+  }, [expenses, search, dateFrom, dateTo]);
+
+  // Selection helpers
+  const allSelected = filtered.length > 0 && filtered.every((e) => selectedIds.has(e.id));
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((e) => e.id)));
+    }
+  };
+
+  // Export summary
+  const exportable = useMemo(() => {
+    const items = selectedIds.size > 0 ? filtered.filter((e) => selectedIds.has(e.id)) : filtered;
+    const totalGross = items.reduce((s, e) => s + Number(e.amount_gross), 0);
+    return { items, totalGross, count: items.length };
+  }, [filtered, selectedIds]);
+
   if (!activeOrganizationId) {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
@@ -66,15 +118,6 @@ const AdminOrgExpenses = () => {
       </div>
     );
   }
-
-  const filtered = expenses.filter((e) => {
-    if (!search) return true;
-    const s = search.toLowerCase();
-    return (
-      e.vendor_name?.toLowerCase().includes(s) ||
-      e.description?.toLowerCase().includes(s)
-    );
-  });
 
   const parseNum = (v: string) => {
     const n = parseFloat(v.replace(',', '.'));
@@ -149,6 +192,69 @@ const AdminOrgExpenses = () => {
     if (selectedExpense?.id === expense.id) {
       setSelectedExpense({ ...expense, export_status: newStatus });
     }
+  };
+
+  // CSV export
+  const handleCsvExport = () => {
+    const { items } = exportable;
+    if (items.length === 0) {
+      toast.error('Keine Ausgaben zum Exportieren.');
+      return;
+    }
+    const header = [
+      'Datum', 'Buchungsdatum', 'Lieferant', 'Beschreibung', 'Kategorie',
+      'Netto', 'USt', 'Brutto', 'Währung', 'Belegdatei', 'Beleg-URL',
+      'Exportstatus', 'Verknüpftes Dokument', 'Notizen',
+    ];
+    const rows = items.map((e) => [
+      formatDateCSV(e.expense_date),
+      formatDateCSV(e.booking_date),
+      e.vendor_name,
+      e.description ?? '',
+      getCategoryLabel(e.category),
+      formatNumDE(e.amount_net),
+      formatNumDE(e.amount_tax),
+      formatNumDE(e.amount_gross),
+      e.currency,
+      e.receipt_file_name ?? '',
+      e.receipt_file_url ?? '',
+      getExportStatusLabel(e.export_status),
+      e.linked_document_id ?? '',
+      e.notes ?? '',
+    ]);
+    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const range = dateFrom || dateTo ? `_${dateFrom || 'start'}_${dateTo || 'end'}` : '';
+    a.download = `Ausgaben${range}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${items.length} Ausgaben exportiert`);
+  };
+
+  // Mark exported with confirmation
+  const handleMarkExported = async () => {
+    const { items } = exportable;
+    const toMark = items.filter((e) => e.export_status !== 'exported');
+    if (toMark.length === 0) {
+      toast.info('Alle ausgewählten Ausgaben sind bereits exportiert.');
+      setShowExportConfirm(false);
+      return;
+    }
+    for (const e of toMark) {
+      await supabase
+        .from('org_expenses' as any)
+        .update({ export_status: 'exported' } as any)
+        .eq('id', e.id);
+    }
+    toast.success(`${toMark.length} Ausgaben als exportiert markiert`);
+    setShowExportConfirm(false);
+    setSelectedIds(new Set());
+    // Invalidate
+    updateMutation.reset();
+    window.location.reload(); // simple refresh to refetch
   };
 
   return (
@@ -257,7 +363,41 @@ const AdminOrgExpenses = () => {
         </div>
       </div>
 
-      {/* Expense list */}
+      {/* Export toolbar */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-foreground">Export</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">Von</label>
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">Bis</label>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <span className="text-muted-foreground">
+            {selectedIds.size > 0
+              ? `${selectedIds.size} von ${filtered.length} ausgewählt`
+              : `${exportable.count} Ausgaben`}
+          </span>
+          <span className="font-semibold text-foreground">Brutto gesamt: {formatEUR(exportable.totalGross)}</span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={handleCsvExport} disabled={exportable.count === 0}>
+            <Download className="mr-1 h-4 w-4" /> CSV exportieren
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setShowExportConfirm(true)} disabled={exportable.count === 0}>
+            Als exportiert markieren
+          </Button>
+        </div>
+      </div>
+
+      {/* Expense list with selection */}
       {isLoading ? (
         <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>
       ) : filtered.length === 0 ? (
@@ -267,14 +407,23 @@ const AdminOrgExpenses = () => {
         </div>
       ) : (
         <div className="space-y-2">
+          {/* Select all */}
+          <button onClick={toggleAll} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition px-1">
+            {allSelected ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+            Alle auswählen
+          </button>
+
           {filtered.map((exp) => (
             <div
               key={exp.id}
-              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 hover:border-primary/40 transition cursor-pointer"
-              onClick={() => setSelectedExpense(exp)}
+              className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition cursor-pointer ${
+                selectedIds.has(exp.id) ? 'border-primary/60' : 'border-border hover:border-primary/40'
+              }`}
             >
-              <Receipt className="h-7 w-7 shrink-0 text-muted-foreground" />
-              <div className="min-w-0 flex-1">
+              <button onClick={(e) => { e.stopPropagation(); toggleSelect(exp.id); }} className="shrink-0 text-muted-foreground hover:text-primary">
+                {selectedIds.has(exp.id) ? <CheckSquare className="h-5 w-5 text-primary" /> : <Square className="h-5 w-5" />}
+              </button>
+              <div className="min-w-0 flex-1" onClick={() => setSelectedExpense(exp)}>
                 <div className="flex items-center gap-2">
                   <p className="truncate text-sm font-medium text-foreground">{exp.vendor_name || '–'}</p>
                   <span className="text-sm font-semibold text-foreground">{formatEUR(exp.amount_gross)}</span>
@@ -362,6 +511,22 @@ const AdminOrgExpenses = () => {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Export confirmation dialog */}
+      <Dialog open={showExportConfirm} onOpenChange={setShowExportConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Als exportiert markieren?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {exportable.count} Ausgaben werden als „Exportiert" markiert. Brutto gesamt: {formatEUR(exportable.totalGross)}
+          </p>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button size="sm" variant="ghost" onClick={() => setShowExportConfirm(false)}>Abbrechen</Button>
+            <Button size="sm" onClick={handleMarkExported}>Bestätigen</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
