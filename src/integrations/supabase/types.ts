@@ -1305,6 +1305,92 @@ export type Database = {
           },
         ]
       }
+      org_document_acceptances: {
+        Row: {
+          accepted_at: string
+          accepted_by_name: string | null
+          created_at: string
+          document_id: string
+          id: string
+          ip_address: string | null
+          signature_image: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_by_name?: string | null
+          created_at?: string
+          document_id: string
+          id?: string
+          ip_address?: string | null
+          signature_image?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          accepted_by_name?: string | null
+          created_at?: string
+          document_id?: string
+          id?: string
+          ip_address?: string | null
+          signature_image?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_document_acceptances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "org_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_document_emails: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          organization_id: string
+          recipient_email: string
+          sent_at: string
+          sent_by_user_id: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          organization_id: string
+          recipient_email: string
+          sent_at?: string
+          sent_by_user_id?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          organization_id?: string
+          recipient_email?: string
+          sent_at?: string
+          sent_by_user_id?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_document_emails_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "org_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_document_emails_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_documents: {
         Row: {
           amount_total: number | null
@@ -1317,10 +1403,13 @@ export type Database = {
           id: string
           notes: string | null
           organization_id: string
+          public_token: string | null
           recipient_email: string | null
           recipient_name: string | null
           rendered_content_json: Json | null
           rendered_html: string | null
+          sent_at: string | null
+          sent_by_user_id: string | null
           status: string
           template_id: string | null
           template_snapshot_json: Json | null
@@ -1338,10 +1427,13 @@ export type Database = {
           id?: string
           notes?: string | null
           organization_id: string
+          public_token?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
           rendered_content_json?: Json | null
           rendered_html?: string | null
+          sent_at?: string | null
+          sent_by_user_id?: string | null
           status?: string
           template_id?: string | null
           template_snapshot_json?: Json | null
@@ -1359,10 +1451,13 @@ export type Database = {
           id?: string
           notes?: string | null
           organization_id?: string
+          public_token?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
           rendered_content_json?: Json | null
           rendered_html?: string | null
+          sent_at?: string | null
+          sent_by_user_id?: string | null
           status?: string
           template_id?: string | null
           template_snapshot_json?: Json | null
@@ -1525,6 +1620,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "organization_commercials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_email_settings: {
+        Row: {
+          created_at: string
+          footer_text: string | null
+          id: string
+          logo_url: string | null
+          organization_id: string
+          reply_to_email: string | null
+          sender_name: string | null
+          sending_mode: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          footer_text?: string | null
+          id?: string
+          logo_url?: string | null
+          organization_id: string
+          reply_to_email?: string | null
+          sender_name?: string | null
+          sending_mode?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          footer_text?: string | null
+          id?: string
+          logo_url?: string | null
+          organization_id?: string
+          reply_to_email?: string | null
+          sender_name?: string | null
+          sending_mode?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_email_settings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
             referencedRelation: "organizations"

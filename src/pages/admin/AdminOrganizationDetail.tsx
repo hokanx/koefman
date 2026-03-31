@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import CommercialSettings from '@/components/admin/CommercialSettings';
 import OrgTemplateOverrides from '@/components/admin/OrgTemplateOverrides';
+import OrgEmailSettings from '@/components/admin/OrgEmailSettings';
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Inhaber',
@@ -236,6 +237,9 @@ const AdminOrganizationDetail = () => {
 
       {/* Template Overrides */}
       <OrgTemplateOverrides organizationId={id!} />
+
+      {/* Email Settings */}
+      <OrgEmailSettings organizationId={id!} />
 
       {/* Commercial Settings */}
       <CommercialSettings organizationId={id!} />
