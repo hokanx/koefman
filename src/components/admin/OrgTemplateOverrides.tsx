@@ -47,12 +47,18 @@ const OrgTemplateOverrides = ({ organizationId }: Props) => {
   const openCreate = (type?: string) => {
     setEditingId(null);
     setForm({ name: '', template_type: type || 'offer', is_active: true, content_json: '{}', content_html: '', content_text: '', notes: '' });
+    setDialogOpen(true);
+  };
+
+  const openEdit = (t: any) => {
     setEditingId(t.id);
     setForm({
       name: t.name,
       template_type: t.template_type,
       is_active: t.is_active,
       content_json: JSON.stringify(t.content_json || {}, null, 2),
+      content_html: t.content_html || '',
+      content_text: t.content_text || '',
       notes: t.notes || '',
     });
     setDialogOpen(true);
