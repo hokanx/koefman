@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import CommercialSettings from '@/components/admin/CommercialSettings';
+import OrgTemplateOverrides from '@/components/admin/OrgTemplateOverrides';
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Inhaber',
