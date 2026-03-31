@@ -238,6 +238,9 @@ const AdminOrganizationDetail = () => {
       {/* Template Overrides */}
       <OrgTemplateOverrides organizationId={id!} />
 
+      {/* Email Settings */}
+      <OrgEmailSettings organizationId={id!} />
+
       {/* Commercial Settings */}
       <CommercialSettings organizationId={id!} />
 
