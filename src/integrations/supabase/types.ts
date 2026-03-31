@@ -1250,6 +1250,7 @@ export type Database = {
           contract_end_date: string | null
           contract_start_date: string | null
           created_at: string
+          discount_scope: string
           discount_type: string | null
           discount_value: number | null
           final_monthly_fee: number
@@ -1267,6 +1268,7 @@ export type Database = {
           contract_end_date?: string | null
           contract_start_date?: string | null
           created_at?: string
+          discount_scope?: string
           discount_type?: string | null
           discount_value?: number | null
           final_monthly_fee?: number
@@ -1284,6 +1286,7 @@ export type Database = {
           contract_end_date?: string | null
           contract_start_date?: string | null
           created_at?: string
+          discount_scope?: string
           discount_type?: string | null
           discount_value?: number | null
           final_monthly_fee?: number
