@@ -223,7 +223,7 @@ export default function DiagnosticIntake() {
         : 'border-border text-foreground bg-transparent hover:border-foreground/50'
     }`;
 
-  const pkg = analysis?.recommended_package ? PACKAGE_INFO[analysis.recommended_package] : PACKAGE_INFO['setup_59'];
+  
 
   return (
     <div className="bg-background text-foreground min-h-screen flex flex-col">
