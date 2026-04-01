@@ -9,6 +9,7 @@ import FormSection from '@/components/shared/FormSection';
 import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import { toast } from 'sonner';
 import { generateDocumentNumber } from '@/lib/documentUtils';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import type { Customer, LineItem } from '@/types';
 
 const InvoiceNew = () => {
