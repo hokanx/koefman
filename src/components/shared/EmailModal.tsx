@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Mail, Send, X, ExternalLink } from 'lucide-react';
+import { Mail, Send, X, ExternalLink, Paperclip } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface EmailModalProps {
   open: boolean;
@@ -15,9 +16,9 @@ interface EmailModalProps {
   documentType: string;
   documentId: string;
   onSent?: () => void;
-  /** @deprecated Legacy PDF support – prefer publicLink */
+  /** When provided, shows a checkbox to optionally attach PDF */
   pdfGenerator?: () => Promise<string>;
-  /** @deprecated Legacy PDF support */
+  /** Filename for optional PDF attachment */
   pdfFilename?: string;
 }
 
@@ -31,6 +32,8 @@ const EmailModal = ({
   documentType,
   documentId,
   onSent,
+  pdfGenerator,
+  pdfFilename,
 }: EmailModalProps) => {
   const { t } = useLanguage();
   const { activeOrganizationId } = useWorkspace();
@@ -38,6 +41,7 @@ const EmailModal = ({
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState(defaultBody);
   const [sending, setSending] = useState(false);
+  const [attachPdf, setAttachPdf] = useState(false);
 
   // Reset fields when modal opens with new defaults
   const [lastSubject, setLastSubject] = useState(defaultSubject);
@@ -46,6 +50,7 @@ const EmailModal = ({
     setBody(defaultBody);
     setTo(recipientEmail);
     setLastSubject(defaultSubject);
+    setAttachPdf(false);
   }
 
   if (!open) return null;
@@ -75,16 +80,33 @@ const EmailModal = ({
 
     setSending(true);
     try {
+      // Build payload
+      const payload: Record<string, unknown> = {
+        organization_id: orgId,
+        legacy_document_id: documentId,
+        legacy_document_type: documentType,
+        to,
+        subject,
+        body,
+        public_link: publicLink || undefined,
+      };
+
+      // Optionally attach PDF
+      if (attachPdf && pdfGenerator && pdfFilename) {
+        try {
+          const pdfBase64 = await pdfGenerator();
+          payload.pdfBase64 = pdfBase64;
+          payload.pdfFilename = pdfFilename;
+        } catch (err) {
+          console.error('PDF generation error:', err);
+          toast.error('PDF konnte nicht erstellt werden.');
+          setSending(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('send-org-document-email', {
-        body: {
-          organization_id: orgId,
-          legacy_document_id: documentId,
-          legacy_document_type: documentType,
-          to,
-          subject,
-          body,
-          public_link: publicLink || undefined,
-        },
+        body: payload,
       });
 
       if (error) {
@@ -160,9 +182,23 @@ const EmailModal = ({
 
           {publicLink && (
             <div className="rounded-lg bg-muted/30 border border-border p-3 text-sm text-muted-foreground">
-              <p className="flex items-center gap-2 text-xs font-medium mb-1">🔗 Enthält Link zum Angebot</p>
+              <p className="flex items-center gap-2 text-xs font-medium mb-1">🔗 Enthält Link zum Dokument</p>
               <p className="text-[11px] break-all text-muted-foreground/60">{publicLink}</p>
             </div>
+          )}
+
+          {/* Optional PDF attachment */}
+          {pdfGenerator && pdfFilename && (
+            <label className="flex items-center gap-3 rounded-lg bg-muted/30 border border-border p-3 cursor-pointer">
+              <Checkbox
+                checked={attachPdf}
+                onCheckedChange={(v) => setAttachPdf(v === true)}
+              />
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                PDF zusätzlich anhängen
+              </div>
+            </label>
           )}
         </div>
 

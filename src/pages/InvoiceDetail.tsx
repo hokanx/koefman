@@ -530,12 +530,12 @@ const InvoiceDetail = () => {
         defaultBody={emailType === 'reminder'
           ? t.email.reminderBody.replace(/{number}/g, invoice?.invoice_number || '')
           : t.email.invoiceBody.replace(/{number}/g, invoice?.invoice_number || '')}
+        documentType={emailType === 'reminder' ? 'reminder' : 'invoice'}
+        documentId={id!}
         pdfGenerator={emailType === 'reminder' ? getReminderPdfBase64 : getInvoicePdfBase64}
         pdfFilename={emailType === 'reminder'
           ? `Zahlungserinnerung_${invoice?.invoice_number}.pdf`
           : `${invoice?.invoice_number}.pdf`}
-        documentType={emailType === 'reminder' ? 'reminder' : 'invoice'}
-        documentId={id!}
         onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'invoice', id] })}
       />
 
