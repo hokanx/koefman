@@ -105,7 +105,7 @@ const OfferEdit = () => {
       const { error } = await supabase.from('offers').update({
         customer_id: customerId || null, date, status, notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
-        subtotal, tax_total, grand_total,
+        subtotal, tax_total, grand_total, service_type: serviceType,
       } as any).eq('id', id!);
       if (error) throw error;
 
