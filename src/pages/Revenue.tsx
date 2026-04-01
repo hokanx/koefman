@@ -144,9 +144,7 @@ const Revenue = () => {
 
       {/* Single stat */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {isKleinunternehmer ? 'Erhalten' : 'Bezahlt (brutto)'}
-        </p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Einnahmen gesamt</p>
         <p className="text-3xl font-bold text-foreground mt-1">{formatEUR(totalPaid)}</p>
       </div>
 
