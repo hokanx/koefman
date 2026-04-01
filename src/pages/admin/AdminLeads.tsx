@@ -55,6 +55,20 @@ const CALL_RESULTS = [
   { key: 'unklar', label: 'Unklar' },
 ];
 
+const PACKAGE_LABELS: Record<string, string> = {
+  setup_59: '499 € Setup + 59 €/Mo',
+  strategy_299: '299 €/Mo Strategie',
+};
+
+interface LeadBooking {
+  id: string;
+  submission_id: string;
+  phone: string;
+  selected_slot: string;
+  booking_status: string;
+  created_at: string;
+}
+
 interface LeadAnalysis {
   id: string;
   submission_id: string;
@@ -70,6 +84,7 @@ interface LeadAnalysis {
   email_sent_at: string | null;
   error_message: string | null;
   created_at: string;
+  recommended_package?: string;
 }
 
 interface DiagnosticSubmission {
