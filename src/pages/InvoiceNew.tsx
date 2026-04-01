@@ -52,8 +52,8 @@ const InvoiceNew = () => {
   useEffect(() => {
     if (settings && !prefilled.current) {
       prefilled.current = true;
-      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:';
-      const fallbackFooter = 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.';
+      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns folgende Rechnung zu stellen:';
+      const fallbackFooter = 'Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer.';
       const fallbackClosing = 'Mit freundlichen Grüßen';
       const fallbackPayment = 'Zahlbar innerhalb von 14 Tagen ohne Abzug.';
       setIntroText((settings as any).default_invoice_intro_text || fallbackIntro);

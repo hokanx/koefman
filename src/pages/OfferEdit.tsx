@@ -70,8 +70,8 @@ const OfferEdit = () => {
   useEffect(() => {
     if (offer && !prefilled.current) {
       prefilled.current = true;
-      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nwir bieten Ihnen die nachfolgend aufgeführten Leistungen zu den genannten Konditionen an:';
-      const fallbackFooter = 'Dieses Angebot ist 14 Tage gültig.';
+      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nvielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:';
+      const fallbackFooter = 'Wir freuen uns auf Ihre Rückmeldung.';
       const fallbackClosing = 'Mit freundlichen Grüßen';
       setCustomerId(offer.customer_id);
       setDate(offer.date);
