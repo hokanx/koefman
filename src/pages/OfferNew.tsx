@@ -73,7 +73,7 @@ const OfferNew = () => {
         user_id: user!.id, customer_id: customerId || null, offer_number: offerNumber,
         date, status: 'draft', notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
-        subtotal, tax_total, grand_total,
+        subtotal, tax_total, grand_total, service_type: serviceType,
       } as any).select().single();
       if (error) throw error;
 
