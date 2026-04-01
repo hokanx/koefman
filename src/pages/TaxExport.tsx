@@ -144,7 +144,7 @@ const TaxExport = () => {
       {/* Summary */}
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">{isKleinunternehmer ? 'Umsatz' : 'Einnahmen brutto'}</span>
+          <span className="text-sm text-muted-foreground">Einnahmen</span>
           <span className="text-lg font-bold text-foreground">{formatEUR(summary?.totalIncome ?? 0)}</span>
         </div>
         <div className="flex items-center justify-between">
@@ -153,7 +153,7 @@ const TaxExport = () => {
         </div>
         {!isKleinunternehmer && (
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Umsatzsteuer</span>
+            <span className="text-sm text-muted-foreground">Steuer</span>
             <span className="text-lg font-bold text-foreground">{formatEUR(summary?.totalTax ?? 0)}</span>
           </div>
         )}
@@ -164,6 +164,9 @@ const TaxExport = () => {
       </div>
 
       {/* Export */}
+      {isReady && (
+        <p className="text-sm text-center text-muted-foreground">Bereit für Steuerberater</p>
+      )}
       <Button
         className="w-full h-auto py-4 text-base"
         onClick={handleExport}
