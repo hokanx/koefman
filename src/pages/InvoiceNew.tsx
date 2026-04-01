@@ -135,6 +135,7 @@ const InvoiceNew = () => {
         </FormSection>
 
         <FormSection title={t.invoices.documentTexts}>
+          <p className="text-xs text-muted-foreground -mt-1 mb-2">Standardtext aus Einstellungen (bearbeitbar)</p>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.invoices.introText}</label>
             <textarea value={introText} onChange={(e) => setIntroText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
