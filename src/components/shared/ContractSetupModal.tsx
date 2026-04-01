@@ -24,6 +24,12 @@ interface ContractSetupModalProps {
   subtotal: number;
   taxTotal: number;
   grandTotal: number;
+  discount?: {
+    type: string | null;
+    value: number;
+    scope: string;
+    duration_months: number | null;
+  };
 }
 
 const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, items, subtotal, taxTotal, grandTotal }: ContractSetupModalProps) => {
