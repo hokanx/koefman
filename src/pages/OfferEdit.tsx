@@ -64,16 +64,21 @@ const OfferEdit = () => {
     enabled: !!user,
   });
 
+  const prefilled = useRef(false);
   useEffect(() => {
-    if (offer) {
+    if (offer && !prefilled.current) {
+      prefilled.current = true;
+      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nwir bieten Ihnen die nachfolgend aufgeführten Leistungen zu den genannten Konditionen an:';
+      const fallbackFooter = 'Dieses Angebot ist 14 Tage gültig.';
+      const fallbackClosing = 'Mit freundlichen Grüßen';
       setCustomerId(offer.customer_id);
       setDate(offer.date);
       setStatus(offer.status as OfferStatus);
       setNotes(offer.notes || '');
       setInternalNotes(offer.internal_notes || '');
-      setIntroText((offer as any).intro_text || (settings as any)?.default_offer_intro_text || '');
-      setFooterText((offer as any).footer_text || (settings as any)?.default_offer_footer_text || '');
-      setClosingText((offer as any).closing_text || (settings as any)?.default_closing_text || '');
+      setIntroText((offer as any).intro_text || (settings as any)?.default_offer_intro_text || fallbackIntro);
+      setFooterText((offer as any).footer_text || (settings as any)?.default_offer_footer_text || fallbackFooter);
+      setClosingText((offer as any).closing_text || (settings as any)?.default_closing_text || fallbackClosing);
     }
   }, [offer, settings]);
 
