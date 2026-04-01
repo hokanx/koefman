@@ -165,17 +165,21 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
 
       {items.length > 0 && (
         <div className="space-y-1 rounded-lg bg-muted/50 p-3 text-sm">
-          <div className="flex justify-between text-muted-foreground">
-            <span>{t.offers.subtotal}</span>
-            <span>{formatEUR(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>{t.offers.taxTotal}</span>
-            <span>{formatEUR(taxTotal)}</span>
-          </div>
-          <div className="flex justify-between border-t border-border pt-1 font-semibold text-foreground">
-            <span>{t.offers.grandTotal}</span>
-            <span>{formatEUR(grandTotal)}</span>
+          {!isKleinunternehmer && (
+            <>
+              <div className="flex justify-between text-muted-foreground">
+                <span>{t.offers.subtotal}</span>
+                <span>{formatEUR(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>{t.offers.taxTotal}</span>
+                <span>{formatEUR(taxTotal)}</span>
+              </div>
+            </>
+          )}
+          <div className={`flex justify-between font-semibold text-foreground ${!isKleinunternehmer ? 'border-t border-border pt-1' : ''}`}>
+            <span>{isKleinunternehmer ? 'Betrag' : t.offers.grandTotal}</span>
+            <span>{formatEUR(isKleinunternehmer ? subtotal : grandTotal)}</span>
           </div>
         </div>
       )}
