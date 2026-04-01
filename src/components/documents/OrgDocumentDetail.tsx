@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Calendar, Mail, User, Hash, Layers, StickyNote, Send, Link, ExternalLink, CheckCircle } from 'lucide-react';
+import { FileText, Calendar, Mail, User, Hash, Layers, StickyNote, Send, Link, ExternalLink, CheckCircle, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import StatusBadge from '@/components/shared/StatusBadge';
