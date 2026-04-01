@@ -226,6 +226,7 @@ const OfferEdit = () => {
         </FormSection>
 
         <FormSection title={t.offers.items}>
+          <DiscountEditor discount={discount} onChange={setDiscount} />
           <LineItemsEditor items={items} onChange={setItems} showTemplatePicker
             defaultTaxRate={19}
             defaultUnit="Pauschal"
