@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -28,6 +28,7 @@ const OfferNew = () => {
   const [footerText, setFooterText] = useState('');
   const [closingText, setClosingText] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
@@ -47,17 +48,13 @@ const OfferNew = () => {
     enabled: !!user,
   });
 
-  // Auto-fill from settings (once only)
   const prefilled = useRef(false);
   useEffect(() => {
     if (settings && !prefilled.current) {
       prefilled.current = true;
-      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nvielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:';
-      const fallbackFooter = 'Wir freuen uns auf Ihre Rückmeldung.';
-      const fallbackClosing = 'Mit freundlichen Grüßen';
-      setIntroText((settings as any).default_offer_intro_text || fallbackIntro);
-      setFooterText((settings as any).default_offer_footer_text || fallbackFooter);
-      setClosingText((settings as any).default_closing_text || fallbackClosing);
+      setIntroText((settings as any).default_offer_intro_text || 'Sehr geehrte Damen und Herren,\n\nvielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:');
+      setFooterText((settings as any).default_offer_footer_text || 'Wir freuen uns auf Ihre Rückmeldung.');
+      setClosingText((settings as any).default_closing_text || 'Mit freundlichen Grüßen');
     }
   }, [settings]);
 
@@ -89,12 +86,14 @@ const OfferNew = () => {
         );
         if (itemsError) throw itemsError;
       }
+
+      return offer;
     },
-    onSuccess: () => {
+    onSuccess: (offer) => {
       queryClient.invalidateQueries({ queryKey: ['offers'] });
       queryClient.invalidateQueries({ queryKey: ['offer-count'] });
       toast.success(t.common.success);
-      navigate('/offers');
+      navigate(`/offers/${offer!.id}`);
     },
     onError: () => toast.error(t.common.error),
   });
@@ -112,68 +111,86 @@ const OfferNew = () => {
         <ArrowLeft className="h-4 w-4" /> {t.common.back}
       </button>
       <h2 className="mb-6 text-xl font-bold text-foreground">{t.offers.newOffer}</h2>
+
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-4">
-        <FormSection title={t.offers.offerDetails}>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.customer} *</label>
-            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>
-              <option value="">{t.offers.selectCustomer}</option>
-              {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <p className="text-[11px] text-muted-foreground/50 mt-1">Optional – Ihr Kunde kann seine Daten selbst beim Bestätigen eingeben</p>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.date}</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
-          </div>
-        </FormSection>
-
-        <FormSection title={t.offers.documentTexts}>
-          <p className="text-[11px] text-muted-foreground/60 -mt-1 mb-3 flex items-center gap-1">
-            <span>📝</span> Änderungen gelten nur für dieses Dokument
-          </p>
-          <div>
-            <label className="mb-0.5 block text-sm text-muted-foreground">{t.offers.introText}</label>
-            <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
-            <textarea value={introText} onChange={(e) => setIntroText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.notes}</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
-          </div>
-          <div>
-            <label className="mb-0.5 block text-sm text-muted-foreground">{t.offers.footerText}</label>
-            <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
-            <textarea value={footerText} onChange={(e) => setFooterText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
-          </div>
-          <div>
-            <label className="mb-0.5 block text-sm text-muted-foreground">{t.offers.closingText}</label>
-            <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
-            <input type="text" value={closingText} onChange={(e) => setClosingText(e.target.value)} className={inputClass} />
-          </div>
-          {isKleinunternehmer && (
-            <div className="rounded-lg border border-border bg-muted/30 p-2.5 flex items-start gap-2">
-              <span className="text-[11px] mt-px">⚖️</span>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">Steuerhinweis wird automatisch ergänzt: <span className="italic">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet."</span></p>
-            </div>
-          )}
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.internalNotes}</label>
-            <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
-          </div>
-        </FormSection>
-
-        <FormSection title={t.offers.items}>
+        {/* 1. POSITIONEN — primary section */}
+        <FormSection title="Positionen">
           <LineItemsEditor items={items} onChange={setItems} showTemplatePicker
             defaultTaxRate={settings?.default_tax_rate ?? 19}
             defaultUnit="Pauschal"
             labels={{
-            addItem: t.offers.addItem, itemTitle: t.offers.itemTitle, description: t.offers.description,
-            quantity: t.offers.quantity, unit: t.offers.unit, unitPrice: t.offers.unitPrice,
-            taxRate: t.offers.taxRate, total: t.offers.total,
-          }} />
+              addItem: t.offers.addItem, itemTitle: t.offers.itemTitle, description: t.offers.description,
+              quantity: t.offers.quantity, unit: t.offers.unit, unitPrice: t.offers.unitPrice,
+              taxRate: t.offers.taxRate, total: t.offers.total,
+            }} />
         </FormSection>
 
+        {/* 2. DETAILS — secondary, smaller */}
+        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Kunde (optional)</label>
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>
+              <option value="">– Kein Kunde –</option>
+              {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <p className="text-[11px] text-muted-foreground/50 mt-1">Kann später vom Kunden selbst ergänzt werden</p>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">{t.offers.date}</label>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
+          </div>
+        </div>
+
+        {/* 3. DOCUMENT TEXTS — collapsed by default */}
+        <div className="rounded-lg border border-border bg-card">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex w-full items-center justify-between p-4 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span>Erweiterte Optionen</span>
+            {showAdvanced ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
+          {showAdvanced && (
+            <div className="border-t border-border p-4 space-y-3">
+              <p className="text-[11px] text-muted-foreground/60 flex items-center gap-1">
+                <span>📝</span> Änderungen gelten nur für dieses Dokument
+              </p>
+              <div>
+                <label className="mb-0.5 block text-xs text-muted-foreground">{t.offers.introText}</label>
+                <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
+                <textarea value={introText} onChange={(e) => setIntroText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+              </div>
+              <div>
+                <label className="mb-0.5 block text-xs text-muted-foreground">{t.offers.notes}</label>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+              </div>
+              <div>
+                <label className="mb-0.5 block text-xs text-muted-foreground">{t.offers.footerText}</label>
+                <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
+                <textarea value={footerText} onChange={(e) => setFooterText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+              </div>
+              <div>
+                <label className="mb-0.5 block text-xs text-muted-foreground">{t.offers.closingText}</label>
+                <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
+                <input type="text" value={closingText} onChange={(e) => setClosingText(e.target.value)} className={inputClass} />
+              </div>
+              {isKleinunternehmer && (
+                <div className="rounded-lg border border-border bg-muted/30 p-2.5 flex items-start gap-2">
+                  <span className="text-[11px] mt-px">⚖️</span>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">Steuerhinweis wird automatisch ergänzt: <span className="italic">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet."</span></p>
+                </div>
+              )}
+              <div>
+                <label className="mb-0.5 block text-xs text-muted-foreground">{t.offers.internalNotes}</label>
+                <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
         <div className="flex gap-3">
           <button type="button" onClick={() => navigate(-1)}
             className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent md:flex-none md:px-6">
