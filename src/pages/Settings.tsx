@@ -318,8 +318,13 @@ const Settings = () => {
                     name="tax_mode"
                     checked={(activeOrganization as any)?.tax_mode !== 'kleinunternehmer'}
                     onChange={async () => {
-                      if (!activeOrganizationId) return;
-                      await supabase.from('organizations').update({ tax_mode: 'standard' } as any).eq('id', activeOrganizationId);
+                      if (!activeOrganizationId) {
+                        toast.error('Geschäft wird eingerichtet, bitte versuchen Sie es gleich erneut.');
+                        return;
+                      }
+                      const { error } = await supabase.from('organizations').update({ tax_mode: 'standard' } as any).eq('id', activeOrganizationId);
+                      if (error) { toast.error('Fehler beim Speichern'); return; }
+                      toast.success('Steuerart gespeichert');
                       queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
                     }}
                     className="mt-0.5"
