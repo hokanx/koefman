@@ -32,6 +32,7 @@ const OfferNew = () => {
   const [items, setItems] = useState<LineItem[]>([]);
   const [serviceType, setServiceType] = useState<'einmalig' | 'laufend'>('einmalig');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [discount, setDiscount] = useState<DiscountData>({ enabled: false, type: 'percentage', value: 0, scope: 'both', duration_months: null });
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
