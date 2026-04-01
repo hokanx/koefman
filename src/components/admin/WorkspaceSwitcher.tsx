@@ -52,7 +52,7 @@ const WorkspaceSwitcher = () => {
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 p-2">
-        <p className="px-2 pb-2 text-xs font-medium text-muted-foreground">Workspace betreten</p>
+        <p className="px-2 pb-2 text-xs font-medium text-muted-foreground">Geschäft wählen</p>
         <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
           {organizations.map((org) => (
             <button
