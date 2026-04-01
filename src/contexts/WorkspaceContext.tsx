@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -47,8 +47,10 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
+  const queryClient = useQueryClient();
   const [manualOrgId, setManualOrgId] = useState<string | null>(null);
   const [adminWorkspaceOrg, setAdminWorkspaceOrg] = useState<Organization | null>(null);
+  const [autoProvisioning, setAutoProvisioning] = useState(false);
 
   // Fetch all memberships for the current user
   const { data: memberships = [], isLoading } = useQuery({
@@ -63,6 +65,44 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     },
     enabled: !!user,
   });
+
+  // Auto-provision: if user has no membership but has business_settings, create org + membership
+  useEffect(() => {
+    if (!user || isLoading || memberships.length > 0 || autoProvisioning || isAdmin) return;
+    const provision = async () => {
+      setAutoProvisioning(true);
+      try {
+        const { data: settings } = await supabase
+          .from('business_settings')
+          .select('business_name, small_business_regulation')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (!settings) return;
+
+        const name = settings.business_name || 'Mein Geschäft';
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const taxMode = settings.small_business_regulation ? 'kleinunternehmer' : 'standard';
+
+        const { data: newOrg, error: orgErr } = await supabase
+          .from('organizations')
+          .insert({ name, slug, owner_user_id: user.id, tax_mode: taxMode })
+          .select('id')
+          .single();
+        if (orgErr) throw orgErr;
+
+        await supabase
+          .from('organization_memberships')
+          .insert({ organization_id: newOrg.id, user_id: user.id, role: 'owner' });
+
+        queryClient.invalidateQueries({ queryKey: ['user-memberships', user.id] });
+      } catch (e) {
+        console.error('Auto-provision failed:', e);
+      } finally {
+        setAutoProvisioning(false);
+      }
+    };
+    provision();
+  }, [user, isLoading, memberships.length, autoProvisioning, isAdmin, queryClient]);
 
   // Determine the active organization
   const resolved = useMemo(() => {
