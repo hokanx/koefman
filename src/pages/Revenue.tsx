@@ -56,18 +56,6 @@ const Revenue = () => {
     enabled: !!user,
   });
 
-  const { data: contracts = [], isLoading: loadingContracts } = useQuery({
-    queryKey: ['revenue-contracts'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('contracts')
-        .select('id, contract_number, status, start_date, grand_total, title, customers(name)')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-    enabled: !!user,
-  });
 
   const totalPaid = invoices
     .filter((i: any) => i.status === 'paid')
