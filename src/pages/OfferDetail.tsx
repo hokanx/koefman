@@ -545,15 +545,22 @@ const OfferDetail = () => {
               ))}
             </div>
             <div className="mt-3 space-y-1 border-t border-border pt-3 text-sm">
-              <div className="flex justify-between text-muted-foreground">
-                <span>{t.offers.subtotal}</span><span>{formatEUR(offer.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>{t.offers.taxTotal}</span><span>{formatEUR(offer.tax_total)}</span>
-              </div>
-              <div className="flex justify-between font-semibold text-foreground">
+              {!isKleinunternehmer && (
+                <>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>{t.offers.subtotal}</span><span>{formatEUR(offer.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>{t.offers.taxTotal}</span><span>{formatEUR(offer.tax_total)}</span>
+                  </div>
+                </>
+              )}
+              <div className={`flex justify-between font-semibold text-foreground ${!isKleinunternehmer ? 'border-t border-border pt-1' : ''}`}>
                 <span>{t.offers.grandTotal}</span><span>{formatEUR(offer.grand_total)}</span>
               </div>
+              {isKleinunternehmer && (
+                <p className="text-xs text-muted-foreground italic">Gemäß §19 UStG wird keine Umsatzsteuer berechnet.</p>
+              )}
             </div>
           </div>
         )}
