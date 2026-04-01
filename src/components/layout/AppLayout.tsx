@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Receipt, Settings, LogOut, Inbox, MoreHorizontal, Sun, Moon, PiggyBank, FolderOpen, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, Settings, LogOut, Inbox, MoreHorizontal, Sun, Moon, PiggyBank, FolderOpen, Shield, ScrollText } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -55,6 +55,7 @@ const AppLayout = () => {
   const secondaryNavItems = [
     { to: '/customers', icon: Users, label: t.nav.customers, badge: 0 },
     { to: '/leads', icon: Inbox, label: t.nav.leads, badge: newLeadsCount },
+    { to: '/contracts', icon: ScrollText, label: 'Verträge', badge: 0 },
     { to: '/settings', icon: Settings, label: t.nav.settings, badge: 0 },
   ];
 

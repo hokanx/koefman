@@ -12,6 +12,7 @@ import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { OfferStatus } from '@/types';
 import { formatEUR } from '@/lib/utils';
+import { sanitizeNotes } from '@/lib/sanitizeNotes';
 import EmailModal from '@/components/shared/EmailModal';
 import ContractSetupModal from '@/components/shared/ContractSetupModal';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
@@ -258,7 +259,7 @@ const OfferDetail = () => {
         invoice_number: invoiceNumber,
         date: new Date().toISOString().split('T')[0],
         due_date: dueDate.toISOString().split('T')[0],
-        status: 'open', notes: offer.notes,
+        status: 'open', notes: sanitizeNotes(offer.notes) || null,
         intro_text: (settings as any)?.default_invoice_intro_text || '',
         footer_text: (settings as any)?.default_invoice_footer_text || '',
         closing_text: (settings as any)?.default_closing_text || '',
@@ -361,7 +362,7 @@ const OfferDetail = () => {
       intro_text: (offer as any).intro_text || undefined,
       footer_text: (offer as any).footer_text || undefined,
       closing_text: (offer as any).closing_text || undefined,
-      notes: offer!.notes || undefined,
+      notes: sanitizeNotes(offer!.notes) || undefined,
       labels: {
         date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
         unitPrice: t.offers.unitPrice, taxRate: t.offers.taxRate, total: t.offers.total,
@@ -409,7 +410,7 @@ const OfferDetail = () => {
             <p>{t.offers.date}: {formatDateDE(offer.date)}</p>
             <p>{t.offers.validUntil}: {getValidityDate()}</p>
           </div>
-          {offer.notes && <p className="mt-2 text-sm text-foreground">{offer.notes}</p>}
+          {sanitizeNotes(offer.notes) && <p className="mt-2 text-sm text-foreground">{sanitizeNotes(offer.notes)}</p>}
 
           {linkedInvoices.length > 0 && (
             <div className="mt-3 rounded-lg bg-success/10 border border-success/20 p-3 text-sm">
@@ -504,11 +505,17 @@ const OfferDetail = () => {
                 <FileText className="h-4 w-4" /> {converting ? t.common.loading : t.offers.convertToInvoice}
               </button>
             )}
-            {offer.status === 'accepted' && (
+            {offer.status === 'accepted' && offer.customer_id && (
               <button onClick={() => setContractOpen(true)}
                 className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10">
                 <ScrollText className="h-4 w-4" /> {(t as any).contracts.createFromOffer}
               </button>
+            )}
+            {offer.status === 'accepted' && !offer.customer_id && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                <ScrollText className="h-4 w-4" />
+                Bitte zuerst Kundendaten vervollständigen, um einen Vertrag zu erstellen.
+              </div>
             )}
             <button onClick={handleDuplicate} disabled={duplicating}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">

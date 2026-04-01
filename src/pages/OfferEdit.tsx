@@ -131,7 +131,6 @@ const OfferEdit = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerId) return;
     mutation.mutate();
   };
 
@@ -146,8 +145,9 @@ const OfferEdit = () => {
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-4">
         <FormSection title={t.offers.offerDetails}>
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.customer} *</label>
-            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required className={inputClass}>
+            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.customer}</label>
+            <p className="text-[11px] text-muted-foreground/50 mb-1">Optional. Kundendaten können später ergänzt werden.</p>
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>
               <option value="">{t.offers.selectCustomer}</option>
               {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
