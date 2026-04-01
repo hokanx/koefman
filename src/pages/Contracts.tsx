@@ -26,6 +26,7 @@ const Contracts = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const ct = (t as any).contracts;
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
 
