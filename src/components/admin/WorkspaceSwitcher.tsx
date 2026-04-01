@@ -35,7 +35,7 @@ const WorkspaceSwitcher = () => {
         <button
           onClick={exitWorkspace}
           className="ml-1 rounded p-0.5 text-primary/60 hover:text-primary"
-          title="Workspace verlassen"
+          title="Geschäft verlassen"
         >
           <X className="h-3.5 w-3.5" />
         </button>
