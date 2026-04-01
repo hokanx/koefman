@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck, CopyPlus, Mail, ScrollText } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
