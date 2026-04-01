@@ -69,14 +69,20 @@ const Contracts = () => {
   const [emailContract, setEmailContract] = useState<any>(null);
 
   const handleSendContract = async (contract: any) => {
+    // Ensure public token exists
+    let publicToken = (contract as any).public_token;
+    if (!publicToken) {
+      publicToken = crypto.randomUUID();
+      await supabase.from('contracts').update({ public_token: publicToken } as any).eq('id', contract.id);
+    }
     // Mark as sent if still draft
     if (contract.status === 'entwurf') {
       await supabase.from('contracts').update({ status: 'gesendet' } as any).eq('id', contract.id);
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       toast.success(ct.contractSent);
     }
-    // Open email modal
-    setEmailContract(contract);
+    // Open email modal with updated token
+    setEmailContract({ ...contract, public_token: publicToken });
     setEmailOpen(true);
   };
 
