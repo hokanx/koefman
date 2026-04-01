@@ -10,6 +10,7 @@ import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import { toast } from 'sonner';
 import { generateDocumentNumber } from '@/lib/documentUtils';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import { calculateTotals } from '@/lib/taxConfig';
 import type { Customer, LineItem } from '@/types';
 
 const InvoiceNew = () => {
