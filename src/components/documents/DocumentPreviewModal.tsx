@@ -210,12 +210,12 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
                       className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">USt (€)</label>
+                    <label className="text-xs text-muted-foreground">Steuer (€)</label>
                     <input type="number" step="0.01" value={editVat} onChange={e => setEditVat(e.target.value)}
                       className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Brutto (€)</label>
+                    <label className="text-xs text-muted-foreground">Betrag (€)</label>
                     <input type="number" step="0.01" value={editGross} onChange={e => setEditGross(e.target.value)}
                       className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
                   </div>
