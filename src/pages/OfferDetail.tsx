@@ -227,7 +227,7 @@ const OfferDetail = () => {
           unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
         })),
         subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
-        small_business_regulation: !!(settings as any)?.small_business_regulation,
+        small_business_regulation: isKleinunternehmer,
         closing_text: (offer as any).closing_text || 'Mit freundlichen Grüßen',
         labels: {
           date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
