@@ -84,6 +84,7 @@ type LegacyDocumentContext = {
   documentType: DocType;
   recipientEmail: string | null;
   recipientName: string;
+  serviceTypeLabel?: string;
   signingUrl?: string;
 };
 
