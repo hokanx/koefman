@@ -63,7 +63,7 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
     loadPreview();
   }, [doc, open]);
 
-  // Auto-calculate brutto
+  // Auto-calculate total
   useEffect(() => {
     const net = parseFloat(editNet);
     const vat = parseFloat(editVat);
