@@ -384,7 +384,7 @@ const PublicOfferView = () => {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-500">{offer.offer_number}</span>
               <span className="text-sm text-gray-500">
-                {new Date(offer.date).toLocaleDateString('de-DE')}
+                {formatDateDE(offer.date)}
               </span>
             </div>
             <h2 className="text-xl font-bold text-gray-900">

@@ -182,8 +182,8 @@ async function loadBranding(supabaseAdmin: any, organizationId: string): Promise
 
 function buildEmailHtml(vars: Record<string, string>): string {
   const logoBlock = vars.logo_url
-    ? `<tr><td align="center" style="padding:30px 20px 10px 20px;"><img src="${escapeHtml(vars.logo_url)}" alt="${escapeHtml(vars.sender_name)}" style="max-width:180px;max-height:60px;" /></td></tr>`
-    : '';
+    ? `<tr><td align="center" style="padding:40px 20px 16px 20px;"><img src="${escapeHtml(vars.logo_url)}" alt="${escapeHtml(vars.sender_name)}" style="max-width:160px;max-height:56px;" /></td></tr>`
+    : `<tr><td align="center" style="padding:40px 20px 16px 20px;"><span style="color:#FFFFFF;font-size:20px;font-weight:bold;letter-spacing:0.1em;text-transform:uppercase;">${escapeHtml(vars.sender_name)}</span></td></tr>`;
 
   const ctaLabel = escapeHtml(vars.cta_label || 'DOKUMENT ANSEHEN');
   const footerText = vars.footer_text ? escapeHtml(vars.footer_text) : '';
@@ -197,19 +197,44 @@ function buildEmailHtml(vars: Record<string, string>): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;">
 <tr><td align="center" style="padding:20px 0;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
 ${logoBlock}
-<tr><td style="padding:30px 30px 10px 30px;">
-<h1 style="color:#FFFFFF;font-size:22px;margin:0 0 8px 0;">${escapeHtml(vars.document_title)}</h1>
-<p style="color:#999999;font-size:14px;margin:0 0 4px 0;">${escapeHtml(vars.document_type_label)}</p>
-${vars.amount_total && vars.amount_total !== '–' ? `<p style="color:#FFFFFF;font-size:16px;font-weight:bold;margin:8px 0 0 0;">${escapeHtml(vars.amount_total)}</p>` : ''}
+
+<!-- Divider -->
+<tr><td style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-bottom:1px solid #333333;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+
+<!-- Headline -->
+<tr><td style="padding:32px 40px 8px 40px;">
+<h1 style="color:#FFFFFF;font-size:24px;font-weight:bold;letter-spacing:0.02em;margin:0;text-transform:uppercase;">${escapeHtml(vars.document_title)}</h1>
 </td></tr>
-<tr><td style="padding:10px 30px 20px 30px;">
-<p style="color:#CCCCCC;font-size:14px;line-height:1.6;margin:0;white-space:pre-line;">${messageBody}</p>
+
+<!-- Amount -->
+${vars.amount_total && vars.amount_total !== '–' ? `<tr><td style="padding:0 40px 24px 40px;"><p style="color:#FFFFFF;font-size:18px;font-weight:bold;margin:0;">${escapeHtml(vars.amount_total)}</p></td></tr>` : '<tr><td style="padding:0 0 16px 0;"></td></tr>'}
+
+<!-- Body text -->
+<tr><td style="padding:0 40px 28px 40px;">
+<p style="color:#CCCCCC;font-size:14px;line-height:1.7;margin:0;white-space:pre-line;">${messageBody}</p>
 </td></tr>
-${signingUrl ? `<tr><td align="center" style="padding:10px 30px 10px 30px;"><p style="margin:0;"><a href="${signingUrl}" style="display:inline-block;background-color:#FFFFFF;color:#000000;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:8px;">→ ${ctaLabel}</a></p></td></tr>` : ''}
-${signingUrl ? `<tr><td style="padding:10px 30px 20px 30px;"><p style="color:#666666;font-size:11px;line-height:1.5;margin:0;">Falls der Link nicht funktioniert, kopieren Sie ihn in Ihren Browser:<br/><a href="${signingUrl}" style="color:#666666;word-break:break-all;">${signingUrl}</a></p></td></tr>` : ''}
-${footerText ? `<tr><td style="padding:10px 30px 30px 30px;border-top:1px solid #222222;"><p style="color:#666666;font-size:11px;line-height:1.5;margin:0;white-space:pre-line;">${footerText}</p></td></tr>` : ''}
-<tr><td style="padding:10px 30px 30px 30px;"><p style="color:#444444;font-size:10px;margin:0;">Gesendet über KÖFMAN</p></td></tr>
+
+<!-- CTA Button -->
+${signingUrl ? `<tr><td align="center" style="padding:0 40px 12px 40px;">
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background-color:#FFFFFF;border-radius:0;padding:16px 40px;">
+<a href="${signingUrl}" style="color:#000000;font-size:14px;font-weight:bold;letter-spacing:0.1em;text-decoration:none;text-transform:uppercase;display:block;">\u2192 ${ctaLabel}</a>
+</td></tr></table>
+</td></tr>` : ''}
+
+<!-- Fallback link -->
+${signingUrl ? `<tr><td style="padding:8px 40px 28px 40px;">
+<p style="color:#555555;font-size:11px;line-height:1.5;margin:0;">Falls der Link nicht funktioniert, kopieren Sie ihn in Ihren Browser:<br/><a href="${signingUrl}" style="color:#555555;word-break:break-all;text-decoration:underline;">${signingUrl}</a></p>
+</td></tr>` : ''}
+
+<!-- Footer divider + text -->
+<tr><td style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-bottom:1px solid #222222;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+
+${footerText ? `<tr><td style="padding:20px 40px 8px 40px;"><p style="color:#666666;font-size:11px;line-height:1.5;margin:0;white-space:pre-line;">${footerText}</p></td></tr>` : ''}
+
+<tr><td style="padding:${footerText ? '8' : '20'}px 40px 40px 40px;"><p style="color:#444444;font-size:10px;letter-spacing:0.05em;margin:0;">GESENDET \u00dcBER K\u00d6FMAN</p></td></tr>
+
 </table>
 </td></tr>
 </table>
