@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Mail, Download, ExternalLink, X } from 'lucide-react';
+import { Mail, Send, X, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface EmailModalProps {
@@ -9,11 +10,14 @@ interface EmailModalProps {
   recipientEmail?: string;
   defaultSubject: string;
   defaultBody: string;
-  pdfGenerator: () => Promise<string>; // returns base64 PDF
-  pdfFilename: string;
+  publicLink?: string;
   documentType: string;
   documentId: string;
   onSent?: () => void;
+  /** @deprecated Legacy PDF support – prefer publicLink */
+  pdfGenerator?: () => Promise<string>;
+  /** @deprecated Legacy PDF support */
+  pdfFilename?: string;
 }
 
 const EmailModal = ({
@@ -22,14 +26,16 @@ const EmailModal = ({
   recipientEmail = '',
   defaultSubject,
   defaultBody,
-  pdfGenerator,
-  pdfFilename,
+  publicLink,
+  documentType,
+  documentId,
+  onSent,
 }: EmailModalProps) => {
   const { t } = useLanguage();
   const [to, setTo] = useState(recipientEmail);
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState(defaultBody);
-  const [downloading, setDownloading] = useState(false);
+  const [sending, setSending] = useState(false);
 
   // Reset fields when modal opens with new defaults
   const [lastSubject, setLastSubject] = useState(defaultSubject);
@@ -42,33 +48,52 @@ const EmailModal = ({
 
   if (!open) return null;
 
-  const handleDownloadPdf = async () => {
-    setDownloading(true);
+  const handleSend = async () => {
+    if (!to) {
+      toast.error('Bitte E-Mail-Adresse eingeben');
+      return;
+    }
+    setSending(true);
     try {
-      const pdfBase64 = await pdfGenerator();
-      const byteCharacters = atob(pdfBase64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = pdfFilename;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(t.email.pdfDownloaded);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error('Not authenticated');
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/send-document-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            to,
+            subject,
+            body,
+            publicLink: publicLink || undefined,
+            documentType,
+            documentId,
+          }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Send failed');
+
+      toast.success('E-Mail gesendet');
+      onSent?.();
+      onClose();
     } catch (err) {
-      console.error('PDF download error:', err);
-      toast.error(t.common.error);
+      console.error('Email send error:', err);
+      toast.error('E-Mail konnte nicht gesendet werden');
     } finally {
-      setDownloading(false);
+      setSending(false);
     }
   };
 
-  const handleOpenMailApp = () => {
+  const handleFallbackMailto = () => {
     const mailtoBody = body.replace(/\n/g, '%0A');
     const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${mailtoBody}`;
     window.open(mailto, '_self');
@@ -81,7 +106,7 @@ const EmailModal = ({
         <div className="flex-shrink-0 flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-foreground">{t.email.prepareEmail}</h3>
+            <h3 className="font-semibold text-foreground">E-Mail senden</h3>
           </div>
           <button onClick={onClose} className="rounded-lg p-1 hover:bg-accent">
             <X className="h-5 w-5 text-muted-foreground" />
@@ -115,32 +140,31 @@ const EmailModal = ({
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={4}
+              rows={3}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
 
-          <div className="rounded-lg bg-muted/30 border border-border p-3 text-sm text-muted-foreground">
-            <p className="flex items-center gap-2">
-              📎 {pdfFilename}
-            </p>
-            <p className="mt-1 text-xs">{t.email.attachmentHint}</p>
-          </div>
+          {publicLink && (
+            <div className="rounded-lg bg-muted/30 border border-border p-3 text-sm text-muted-foreground">
+              <p className="flex items-center gap-2 text-xs font-medium mb-1">🔗 Enthält Link zum Angebot</p>
+              <p className="text-[11px] break-all text-muted-foreground/60">{publicLink}</p>
+            </div>
+          )}
         </div>
 
         <div className="flex-shrink-0 border-t border-border p-4 space-y-2">
           <button
-            onClick={handleDownloadPdf}
-            disabled={downloading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+            onClick={handleSend}
+            disabled={sending || !to}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            <Download className="h-4 w-4" />
-            {downloading ? t.common.generating : t.email.downloadPdf}
+            <Send className="h-4 w-4" />
+            {sending ? 'Wird gesendet...' : 'E-Mail senden'}
           </button>
           <button
-            onClick={handleOpenMailApp}
-            disabled={!to}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            onClick={handleFallbackMailto}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent"
           >
             <ExternalLink className="h-4 w-4" />
             {t.email.openInMail}

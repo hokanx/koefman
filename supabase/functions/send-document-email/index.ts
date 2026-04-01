@@ -35,22 +35,85 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'RESEND_API_KEY is not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const { to, subject, body, pdfBase64, pdfFilename, documentType, documentId } = await req.json();
+    const body = await req.json();
+    const { to, subject, documentType, documentId, publicLink, pdfBase64, pdfFilename } = body;
+    const messageBody = body.body;
 
-    if (!to || !subject || !body || !pdfBase64 || !pdfFilename) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!to || !subject) {
+      return new Response(JSON.stringify({ error: 'Missing required fields: to, subject' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Get sender email from business settings
+    // Get sender settings
     const { data: settings } = await supabase
       .from('business_settings')
-      .select('email, business_name')
+      .select('email, business_name, logo_url')
       .eq('user_id', userId)
       .maybeSingle();
 
-    const fromName = settings?.business_name || 'KÖFMAN';
-    // Resend requires a verified domain or uses onboarding@resend.dev for testing
-    const fromEmail = 'onboarding@resend.dev';
+    const senderName = settings?.business_name || 'KÖFMAN';
+    const fromEmail = 'no-reply@koefman.de';
+    const replyTo = settings?.email || undefined;
+    const logoUrl = settings?.logo_url || undefined;
+
+    // Build branded HTML email if we have a public link
+    let htmlContent: string | undefined;
+    let textContent: string;
+
+    if (publicLink) {
+      const ctaLabel = documentType === 'offer' 
+        ? 'Angebot prüfen & bestätigen' 
+        : 'Dokument ansehen';
+
+      htmlContent = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border-radius:12px;overflow:hidden;">
+${logoUrl ? `<tr><td style="padding:32px 32px 16px 32px;" align="center"><img src="${logoUrl}" alt="${senderName}" style="max-height:48px;max-width:200px;" /></td></tr>` : ''}
+<tr><td style="padding:${logoUrl ? '8' : '32'}px 32px 8px 32px;">
+<p style="margin:0;font-size:18px;font-weight:700;color:#18181b;">${subject}</p>
+</td></tr>
+<tr><td style="padding:8px 32px 24px 32px;">
+<p style="margin:0;font-size:14px;line-height:1.6;color:#52525b;white-space:pre-line;">${messageBody || `Sie haben ein Dokument von ${senderName} erhalten.`}</p>
+</td></tr>
+<tr><td style="padding:0 32px 32px 32px;" align="center">
+<a href="${publicLink}" style="display:inline-block;background-color:#18181b;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 32px;border-radius:8px;">${ctaLabel}</a>
+</td></tr>
+<tr><td style="padding:0 32px 24px 32px;">
+<p style="margin:0;font-size:11px;color:#a1a1aa;word-break:break-all;">${publicLink}</p>
+</td></tr>
+<tr><td style="border-top:1px solid #e4e4e7;padding:20px 32px;">
+<p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center;">Gesendet über KÖFMAN</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+      textContent = `${subject}\n\n${messageBody || `Sie haben ein Dokument von ${senderName} erhalten.`}\n\n${ctaLabel}: ${publicLink}`;
+    } else {
+      textContent = messageBody || subject;
+    }
+
+    // Build email payload
+    const emailPayload: Record<string, unknown> = {
+      from: `${senderName} via KÖFMAN <${fromEmail}>`,
+      to: [to],
+      subject,
+      ...(htmlContent ? { html: htmlContent } : {}),
+      text: textContent,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    };
+
+    // Attach PDF if provided (legacy support)
+    if (pdfBase64 && pdfFilename) {
+      emailPayload.attachments = [{
+        filename: pdfFilename,
+        content: pdfBase64,
+      }];
+    }
 
     const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -58,16 +121,7 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: `${fromName} <${fromEmail}>`,
-        to: [to],
-        subject: subject,
-        text: body,
-        attachments: [{
-          filename: pdfFilename,
-          content: pdfBase64,
-        }],
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
     const resendData = await resendResponse.json();

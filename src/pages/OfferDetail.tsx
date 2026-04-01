@@ -569,10 +569,9 @@ const OfferDetail = () => {
         open={emailOpen}
         onClose={() => setEmailOpen(false)}
         recipientEmail={(offer as any)?.customer?.email || ''}
-        defaultSubject={t.email.offerSubject.replace('{company}', settings?.business_name || '')}
-        defaultBody={t.email.offerBody.replace(/{number}/g, offer?.offer_number || '')}
-        pdfGenerator={getOfferPdfBase64}
-        pdfFilename={`${offer?.offer_number}.pdf`}
+        defaultSubject={`Angebot ${offer?.offer_number} von ${settings?.business_name || 'uns'}`}
+        defaultBody={`Guten Tag,\n\nanbei erhalten Sie unser Angebot ${offer?.offer_number}.\n\nBitte prüfen Sie die Details und bestätigen Sie direkt über den Link.\n\nMit freundlichen Grüßen\n${settings?.business_name || ''}`}
+        publicLink={getPublicLink()}
         documentType="offer"
         documentId={id!}
         onSent={() => queryClient.invalidateQueries({ queryKey: ['document-emails', 'offer', id] })}
