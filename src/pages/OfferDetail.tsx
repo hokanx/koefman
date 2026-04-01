@@ -409,6 +409,7 @@ const OfferDetail = () => {
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>{t.offers.date}: {formatDateDE(offer.date)}</p>
             <p>{t.offers.validUntil}: {getValidityDate()}</p>
+            <p>Leistungsart: {(offer as any).service_type === 'laufend' ? 'Laufender Vertrag' : 'Einmalige Leistung'}</p>
           </div>
           {sanitizeNotes(offer.notes) && <p className="mt-2 text-sm text-foreground">{sanitizeNotes(offer.notes)}</p>}
 
