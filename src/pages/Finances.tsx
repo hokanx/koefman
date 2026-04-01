@@ -45,6 +45,7 @@ const Finances = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
   const { effectiveUserId, isImpersonating } = useImpersonation();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [range, setRange] = useState<DateRange>('month');
