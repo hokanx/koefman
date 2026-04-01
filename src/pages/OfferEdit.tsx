@@ -55,6 +55,15 @@ const OfferEdit = () => {
     enabled: !!user,
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ['business-settings'],
+    queryFn: async () => {
+      const { data } = await supabase.from('business_settings').select('*').eq('user_id', user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   useEffect(() => {
     if (offer) {
       setCustomerId(offer.customer_id);
@@ -62,11 +71,11 @@ const OfferEdit = () => {
       setStatus(offer.status as OfferStatus);
       setNotes(offer.notes || '');
       setInternalNotes(offer.internal_notes || '');
-      setIntroText((offer as any).intro_text || '');
-      setFooterText((offer as any).footer_text || '');
-      setClosingText((offer as any).closing_text || '');
+      setIntroText((offer as any).intro_text || (settings as any)?.default_offer_intro_text || '');
+      setFooterText((offer as any).footer_text || (settings as any)?.default_offer_footer_text || '');
+      setClosingText((offer as any).closing_text || (settings as any)?.default_closing_text || '');
     }
-  }, [offer]);
+  }, [offer, settings]);
 
   useEffect(() => {
     if (offerItems) {
