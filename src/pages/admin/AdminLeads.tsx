@@ -55,10 +55,6 @@ const CALL_RESULTS = [
   { key: 'unklar', label: 'Unklar' },
 ];
 
-const PACKAGE_LABELS: Record<string, string> = {
-  setup_59: '499 € Setup + 59 €/Mo',
-  strategy_299: '299 €/Mo Strategie',
-};
 
 interface LeadBooking {
   id: string;
@@ -326,11 +322,6 @@ const AdminLeads = () => {
                           </span>
                         )}
                         {getStatusBadge(sub.lead_status || 'neu')}
-                        {analysis?.recommended_package && (
-                          <span className="text-[9px] font-medium tracking-[0.06em] px-2 py-0.5 rounded border border-border text-muted-foreground">
-                            {PACKAGE_LABELS[analysis.recommended_package] || analysis.recommended_package}
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">{sub.email}</p>
                       <div className="flex items-center gap-2 flex-wrap">

@@ -10,35 +10,14 @@ const corsHeaders = {
 const EMAIL_FROM = "Köfman <no-reply@koefman.de>";
 const BOOKING_URL = "https://koefman.lovable.app/book";
 
-const PACKAGE_INFO: Record<string, { title: string; price: string; detail: string }> = {
-  setup_59: {
-    title: "SYSTEM-SETUP",
-    price: "499 € einmalig + 59 €/Monat",
-    detail: "Wir richten dein komplettes System ein und betreuen es laufend.",
-  },
-  strategy_299: {
-    title: "STRATEGIE & BEGLEITUNG",
-    price: "299 €/Monat",
-    detail: "Wöchentliche Strategie-Calls und laufende Optimierung deines Systems.",
-  },
-};
-
-function recommendPackage(companySize: string, importance: string, commitment: string): string {
-  // Larger companies or high urgency → strategy package
-  if (companySize === "6-15" || companySize === "15+") return "strategy_299";
-  if (importance === "hoch" && commitment === "ja") return "strategy_299";
-  return "setup_59";
-}
 
 function buildEmailHtml(
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
-  recommendedPkg: string,
   submissionId?: string,
   variant?: string
 ) {
   const ctaUrl = `${BOOKING_URL}?sid=${submissionId || ""}&source=email${variant ? `&variant=${variant}` : ""}`;
-  const pkg = PACKAGE_INFO[recommendedPkg] || PACKAGE_INFO["setup_59"];
 
   const prioritiesHtml = analysis.priorities
     .filter((p: string) => p)
@@ -130,19 +109,6 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 
 <tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
-<!-- Package Recommendation -->
-<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">UNSERE EMPFEHLUNG F&#220;R DICH</p>
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #2A2A2A;">
-    <tr><td style="padding:20px 24px;background-color:#0A0A0A;">
-      <p style="color:#FFFFFF;font-size:16px;font-weight:700;letter-spacing:0.06em;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">${pkg.title}</p>
-      <p style="color:#FFFFFF;font-size:14px;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">${pkg.price}</p>
-      <p style="color:#9A9A9A;font-size:13px;line-height:1.6;margin:0;font-family:Arial,Helvetica,sans-serif;">${pkg.detail}</p>
-    </td></tr>
-  </table>
-</td></tr>
-
-<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- CTA -->
 <tr><td style="padding:32px 32px 0 32px;background-color:#000000;" align="center">
@@ -181,7 +147,6 @@ async function sendAnalysisEmail(
   email: string,
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
-  recommendedPkg: string,
   submissionId?: string,
   variant?: string
 ): Promise<boolean> {
@@ -191,7 +156,7 @@ async function sendAnalysisEmail(
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
-  const emailHtml = buildEmailHtml(name, analysis, recommendedPkg, submissionId, variant);
+  const emailHtml = buildEmailHtml(name, analysis, submissionId, variant);
 
   // Try gateway first, fall back to direct
   let emailRes: Response;
@@ -287,7 +252,6 @@ serve(async (req) => {
 
         emailSent = await sendAnalysisEmail(
           email, name, analysis,
-          existingAnalysis.recommended_package || "setup_59",
           submission_id, sub?.variant
         );
         if (emailSent) {
@@ -351,7 +315,6 @@ serve(async (req) => {
 
       const sent = await sendAnalysisEmail(
         sub.email, sub.name, analysis,
-        existingAnalysis.recommended_package || "setup_59",
         sub.id, sub.variant
       );
       if (sent) {
@@ -403,8 +366,6 @@ serve(async (req) => {
 
     if (subErr) throw subErr;
 
-    // Determine recommended package
-    const recPkg = recommendPackage(company_size || "", importance || "", commitment || "");
 
     // 2. Generate AI analysis
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -575,7 +536,6 @@ Erstelle eine strukturierte Mini-Analyse.`,
         next_step: analysis.next_step || "",
         full_analysis_json: analysis,
         error_message: errorMessage,
-        recommended_package: recPkg,
       })
       .select()
       .single();
@@ -584,7 +544,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
     let emailSent = false;
     if (!skip_email && name && email && analysisStatus === "completed") {
       try {
-        emailSent = await sendAnalysisEmail(email, name, analysis, recPkg, submission.id, variant);
+        emailSent = await sendAnalysisEmail(email, name, analysis, submission.id, variant);
         if (emailSent && savedAnalysis) {
           await supabase
             .from("lead_analyses")
@@ -604,7 +564,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
         needs: problems?.length ? problems : [main_problem || "unknown"],
         contact_method: "email",
         status: "neu",
-        admin_notes: `Intent: ${intent_score || "medium"}. Submission-ID: ${submission.id}. Package: ${recPkg}`,
+        admin_notes: `Intent: ${intent_score || "medium"}. Submission-ID: ${submission.id}`,
       });
     }
 
@@ -618,7 +578,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
           practical_meaning: analysis.practical_meaning,
           priorities: analysis.priorities,
           next_step: analysis.next_step,
-          recommended_package: recPkg,
+          
         },
         analysis_status: analysisStatus,
         email_sent: emailSent,

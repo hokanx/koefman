@@ -45,7 +45,7 @@ import Onboarding from "@/pages/Onboarding";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminLeads from "@/pages/admin/AdminLeads";
 import AdminDocumentsUnified from "@/pages/admin/AdminDocumentsUnified";
-import AdminSettings from "@/pages/admin/AdminSettings";
+
 import LandingPage from "@/pages/LandingPage";
 import Truth from "@/pages/Truth";
 import TruthA from "@/pages/TruthA";
@@ -76,7 +76,7 @@ const AppWithImpersonation = () => {
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/leads" element={<AdminLeads />} />
                 <Route path="/admin/documents" element={<AdminDocumentsUnified />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
+                
               </Route>
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />

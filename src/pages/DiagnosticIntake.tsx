@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import BrandMark from '@/components/shared/BrandMark';
 
 interface AnalysisResult {
@@ -9,7 +10,6 @@ interface AnalysisResult {
   practical_meaning: string;
   priorities: string[];
   next_step: string;
-  recommended_package?: string;
 }
 
 const INDUSTRIES = [
@@ -66,18 +66,6 @@ const URGENCY_OPTIONS = [
   { label: 'IRGENDWANN', value: 'irgendwann' },
 ];
 
-const PACKAGE_INFO: Record<string, { title: string; price: string; detail: string }> = {
-  setup_59: {
-    title: 'SYSTEM-SETUP',
-    price: '499 € einmalig + 59 €/Monat',
-    detail: 'Wir richten dein komplettes System ein und betreuen es laufend.',
-  },
-  strategy_299: {
-    title: 'STRATEGIE & BEGLEITUNG',
-    price: '299 €/Monat',
-    detail: 'Wöchentliche Strategie-Calls und laufende Optimierung deines Systems.',
-  },
-};
 
 function computeIntentScore(importance: string, commitment: string, urgency: string): { score: number; level: string } {
   let score = 0;
@@ -201,18 +189,19 @@ export default function DiagnosticIntake() {
       });
 
       if (response.error) throw response.error;
-      setEmailSent(true);
-
-      // Navigate to booking page
-      setTimeout(() => {
-        navigate(`/book?sid=${submissionId}`);
-      }, 2000);
+      const data = response.data;
+      if (data?.email_sent) {
+        setEmailSent(true);
+        setTimeout(() => {
+          navigate(`/book?sid=${submissionId}`);
+        }, 2000);
+      } else {
+        toast.error('E-Mail konnte nicht gesendet werden. Bitte prüfe deine E-Mail-Adresse.');
+        setEmailSent(false);
+      }
     } catch (err) {
       console.error('Email capture error:', err);
-      setEmailSent(true); // still proceed
-      setTimeout(() => {
-        navigate(`/book?sid=${submissionId}`);
-      }, 2000);
+      toast.error('E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.');
     } finally {
       setSendingEmail(false);
     }
@@ -234,7 +223,7 @@ export default function DiagnosticIntake() {
         : 'border-border text-foreground bg-transparent hover:border-foreground/50'
     }`;
 
-  const pkg = analysis?.recommended_package ? PACKAGE_INFO[analysis.recommended_package] : PACKAGE_INFO['setup_59'];
+  
 
   return (
     <div className="bg-background text-foreground min-h-screen flex flex-col">
@@ -473,17 +462,6 @@ export default function DiagnosticIntake() {
                     <p className="text-sm sm:text-base text-foreground leading-[1.7]">{analysis.next_step}</p>
                   </div>
 
-                  {/* Package Recommendation */}
-                  {pkg && (
-                    <div className="border-t border-[hsl(var(--border))] py-7">
-                      <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">UNSERE EMPFEHLUNG FÜR DICH</p>
-                      <div className="border border-foreground/20 p-6 space-y-3">
-                        <p className="text-base sm:text-lg font-bold tracking-[0.08em]">{pkg.title}</p>
-                        <p className="text-sm text-foreground/80">{pkg.price}</p>
-                        <p className="text-sm text-muted-foreground leading-[1.6]">{pkg.detail}</p>
-                      </div>
-                    </div>
-                  )}
 
                   {/* CTA to capture email */}
                   <div className="border-t border-[hsl(var(--border))] pt-10 pb-4 text-center">
