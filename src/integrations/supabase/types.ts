@@ -1714,6 +1714,7 @@ export type Database = {
           owner_user_id: string | null
           slug: string | null
           status: string
+          tax_mode: string
           updated_at: string
         }
         Insert: {
@@ -1726,6 +1727,7 @@ export type Database = {
           owner_user_id?: string | null
           slug?: string | null
           status?: string
+          tax_mode?: string
           updated_at?: string
         }
         Update: {
@@ -1738,6 +1740,7 @@ export type Database = {
           owner_user_id?: string | null
           slug?: string | null
           status?: string
+          tax_mode?: string
           updated_at?: string
         }
         Relationships: []
