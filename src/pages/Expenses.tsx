@@ -170,7 +170,7 @@ const Expenses = () => {
         </div>
         <div className="rounded-xl border border-border bg-card p-3 text-center">
           <p className="text-2xl font-bold text-foreground">{formatAmountDE(totalExpenseAmount)}</p>
-          <p className="text-xs text-muted-foreground">Summe</p>
+          <p className="text-xs text-muted-foreground">{isKleinunternehmer ? 'Summe' : 'Summe (brutto)'}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-3 text-center">
           <p className={`text-2xl font-bold ${notExported > 0 ? 'text-warning' : 'text-success'}`}>{notExported}</p>

@@ -126,9 +126,15 @@ const Revenue = () => {
         </div>
         <div className="rounded-xl border border-border bg-card p-3 text-center">
           <p className="text-2xl font-bold text-success">{formatEUR(totalPaid)}</p>
-          <p className="text-xs text-muted-foreground">Bezahlt</p>
+          <p className="text-xs text-muted-foreground">{isKleinunternehmer ? 'Erhalten' : 'Bezahlt (brutto)'}</p>
         </div>
       </div>
+
+      {isKleinunternehmer && (
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+          <span>§19 UStG – Keine Umsatzsteuer wird berechnet.</span>
+        </div>
+      )}
 
       {/* Tab switcher */}
       <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
