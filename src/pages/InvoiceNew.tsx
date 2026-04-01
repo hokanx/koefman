@@ -45,14 +45,19 @@ const InvoiceNew = () => {
     enabled: !!user,
   });
 
-  // Auto-fill from settings
+  // Auto-fill from settings (once only)
+  const prefilled = useRef(false);
   useEffect(() => {
-    if (settings) {
-      setIntroText((settings as any).default_invoice_intro_text || '');
-      setFooterText((settings as any).default_invoice_footer_text || '');
-      setClosingText((settings as any).default_closing_text || '');
-      setPaymentTerms(settings.payment_terms || '');
-      // Auto-calculate due date (14 days from today)
+    if (settings && !prefilled.current) {
+      prefilled.current = true;
+      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:';
+      const fallbackFooter = 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.';
+      const fallbackClosing = 'Mit freundlichen Grüßen';
+      const fallbackPayment = 'Zahlbar innerhalb von 14 Tagen ohne Abzug.';
+      setIntroText((settings as any).default_invoice_intro_text || fallbackIntro);
+      setFooterText((settings as any).default_invoice_footer_text || fallbackFooter);
+      setClosingText((settings as any).default_closing_text || fallbackClosing);
+      setPaymentTerms(settings.payment_terms || fallbackPayment);
       if (!dueDate) {
         const due = new Date();
         due.setDate(due.getDate() + 14);
