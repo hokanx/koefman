@@ -251,7 +251,7 @@ const PublicOfferView = () => {
     const days = (offer as any).validity_days || 14;
     const offerDate = new Date(offer.date);
     offerDate.setDate(offerDate.getDate() + days);
-    return offerDate.toLocaleDateString('de-DE');
+    return formatDateDE(offerDate);
   };
 
   const isExpired = (): boolean => {
