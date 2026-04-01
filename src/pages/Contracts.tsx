@@ -11,6 +11,7 @@ import { formatAddress } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle } from 'lucide-react';
 import { formatEUR } from '@/lib/utils';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 const frequencyLabels: Record<string, Record<string, string>> = {
   weekly: { de: 'Wöchentlich', en: 'Weekly', ar: 'أسبوعياً' },
