@@ -2,6 +2,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatEUR } from '@/lib/utils';
 import TemplatePicker from './TemplatePicker';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import type { LineItem } from '@/types';
 
 interface LineItemsEditorProps {
@@ -24,6 +25,7 @@ interface LineItemsEditorProps {
 
 const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, defaultTaxRate = 19, defaultUnit = 'Pauschal' }: LineItemsEditorProps) => {
   const { t } = useLanguage();
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const addItem = () => {
     onChange([...items, {
@@ -126,18 +128,20 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
                 className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">{labels.taxRate}</label>
-              <select
-                value={item.tax_rate}
-                onChange={(e) => updateItem(item.id, 'tax_rate', parseFloat(e.target.value))}
-                className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-              >
-                <option value="19">19%</option>
-                <option value="7">7%</option>
-                <option value="0">0%</option>
-              </select>
-            </div>
+            {!isKleinunternehmer && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">{labels.taxRate}</label>
+                <select
+                  value={item.tax_rate}
+                  onChange={(e) => updateItem(item.id, 'tax_rate', parseFloat(e.target.value))}
+                  className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                >
+                  <option value="19">19%</option>
+                  <option value="7">7%</option>
+                  <option value="0">0%</option>
+                </select>
+              </div>
+            )}
           </div>
           <div className="text-end text-sm font-medium text-foreground">
             {labels.total}: {formatEUR(item.total)}
@@ -161,17 +165,21 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
 
       {items.length > 0 && (
         <div className="space-y-1 rounded-lg bg-muted/50 p-3 text-sm">
-          <div className="flex justify-between text-muted-foreground">
-            <span>{t.offers.subtotal}</span>
-            <span>{formatEUR(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>{t.offers.taxTotal}</span>
-            <span>{formatEUR(taxTotal)}</span>
-          </div>
-          <div className="flex justify-between border-t border-border pt-1 font-semibold text-foreground">
-            <span>{t.offers.grandTotal}</span>
-            <span>{formatEUR(grandTotal)}</span>
+          {!isKleinunternehmer && (
+            <>
+              <div className="flex justify-between text-muted-foreground">
+                <span>{t.offers.subtotal}</span>
+                <span>{formatEUR(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>{t.offers.taxTotal}</span>
+                <span>{formatEUR(taxTotal)}</span>
+              </div>
+            </>
+          )}
+          <div className={`flex justify-between font-semibold text-foreground ${!isKleinunternehmer ? 'border-t border-border pt-1' : ''}`}>
+            <span>{isKleinunternehmer ? 'Betrag' : t.offers.grandTotal}</span>
+            <span>{formatEUR(isKleinunternehmer ? subtotal : grandTotal)}</span>
           </div>
         </div>
       )}

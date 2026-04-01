@@ -63,7 +63,7 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
     loadPreview();
   }, [doc, open]);
 
-  // Auto-calculate brutto
+  // Auto-calculate total
   useEffect(() => {
     const net = parseFloat(editNet);
     const vat = parseFloat(editVat);
@@ -176,9 +176,7 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {norm.vendor && <div><span className="text-muted-foreground text-xs">Anbieter</span><p className="font-medium">{norm.vendor}</p></div>}
                 {norm.date && <div><span className="text-muted-foreground text-xs">Datum</span><p className="font-medium">{norm.date}</p></div>}
-                {norm.net_amount != null && <div><span className="text-muted-foreground text-xs">Netto</span><p className="font-medium">{formatAmountDE(norm.net_amount)}</p></div>}
-                {norm.vat_amount != null && <div><span className="text-muted-foreground text-xs">Umsatzsteuer</span><p className="font-medium">{formatAmountDE(norm.vat_amount)}</p></div>}
-                {norm.gross_amount != null && <div><span className="text-muted-foreground text-xs">Brutto</span><p className="font-medium">{formatAmountDE(norm.gross_amount)}</p></div>}
+                {norm.gross_amount != null && <div><span className="text-muted-foreground text-xs">Betrag</span><p className="font-medium">{formatAmountDE(norm.gross_amount)}</p></div>}
                 {norm.suggested_category && <div><span className="text-muted-foreground text-xs">Vorgeschlagene Kategorie</span><p className="font-medium">{getCategoryInfo(norm.suggested_category).label}</p></div>}
               </div>
             </div>
@@ -212,12 +210,12 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
                       className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">USt (€)</label>
+                    <label className="text-xs text-muted-foreground">Steuer (€)</label>
                     <input type="number" step="0.01" value={editVat} onChange={e => setEditVat(e.target.value)}
                       className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Brutto (€)</label>
+                    <label className="text-xs text-muted-foreground">Betrag (€)</label>
                     <input type="number" step="0.01" value={editGross} onChange={e => setEditGross(e.target.value)}
                       className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" />
                   </div>
