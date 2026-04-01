@@ -12,6 +12,7 @@ import { generateDocumentNumber } from '@/lib/documentUtils';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import { calculateTotals } from '@/lib/taxConfig';
 import type { Customer, LineItem } from '@/types';
+import DiscountEditor, { type DiscountData } from '@/components/shared/DiscountEditor';
 
 const OfferNew = () => {
   const { t } = useLanguage();
