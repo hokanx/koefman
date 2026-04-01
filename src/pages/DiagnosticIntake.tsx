@@ -460,17 +460,6 @@ export default function DiagnosticIntake() {
                     <p className="text-sm sm:text-base text-foreground leading-[1.7]">{analysis.next_step}</p>
                   </div>
 
-                  {/* Package Recommendation */}
-                  {pkg && (
-                    <div className="border-t border-[hsl(var(--border))] py-7">
-                      <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">UNSERE EMPFEHLUNG FÜR DICH</p>
-                      <div className="border border-foreground/20 p-6 space-y-3">
-                        <p className="text-base sm:text-lg font-bold tracking-[0.08em]">{pkg.title}</p>
-                        <p className="text-sm text-foreground/80">{pkg.price}</p>
-                        <p className="text-sm text-muted-foreground leading-[1.6]">{pkg.detail}</p>
-                      </div>
-                    </div>
-                  )}
 
                   {/* CTA to capture email */}
                   <div className="border-t border-[hsl(var(--border))] pt-10 pb-4 text-center">
