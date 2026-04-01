@@ -168,8 +168,12 @@ const OfferEdit = () => {
         </FormSection>
 
         <FormSection title={t.offers.documentTexts}>
+          <p className="text-[11px] text-muted-foreground/60 -mt-1 mb-3 flex items-center gap-1">
+            <span>📝</span> Änderungen gelten nur für dieses Dokument
+          </p>
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.introText}</label>
+            <label className="mb-0.5 block text-sm text-muted-foreground">{t.offers.introText}</label>
+            <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
             <textarea value={introText} onChange={(e) => setIntroText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
           </div>
           <div>
@@ -177,11 +181,13 @@ const OfferEdit = () => {
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.footerText}</label>
+            <label className="mb-0.5 block text-sm text-muted-foreground">{t.offers.footerText}</label>
+            <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
             <textarea value={footerText} onChange={(e) => setFooterText(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">{t.offers.closingText}</label>
+            <label className="mb-0.5 block text-sm text-muted-foreground">{t.offers.closingText}</label>
+            <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
             <input type="text" value={closingText} onChange={(e) => setClosingText(e.target.value)} className={inputClass} />
           </div>
           <div>
