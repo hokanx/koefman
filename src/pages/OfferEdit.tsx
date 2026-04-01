@@ -101,7 +101,7 @@ const OfferEdit = () => {
       const grand_total = subtotal + tax_total;
 
       const { error } = await supabase.from('offers').update({
-        customer_id: customerId, date, status, notes, internal_notes: internalNotes,
+        customer_id: customerId || null, date, status, notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total,
       } as any).eq('id', id!);

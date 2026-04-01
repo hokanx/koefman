@@ -127,8 +127,11 @@ const PublicOfferView = () => {
           email: email.trim() || null,
         } as any).eq('id', customer.id);
       } else {
-        // Create new customer from submitted data
-        const { data: newCustomer, error: custError } = await supabase.from('customers').insert({
+        // Create new customer from submitted data — generate ID client-side
+        // to avoid anon RLS SELECT issue after insert
+        const newId = crypto.randomUUID();
+        const { error: custError } = await supabase.from('customers').insert({
+          id: newId,
           user_id: offer!.user_id,
           name: companyName.trim(),
           contact_person: contactPerson.trim() || null,
@@ -137,9 +140,9 @@ const PublicOfferView = () => {
           postal_code: postalCode.trim(),
           city: city.trim(),
           email: email.trim() || null,
-        } as any).select().single();
+        } as any);
         if (custError) throw custError;
-        customerId = newCustomer!.id;
+        customerId = newId;
       }
 
       // Insert acceptance record
