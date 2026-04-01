@@ -141,7 +141,7 @@ const AdminOrgExpenses = () => {
   const handleCreate = async () => {
     const gross = parseNum(form.amount_gross);
     if (!form.vendor_name.trim() || gross == null || gross <= 0) {
-      toast.error('Lieferant und Bruttobetrag sind erforderlich.');
+      toast.error('Lieferant und Betrag sind erforderlich.');
       return;
     }
 
