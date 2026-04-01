@@ -36,7 +36,7 @@ const Contracts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contracts')
-        .select('*, customer:customers(name), source_offer:offers(offer_number)')
+        .select('*, customer:customers(name, email), source_offer:offers(offer_number)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
