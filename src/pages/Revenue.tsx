@@ -11,12 +11,11 @@ import { formatEUR } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
-type Tab = 'offers' | 'invoices' | 'contracts';
+type Tab = 'offers' | 'invoices';
 
 const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: 'offers', label: 'Angebote', icon: FileText },
   { key: 'invoices', label: 'Rechnungen', icon: Receipt },
-  { key: 'contracts', label: 'Verträge', icon: ScrollText },
 ];
 
 const statusLabel: Record<string, string> = {
