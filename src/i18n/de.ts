@@ -163,7 +163,7 @@ export const de = {
     total: 'Gesamt',
     subtotal: 'Zwischensumme',
     taxTotal: 'MwSt.',
-    grandTotal: 'Gesamtbetrag',
+    grandTotal: 'Betrag',
     saveDraft: 'Entwurf speichern',
     sendOffer: 'Angebot senden',
     duplicateOffer: 'Angebot duplizieren',
