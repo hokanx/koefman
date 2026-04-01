@@ -8,7 +8,6 @@ import { formatEUR } from '@/lib/utils';
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  useOrgTaxMode(); // ensure workspace context is loaded
 
   const { data: stats } = useQuery({
     queryKey: ['dashboard-stats'],
