@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 const DEFAULT_TEXTS = {
   de: {
     offer_intro: 'Sehr geehrte Damen und Herren,\n\nwir bieten Ihnen die nachfolgend aufgeführten Leistungen zu den genannten Konditionen an:',
-    offer_footer: 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.\n\nDieses Angebot ist 14 Tage gültig.',
+    offer_footer: 'Dieses Angebot ist 14 Tage gültig.',
     invoice_intro: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:',
     invoice_footer: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
     payment_terms: 'Zahlbar innerhalb von 14 Tagen ohne Abzug.',
