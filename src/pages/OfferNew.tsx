@@ -18,6 +18,7 @@ const OfferNew = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const [customerId, setCustomerId] = useState(searchParams.get('customer') || '');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);

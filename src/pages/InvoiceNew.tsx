@@ -17,6 +17,7 @@ const InvoiceNew = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const [customerId, setCustomerId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
