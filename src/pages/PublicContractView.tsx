@@ -330,7 +330,7 @@ const PublicContractView = () => {
             <h3 className="text-lg font-bold text-green-800">Vertrag unterzeichnet</h3>
             <p className="mt-1 text-sm text-green-600">
               {existingAcceptance
-                ? `Unterzeichnet von ${existingAcceptance.accepted_by_name} am ${new Date(existingAcceptance.accepted_at).toLocaleDateString('de-DE')}`
+                ? `Unterzeichnet von ${existingAcceptance.accepted_by_name} am ${formatDateDE(existingAcceptance.accepted_at)}`
                 : signed
                 ? `Unterzeichnet von ${acceptName}`
                 : 'Dieser Vertrag wurde bereits unterzeichnet.'}
