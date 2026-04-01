@@ -124,7 +124,7 @@ function buildTextBody(subject: string, messageBody: string, ctaLabel?: string, 
   return parts.join('\n');
 }
 
-async function ensureOrganizationAccess(supabaseAdmin: ReturnType<typeof createClient>, userId: string, organizationId: string) {
+async function ensureOrganizationAccess(supabaseAdmin: any, userId: string, organizationId: string) {
   const [membershipResult, ownerResult, adminResult] = await Promise.all([
     supabaseAdmin
       .from('organization_memberships')
@@ -150,7 +150,7 @@ async function ensureOrganizationAccess(supabaseAdmin: ReturnType<typeof createC
   return Boolean(membershipResult.data || ownerResult.data || adminResult.data);
 }
 
-async function loadBranding(supabaseAdmin: ReturnType<typeof createClient>, organizationId: string): Promise<BrandingSettings> {
+async function loadBranding(supabaseAdmin: any, organizationId: string): Promise<BrandingSettings> {
   const [{ data: org, error: orgError }, { data: emailSettings, error: emailSettingsError }] = await Promise.all([
     supabaseAdmin
       .from('organizations')
@@ -238,7 +238,7 @@ async function sendViaResend(resendApiKey: string, emailPayload: Record<string, 
 }
 
 async function resolveLegacyDocument(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   requestData: ParsedRequest,
   userId: string,
   appUrl: string,
@@ -369,12 +369,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
-    const supabaseAdmin = createClient(
+    const supabaseAdmin: any = createClient(
       supabaseUrl,
       serviceRoleKey
     );
 
-    const supabaseUser = createClient(
+    const supabaseUser: any = createClient(
       supabaseUrl,
       anonKey,
       { global: { headers: { Authorization: authHeader } } }
@@ -545,7 +545,7 @@ Deno.serve(async (req) => {
     };
 
     if (branding.replyTo) {
-      resendBody.reply_to = replyTo;
+      resendBody.reply_to = branding.replyTo;
     }
 
     if (requestData.pdfBase64 && requestData.pdfFilename) {
