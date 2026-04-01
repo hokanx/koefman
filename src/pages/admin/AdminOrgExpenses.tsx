@@ -203,7 +203,7 @@ const AdminOrgExpenses = () => {
     }
     const header = [
       'Datum', 'Buchungsdatum', 'Lieferant', 'Beschreibung', 'Kategorie',
-      'Netto', 'USt', 'Brutto', 'Währung', 'Belegdatei', 'Beleg-URL',
+      'Betrag Netto', 'Steuer', 'Betrag', 'Währung', 'Belegdatei', 'Beleg-URL',
       'Exportstatus', 'Verknüpftes Dokument', 'Notizen',
     ];
     const rows = items.map((e) => [
