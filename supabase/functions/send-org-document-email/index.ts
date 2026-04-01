@@ -474,7 +474,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: 'Forbidden' }, 403);
       }
 
-      const branding = await loadBranding(supabaseAdmin, doc.organization_id);
+      const branding = await loadBranding(supabaseAdmin, doc.organization_id, userId);
       const recipientEmail = requestData.to || doc.recipient_email;
       if (!recipientEmail) {
         return jsonResponse({ error: 'No recipient email on document' }, 400);
