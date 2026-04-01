@@ -71,9 +71,7 @@ const InvoiceNew = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const subtotal = items.reduce((s, i) => s + i.total, 0);
-      const tax_total = items.reduce((s, i) => s + (i.total * i.tax_rate) / 100, 0);
-      const grand_total = subtotal + tax_total;
+      const { subtotal, taxTotal: tax_total, grandTotal: grand_total } = calculateTotals(items, isKleinunternehmer ? 'kleinunternehmer' : 'standard');
 
       const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user!.id);
       const prefix = settings?.invoice_number_prefix || 'RE-';

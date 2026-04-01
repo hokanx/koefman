@@ -99,9 +99,7 @@ const OfferEdit = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const subtotal = items.reduce((s, i) => s + i.total, 0);
-      const tax_total = items.reduce((s, i) => s + (i.total * i.tax_rate) / 100, 0);
-      const grand_total = subtotal + tax_total;
+      const { subtotal, taxTotal: tax_total, grandTotal: grand_total } = calculateTotals(items, isKleinunternehmer ? 'kleinunternehmer' : 'standard');
 
       const { error } = await supabase.from('offers').update({
         customer_id: customerId || null, date, status, notes, internal_notes: internalNotes,

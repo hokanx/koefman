@@ -56,9 +56,8 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
     onChange(updated);
   };
 
-  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const taxTotal = items.reduce((sum, item) => sum + (item.total * item.tax_rate) / 100, 0);
-  const grandTotal = subtotal + taxTotal;
+  const { taxMode } = useOrgTaxMode();
+  const { subtotal, taxTotal, grandTotal } = calculateTotals(items, taxMode);
 
   return (
     <div className="space-y-3">
