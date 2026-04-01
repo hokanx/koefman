@@ -73,19 +73,10 @@ const AppWithImpersonation = () => {
               <Route path="/landing" element={<LandingPage />} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
-              <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
-                <Route path="/admin/workspaces" element={<AdminWorkspaces />} />
-                <Route path="/admin/clients" element={<AdminClients />} />
-                <Route path="/admin/documents" element={<AdminDocuments />} />
-                <Route path="/admin/templates" element={<AdminTemplates />} />
-                <Route path="/admin/document-templates" element={<AdminDocumentTemplates />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/leads" element={<AdminLeads />} />
-                <Route path="/admin/organizations" element={<AdminOrganizations />} />
-                <Route path="/admin/organizations/:id" element={<AdminOrganizationDetail />} />
-                <Route path="/admin/org-documents" element={<AdminOrgDocuments />} />
-                <Route path="/admin/org-expenses" element={<AdminOrgExpenses />} />
+                <Route path="/admin/documents" element={<AdminDocumentsUnified />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
               </Route>
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
