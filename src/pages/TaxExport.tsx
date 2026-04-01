@@ -81,6 +81,7 @@ const TaxExport = () => {
     try {
       const blob = await generateCleanTaxExportZip({
         userId: targetUserId, from, to, businessSettings: settings,
+        isKleinunternehmer,
         onProgress: (_p, label) => setExportProgress(label),
       });
       const url = URL.createObjectURL(blob);
