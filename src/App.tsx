@@ -133,6 +133,7 @@ const AppWithImpersonation = () => {
               <Route path="/diagnose" element={<DiagnosticIntake />} />
               <Route path="/system" element={<SystemPage />} />
               <Route path="/start" element={<StrategyStart />} />
+              <Route path="/book" element={<BookingPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
