@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { DOCUMENT_GROUPS, getCategoryInfo, getStatusInfo } from '@/lib/documentCategories';
 import { normalizeExtracted, formatAmountDE } from '@/lib/extractedDataUtils';
 import DocumentPreviewModal from '@/components/documents/DocumentPreviewModal';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 const getStoragePath = (fileUrl: string): string => {
   if (fileUrl.includes('/client-documents/')) {

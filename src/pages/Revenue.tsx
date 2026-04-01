@@ -10,6 +10,7 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE } from '@/lib/generatePdf';
 import { formatEUR } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 type Tab = 'offers' | 'invoices' | 'contracts';
 

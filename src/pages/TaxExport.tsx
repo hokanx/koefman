@@ -8,6 +8,7 @@ import { fetchTaxExportSummary, generateCleanTaxExportZip } from '@/lib/cleanTax
 import { toast } from 'sonner';
 import { FileArchive, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 type DateRange = 'month' | 'quarter' | 'year';
 
