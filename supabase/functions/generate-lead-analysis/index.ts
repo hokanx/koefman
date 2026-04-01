@@ -14,12 +14,10 @@ const BOOKING_URL = "https://koefman.lovable.app/book";
 function buildEmailHtml(
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
-  recommendedPkg: string,
   submissionId?: string,
   variant?: string
 ) {
   const ctaUrl = `${BOOKING_URL}?sid=${submissionId || ""}&source=email${variant ? `&variant=${variant}` : ""}`;
-  const pkg = PACKAGE_INFO[recommendedPkg] || PACKAGE_INFO["setup_59"];
 
   const prioritiesHtml = analysis.priorities
     .filter((p: string) => p)
