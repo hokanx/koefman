@@ -255,7 +255,7 @@ export const de = {
     total: 'Gesamt',
     subtotal: 'Zwischensumme',
     taxTotal: 'MwSt.',
-    grandTotal: 'Gesamtbetrag',
+    grandTotal: 'Betrag',
     documentTitle: 'Rechnung',
     introText: 'Einleitungstext',
     footerText: 'Schlusstext',
