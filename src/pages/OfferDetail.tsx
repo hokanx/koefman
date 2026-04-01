@@ -137,7 +137,7 @@ const OfferDetail = () => {
       const validityDays = (offer as any).validity_days || 14;
       const validityDate = getValidityDate();
 
-      const isSmallBiz = !!(settings as any)?.small_business_regulation;
+      const isSmallBiz = isKleinunternehmer;
 
       await generatePdf({
         type: 'offer',
