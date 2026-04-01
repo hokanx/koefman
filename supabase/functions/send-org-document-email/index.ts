@@ -380,7 +380,7 @@ async function resolveLegacyDocument(
 
   const { data: invoice, error } = await supabaseAdmin
     .from('invoices')
-    .select('id, user_id, invoice_number, grand_total, due_date, customer:customers(name, email)')
+    .select('id, user_id, invoice_number, grand_total, due_date, source_recurring_id, customer:customers(name, email)')
     .eq('id', legacyDocumentId)
     .eq('user_id', userId)
     .single();
