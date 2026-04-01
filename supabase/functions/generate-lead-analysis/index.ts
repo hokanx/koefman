@@ -109,19 +109,6 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 
 <tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
-<!-- Package Recommendation -->
-<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">UNSERE EMPFEHLUNG F&#220;R DICH</p>
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #2A2A2A;">
-    <tr><td style="padding:20px 24px;background-color:#0A0A0A;">
-      <p style="color:#FFFFFF;font-size:16px;font-weight:700;letter-spacing:0.06em;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">${pkg.title}</p>
-      <p style="color:#FFFFFF;font-size:14px;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">${pkg.price}</p>
-      <p style="color:#9A9A9A;font-size:13px;line-height:1.6;margin:0;font-family:Arial,Helvetica,sans-serif;">${pkg.detail}</p>
-    </td></tr>
-  </table>
-</td></tr>
-
-<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- CTA -->
 <tr><td style="padding:32px 32px 0 32px;background-color:#000000;" align="center">
