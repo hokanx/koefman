@@ -391,17 +391,8 @@ export const generatePdf = async (data: PdfData, returnBase64 = false): Promise<
     y += noteLines.length * 4 + 5;
   }
 
-  // --- OFFER-SPECIFIC: legal note + validity ---
+  // --- OFFER-SPECIFIC: validity ---
   if (data.type === 'offer') {
-    // Only show legal note if small business regulation is active
-    if (data.small_business_regulation && data.legal_note) {
-      doc.setFontSize(8.5);
-      doc.setFont('helvetica', 'italic');
-      doc.setTextColor(80, 80, 80);
-      const legalLines = doc.splitTextToSize(data.legal_note, contentWidth);
-      doc.text(legalLines, margin, y);
-      y += legalLines.length * 4 + 4;
-    }
 
     if (data.validityDate) {
       doc.setFontSize(8.5);
