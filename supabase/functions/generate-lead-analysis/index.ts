@@ -547,7 +547,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
     let emailSent = false;
     if (!skip_email && name && email && analysisStatus === "completed") {
       try {
-        emailSent = await sendAnalysisEmail(email, name, analysis, recPkg, submission.id, variant);
+        emailSent = await sendAnalysisEmail(email, name, analysis, submission.id, variant);
         if (emailSent && savedAnalysis) {
           await supabase
             .from("lead_analyses")
