@@ -64,16 +64,21 @@ const InvoiceEdit = () => {
     enabled: !!user,
   });
 
+  const prefilled = useRef(false);
   useEffect(() => {
-    if (invoice) {
+    if (invoice && !prefilled.current) {
+      prefilled.current = true;
+      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:';
+      const fallbackFooter = 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.';
+      const fallbackClosing = 'Mit freundlichen Grüßen';
       setCustomerId(invoice.customer_id);
       setDate(invoice.date);
       setDueDate(invoice.due_date);
       setStatus(invoice.status as InvoiceStatus);
       setNotes(invoice.notes || '');
-      setIntroText((invoice as any).intro_text || (settings as any)?.default_invoice_intro_text || '');
-      setFooterText((invoice as any).footer_text || (settings as any)?.default_invoice_footer_text || '');
-      setClosingText((invoice as any).closing_text || (settings as any)?.default_closing_text || '');
+      setIntroText((invoice as any).intro_text || (settings as any)?.default_invoice_intro_text || fallbackIntro);
+      setFooterText((invoice as any).footer_text || (settings as any)?.default_invoice_footer_text || fallbackFooter);
+      setClosingText((invoice as any).closing_text || (settings as any)?.default_closing_text || fallbackClosing);
     }
   }, [invoice, settings]);
 
