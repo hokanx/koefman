@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import FormSection from '@/components/shared/FormSection';
 import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import { toast } from 'sonner';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import type { Customer, LineItem, OfferStatus } from '@/types';
 
 const OfferEdit = () => {
@@ -15,6 +16,7 @@ const OfferEdit = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const queryClient = useQueryClient();
 
   const [customerId, setCustomerId] = useState('');
@@ -190,6 +192,12 @@ const OfferEdit = () => {
             <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
             <input type="text" value={closingText} onChange={(e) => setClosingText(e.target.value)} className={inputClass} />
           </div>
+          {isKleinunternehmer && (
+            <div className="rounded-lg border border-border bg-muted/30 p-2.5 flex items-start gap-2">
+              <span className="text-[11px] mt-px">⚖️</span>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">Steuerhinweis wird automatisch ergänzt: <span className="italic">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet."</span></p>
+            </div>
+          )}
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.internalNotes}</label>
             <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />

@@ -9,6 +9,7 @@ import FormSection from '@/components/shared/FormSection';
 import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import { toast } from 'sonner';
 import { generateDocumentNumber } from '@/lib/documentUtils';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import type { Customer, LineItem } from '@/types';
 
 const OfferNew = () => {
@@ -17,6 +18,7 @@ const OfferNew = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const [customerId, setCustomerId] = useState(searchParams.get('customer') || '');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -149,6 +151,12 @@ const OfferNew = () => {
             <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
             <input type="text" value={closingText} onChange={(e) => setClosingText(e.target.value)} className={inputClass} />
           </div>
+          {isKleinunternehmer && (
+            <div className="rounded-lg border border-border bg-muted/30 p-2.5 flex items-start gap-2">
+              <span className="text-[11px] mt-px">⚖️</span>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">Steuerhinweis wird automatisch ergänzt: <span className="italic">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet."</span></p>
+            </div>
+          )}
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.internalNotes}</label>
             <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
