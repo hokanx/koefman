@@ -233,9 +233,12 @@ ${orgLogoRow}
 </td></tr>
 
 <!-- Headline -->
-<tr><td style="padding:4px 40px 10px 40px;background-color:#000000;">
+<tr><td style="padding:4px 40px 4px 40px;background-color:#000000;">
 <h1 style="color:#FFFFFF;font-size:28px;font-weight:bold;letter-spacing:0.02em;margin:0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(vars.document_title)}</h1>
 </td></tr>
+
+<!-- Service Type Label -->
+${vars.service_type_label ? `<tr><td style="padding:2px 40px 10px 40px;background-color:#000000;"><p style="color:#999999;font-size:12px;font-weight:bold;letter-spacing:0.1em;text-transform:uppercase;margin:0;font-family:Arial,Helvetica,sans-serif;">Leistungsart: ${escapeHtml(vars.service_type_label)}</p></td></tr>` : ''}
 
 <!-- Amount -->
 ${vars.amount_total && vars.amount_total !== '\u2013' ? `<tr><td style="padding:6px 40px 28px 40px;background-color:#000000;"><p style="color:#FFFFFF;font-size:24px;font-weight:bold;margin:0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(vars.amount_total)}</p></td></tr>` : '<tr><td style="padding:0 0 20px 0;background-color:#000000;"></td></tr>'}
