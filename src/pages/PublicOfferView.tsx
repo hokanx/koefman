@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileText, XCircle, ShieldCheck } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { formatEUR } from '@/lib/utils';
+import { formatEUR, formatDateDE } from '@/lib/utils';
 
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
@@ -251,7 +251,7 @@ const PublicOfferView = () => {
     const days = (offer as any).validity_days || 14;
     const offerDate = new Date(offer.date);
     offerDate.setDate(offerDate.getDate() + days);
-    return offerDate.toLocaleDateString('de-DE');
+    return formatDateDE(offerDate);
   };
 
   const isExpired = (): boolean => {
@@ -384,7 +384,7 @@ const PublicOfferView = () => {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-500">{offer.offer_number}</span>
               <span className="text-sm text-gray-500">
-                {new Date(offer.date).toLocaleDateString('de-DE')}
+                {formatDateDE(offer.date)}
               </span>
             </div>
             <h2 className="text-xl font-bold text-gray-900">

@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatAddress } from '@/types';
 import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
-import { formatEUR } from '@/lib/utils';
+import { formatEUR, formatDateDE } from '@/lib/utils';
 
 const PublicContractView = () => {
   const { token } = useParams<{ token: string }>();
@@ -212,7 +212,7 @@ const PublicContractView = () => {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-500">{contract.contract_number}</span>
               <span className="text-sm text-gray-500">
-                {new Date(contract.created_at).toLocaleDateString('de-DE')}
+                {formatDateDE(contract.created_at)}
               </span>
             </div>
             <h2 className="text-xl font-bold text-gray-900">{contract.title}</h2>
@@ -229,12 +229,12 @@ const PublicContractView = () => {
             </div>
             <div>
               <p className="text-gray-500">Vertragsbeginn</p>
-              <p className="font-medium text-gray-900">{new Date(contract.start_date).toLocaleDateString('de-DE')}</p>
+              <p className="font-medium text-gray-900">{formatDateDE(contract.start_date)}</p>
             </div>
             {contract.end_date && (
               <div>
                 <p className="text-gray-500">Vertragsende</p>
-                <p className="font-medium text-gray-900">{new Date(contract.end_date).toLocaleDateString('de-DE')}</p>
+                <p className="font-medium text-gray-900">{formatDateDE(contract.end_date)}</p>
               </div>
             )}
             {!contract.end_date && (
@@ -330,7 +330,7 @@ const PublicContractView = () => {
             <h3 className="text-lg font-bold text-green-800">Vertrag unterzeichnet</h3>
             <p className="mt-1 text-sm text-green-600">
               {existingAcceptance
-                ? `Unterzeichnet von ${existingAcceptance.accepted_by_name} am ${new Date(existingAcceptance.accepted_at).toLocaleDateString('de-DE')}`
+                ? `Unterzeichnet von ${existingAcceptance.accepted_by_name} am ${formatDateDE(existingAcceptance.accepted_at)}`
                 : signed
                 ? `Unterzeichnet von ${acceptName}`
                 : 'Dieser Vertrag wurde bereits unterzeichnet.'}
