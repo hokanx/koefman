@@ -114,6 +114,10 @@ const OfferEdit = () => {
         customer_id: customerId || null, date, status, notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total, service_type: serviceType,
+        discount_type: discount.enabled ? discount.type : null,
+        discount_value: discount.enabled ? discount.value : 0,
+        discount_scope: discount.enabled ? discount.scope : 'both',
+        discount_duration_months: discount.enabled ? discount.duration_months : null,
       } as any).eq('id', id!);
       if (error) throw error;
 
