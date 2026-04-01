@@ -16,6 +16,7 @@ const InvoiceEdit = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const queryClient = useQueryClient();
 
   const [customerId, setCustomerId] = useState('');
