@@ -55,10 +55,6 @@ const CALL_RESULTS = [
   { key: 'unklar', label: 'Unklar' },
 ];
 
-const PACKAGE_LABELS: Record<string, string> = {
-  setup_59: '499 € Setup + 59 €/Mo',
-  strategy_299: '299 €/Mo Strategie',
-};
 
 interface LeadBooking {
   id: string;
