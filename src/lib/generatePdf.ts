@@ -54,6 +54,7 @@ interface PdfData {
   validity_days?: number;
   legal_note?: string;
   small_business_regulation?: boolean;
+  service_type_label?: string;
   accepted_by_name?: string;
   accepted_at?: string;
   accepted_at_time?: string;
@@ -218,13 +219,22 @@ export const generatePdf = async (data: PdfData, returnBase64 = false): Promise<
   y += 14;
 
   // ============================================================
-  // 4. DOCUMENT TITLE
+  // 4. DOCUMENT TITLE + SERVICE TYPE LABEL
   // ============================================================
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
   doc.text(data.documentTitle, margin, y);
-  y += 10;
+  y += 6;
+
+  if (data.service_type_label) {
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Leistungsart: ${data.service_type_label}`, margin, y);
+    y += 6;
+  }
+  y += 4;
 
   // ============================================================
   // 5. CONFIRMATION-SPECIFIC: Reference info + formal text

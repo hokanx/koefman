@@ -366,6 +366,9 @@ const PublicOfferView = () => {
             <h2 className="text-xl font-bold text-gray-900">
               {(settings as any)?.default_offer_title || 'Angebot'}
             </h2>
+            <p className="mt-1 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Leistungsart: {(offer as any).service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig'}
+            </p>
             {customer && (
               <p className="mt-1 text-sm text-gray-600">Für: {customer.name}</p>
             )}

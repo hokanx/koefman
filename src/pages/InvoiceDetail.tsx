@@ -147,6 +147,7 @@ const InvoiceDetail = () => {
       await generatePdf({
         type: 'invoice',
         small_business_regulation: isSmallBiz,
+        service_type_label: (invoice as any).source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
         documentTitle: t.invoices.documentTitle,
         documentNumber: invoice.invoice_number,
         date: formatDateDE(invoice.date),
@@ -255,6 +256,7 @@ const InvoiceDetail = () => {
     const result = await generatePdf({
       type: 'invoice',
       small_business_regulation: isSmallBiz,
+      service_type_label: (invoice as any).source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
       documentTitle: t.invoices.documentTitle,
       documentNumber: invoice!.invoice_number,
       date: formatDateDE(invoice!.date),
@@ -356,6 +358,7 @@ const InvoiceDetail = () => {
             <p className={isOverdue ? 'text-destructive font-medium' : ''}>
               {t.invoices.dueDate}: {formatDateDE(invoice.due_date)}
             </p>
+            <p>Leistungsart: {(invoice as any).source_recurring_id ? 'Wiederkehrend' : 'Einmalig'}</p>
             {settings?.payment_terms && (
               <p>{t.invoices.paymentTerms}: {settings.payment_terms}</p>
             )}

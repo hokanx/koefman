@@ -84,6 +84,7 @@ type LegacyDocumentContext = {
   documentType: DocType;
   recipientEmail: string | null;
   recipientName: string;
+  serviceTypeLabel?: string;
   signingUrl?: string;
 };
 
@@ -232,9 +233,12 @@ ${orgLogoRow}
 </td></tr>
 
 <!-- Headline -->
-<tr><td style="padding:4px 40px 10px 40px;background-color:#000000;">
+<tr><td style="padding:4px 40px 4px 40px;background-color:#000000;">
 <h1 style="color:#FFFFFF;font-size:28px;font-weight:bold;letter-spacing:0.02em;margin:0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(vars.document_title)}</h1>
 </td></tr>
+
+<!-- Service Type Label -->
+${vars.service_type_label ? `<tr><td style="padding:2px 40px 10px 40px;background-color:#000000;"><p style="color:#999999;font-size:12px;font-weight:bold;letter-spacing:0.1em;text-transform:uppercase;margin:0;font-family:Arial,Helvetica,sans-serif;">Leistungsart: ${escapeHtml(vars.service_type_label)}</p></td></tr>` : ''}
 
 <!-- Amount -->
 ${vars.amount_total && vars.amount_total !== '\u2013' ? `<tr><td style="padding:6px 40px 28px 40px;background-color:#000000;"><p style="color:#FFFFFF;font-size:24px;font-weight:bold;margin:0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(vars.amount_total)}</p></td></tr>` : '<tr><td style="padding:0 0 20px 0;background-color:#000000;"></td></tr>'}
@@ -303,7 +307,7 @@ async function resolveLegacyDocument(
   if (legacyDocumentType === 'offer') {
     const { data: offer, error } = await supabaseAdmin
       .from('offers')
-      .select('id, user_id, offer_number, public_token, grand_total, customer:customers(name, email)')
+      .select('id, user_id, offer_number, public_token, grand_total, service_type, customer:customers(name, email)')
       .eq('id', legacyDocumentId)
       .eq('user_id', userId)
       .single();
@@ -333,6 +337,7 @@ async function resolveLegacyDocument(
       recipientEmail: offer.customer?.email || null,
       recipientName: offer.customer?.name || '',
       amountTotal: offer.grand_total,
+      serviceTypeLabel: offer.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
       signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/offer/view/${publicToken}` : undefined),
     };
   }
@@ -340,7 +345,7 @@ async function resolveLegacyDocument(
   if (legacyDocumentType === 'contract') {
     const { data: contract, error } = await supabaseAdmin
       .from('contracts')
-      .select('id, user_id, contract_number, public_token, grand_total, customer:customers(name, email)')
+      .select('id, user_id, contract_number, public_token, grand_total, frequency, customer:customers(name, email)')
       .eq('id', legacyDocumentId)
       .eq('user_id', userId)
       .single();
@@ -363,6 +368,7 @@ async function resolveLegacyDocument(
       }
     }
 
+    const freqMap: Record<string, string> = { weekly: 'Wöchentlich', every_2_weeks: 'Alle 2 Wochen', monthly: 'Monatlich', quarterly: 'Vierteljährlich' };
     return {
       documentId: contract.id,
       documentType: 'contract',
@@ -370,13 +376,14 @@ async function resolveLegacyDocument(
       recipientEmail: contract.customer?.email || null,
       recipientName: contract.customer?.name || '',
       amountTotal: contract.grand_total,
+      serviceTypeLabel: `Wiederkehrend (${freqMap[contract.frequency] || contract.frequency})`,
       signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/contract/view/${publicToken}` : undefined),
     };
   }
 
   const { data: invoice, error } = await supabaseAdmin
     .from('invoices')
-    .select('id, user_id, invoice_number, grand_total, due_date, customer:customers(name, email)')
+    .select('id, user_id, invoice_number, grand_total, due_date, source_recurring_id, customer:customers(name, email)')
     .eq('id', legacyDocumentId)
     .eq('user_id', userId)
     .single();
@@ -406,6 +413,7 @@ async function resolveLegacyDocument(
     recipientEmail: invoice.customer?.email || null,
     recipientName: invoice.customer?.name || '',
     amountTotal: invoice.grand_total,
+    serviceTypeLabel: invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
     signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/invoice/view/${publicToken}` : undefined),
   };
 }
@@ -602,6 +610,7 @@ Deno.serve(async (req) => {
       logo_url: branding.logoUrl,
       cta_label: ctaLabel.toUpperCase(),
       message_body: messageBody,
+      service_type_label: legacyDocument.serviceTypeLabel || '',
     });
 
     const resendBody: Record<string, unknown> = {
