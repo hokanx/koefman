@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, Receipt, Upload, FileArchive, Inbox } from 'lucide-react';
+import { ArrowRight, FileArchive, Inbox } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';

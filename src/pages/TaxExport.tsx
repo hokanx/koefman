@@ -134,8 +134,11 @@ const TaxExport = () => {
         {isReady ? <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" /> : <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />}
         <div>
           <p className="text-sm font-medium text-foreground">
-            {isReady ? 'Bereit für Export' : 'Hinweis'}
+            {isReady ? 'Bereit für Export' : 'Noch keine Daten vorhanden'}
           </p>
+          {!isReady && invoiceCount === 0 && expenseCount === 0 && (
+            <p className="text-xs text-muted-foreground">Fügen Sie Einnahmen oder Ausgaben hinzu</p>
+          )}
           {warnings.map((w, i) => <p key={i} className="text-xs text-muted-foreground">{w}</p>)}
           {isReady && <p className="text-xs text-muted-foreground">{invoiceCount} Rechnungen · {expenseCount} Belege</p>}
         </div>

@@ -100,19 +100,7 @@ const Revenue = () => {
       });
     }
 
-    if (contracts.length === 0) return <EmptyState icon={ScrollText} title="Keine Verträge" description="Verträge werden aus Angeboten erstellt." />;
-    return contracts.map((c: any) => (
-      <Link key={c.id} to="/contracts" className="flex items-center justify-between rounded-xl border border-border bg-card p-4 transition hover:border-primary/40">
-        <div className="min-w-0 flex-1">
-          <p className="font-medium text-foreground truncate">{c.title || (c.customers as any)?.name}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{c.contract_number} · {formatDateDE(c.start_date)}</p>
-        </div>
-        <div className="flex items-center gap-3 ml-3 shrink-0">
-          <span className="font-medium text-foreground">{formatEUR(c.grand_total)}</span>
-          <StatusBadge status={c.status} label={statusLabel[c.status] || c.status} />
-        </div>
-      </Link>
-    ));
+    return null;
   };
 
   return (
