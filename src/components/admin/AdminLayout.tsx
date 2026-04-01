@@ -1,20 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Building2, ArrowLeft, UserCheck, FolderOpen, FileStack, Inbox, Landmark, FileText, FilePlus2, Receipt } from 'lucide-react';
+import { LayoutDashboard, Inbox, FileText, Settings, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Übersicht', end: true },
-  { to: '/admin/leads', icon: Inbox, label: 'Anfragen' },
-  { to: '/admin/users', icon: Users, label: 'Konten' },
-  { to: '/admin/clients', icon: UserCheck, label: 'Kunden' },
-  { to: '/admin/documents', icon: FolderOpen, label: 'Belege' },
-  { to: '/admin/templates', icon: FileStack, label: 'Vorlagen' },
-  { to: '/admin/document-templates', icon: FileText, label: 'Dok.-Vorlagen' },
-  { to: '/admin/subscriptions', icon: CreditCard, label: 'Abos' },
-  { to: '/admin/workspaces', icon: Building2, label: 'Firmen' },
-  { to: '/admin/organizations', icon: Landmark, label: 'Organisationen' },
-  { to: '/admin/org-documents', icon: FilePlus2, label: 'Org-Dokumente' },
-  { to: '/admin/org-expenses', icon: Receipt, label: 'Ausgaben' },
+  { to: '/admin/leads', icon: Inbox, label: 'Leads' },
+  { to: '/admin/documents', icon: FileText, label: 'Dokumente' },
+  { to: '/admin/settings', icon: Settings, label: 'Einstellungen' },
 ];
 
 const AdminLayout = () => {

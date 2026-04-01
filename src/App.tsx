@@ -43,18 +43,9 @@ import Expenses from "@/pages/Expenses";
 import TaxExport from "@/pages/TaxExport";
 import Onboarding from "@/pages/Onboarding";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
-import AdminUsers from "@/pages/admin/AdminUsers";
-import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
-import AdminWorkspaces from "@/pages/admin/AdminWorkspaces";
-import AdminOrganizations from "@/pages/admin/AdminOrganizations";
-import AdminOrganizationDetail from "@/pages/admin/AdminOrganizationDetail";
-import AdminClients from "@/pages/admin/AdminClients";
-import AdminDocuments from "@/pages/admin/AdminDocuments";
-import AdminTemplates from "@/pages/admin/AdminTemplates";
-import AdminDocumentTemplates from "@/pages/admin/AdminDocumentTemplates";
-import AdminOrgDocuments from "@/pages/admin/AdminOrgDocuments";
-import AdminOrgExpenses from "@/pages/admin/AdminOrgExpenses";
 import AdminLeads from "@/pages/admin/AdminLeads";
+import AdminDocumentsUnified from "@/pages/admin/AdminDocumentsUnified";
+import AdminSettings from "@/pages/admin/AdminSettings";
 import LandingPage from "@/pages/LandingPage";
 import Truth from "@/pages/Truth";
 import TruthA from "@/pages/TruthA";
@@ -82,19 +73,10 @@ const AppWithImpersonation = () => {
               <Route path="/landing" element={<LandingPage />} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
-              <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
-                <Route path="/admin/workspaces" element={<AdminWorkspaces />} />
-                <Route path="/admin/clients" element={<AdminClients />} />
-                <Route path="/admin/documents" element={<AdminDocuments />} />
-                <Route path="/admin/templates" element={<AdminTemplates />} />
-                <Route path="/admin/document-templates" element={<AdminDocumentTemplates />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/leads" element={<AdminLeads />} />
-                <Route path="/admin/organizations" element={<AdminOrganizations />} />
-                <Route path="/admin/organizations/:id" element={<AdminOrganizationDetail />} />
-                <Route path="/admin/org-documents" element={<AdminOrgDocuments />} />
-                <Route path="/admin/org-expenses" element={<AdminOrgExpenses />} />
+                <Route path="/admin/documents" element={<AdminDocumentsUnified />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
               </Route>
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
