@@ -251,7 +251,7 @@ const InvoiceDetail = () => {
     const customer = (invoice as any)?.customer;
     const businessAddress = settings ? formatAddress(settings as any) : '';
     const customerAddress = customer ? formatAddress(customer) : '';
-    const isSmallBiz = !!(settings as any)?.small_business_regulation;
+    const isSmallBiz = isKleinunternehmer;
     const result = await generatePdf({
       type: 'invoice',
       small_business_regulation: isSmallBiz,

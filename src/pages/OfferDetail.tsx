@@ -331,7 +331,7 @@ const OfferDetail = () => {
     const customTitle = (settings as any)?.default_offer_title || t.offers.documentTitle;
     const validityDays = (offer as any)?.validity_days || 14;
     const validityDate = getValidityDate();
-    const isSmallBiz = !!(settings as any)?.small_business_regulation;
+    const isSmallBiz = isKleinunternehmer;
     const result = await generatePdf({
       type: 'offer',
       documentTitle: customTitle,

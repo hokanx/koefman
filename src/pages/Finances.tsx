@@ -134,7 +134,7 @@ const Finances = () => {
     onError: () => toast.error('Fehler beim Speichern'),
   });
 
-  const isSmallBiz = !!settings?.small_business_regulation;
+  const isSmallBiz = isKleinunternehmer;
   const today = new Date().toISOString().split('T')[0];
 
   const stats = useMemo(() => {

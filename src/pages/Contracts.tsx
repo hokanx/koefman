@@ -360,7 +360,7 @@ const Contracts = () => {
         frequency: frequencyLabels[contract.frequency]?.[language] || contract.frequency,
         startDate: formatDateDE(contract.start_date),
         endDate: contract.end_date ? formatDateDE(contract.end_date) : null,
-        small_business_regulation: !!(settings as any)?.small_business_regulation,
+        small_business_regulation: isKleinunternehmer,
       });
     } catch {
       toast.error(t.common.error);
