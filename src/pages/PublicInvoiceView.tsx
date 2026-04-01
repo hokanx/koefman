@@ -98,7 +98,7 @@ const PublicInvoiceView = () => {
 
           {/* Status */}
           {isPaid && (
-            <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-800 font-medium">
+            <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-sm text-primary font-medium">
               ✓ Bezahlt
             </div>
           )}
