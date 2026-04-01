@@ -76,7 +76,6 @@ const AppWithImpersonation = () => {
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/leads" element={<AdminLeads />} />
                 <Route path="/admin/documents" element={<AdminDocumentsUnified />} />
-                
               </Route>
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
