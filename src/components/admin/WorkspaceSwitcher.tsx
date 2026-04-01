@@ -46,7 +46,7 @@ const WorkspaceSwitcher = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1.5 rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground" title="Workspace wählen">
+        <button className="flex items-center gap-1.5 rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground" title="Geschäft wählen">
           <Building2 className="h-4 w-4" />
           <ChevronDown className="h-3 w-3" />
         </button>
