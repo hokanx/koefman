@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatAddress } from '@/types';
 import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
-import { formatEUR } from '@/lib/utils';
+import { formatEUR, formatDateDE } from '@/lib/utils';
 
 const PublicContractView = () => {
   const { token } = useParams<{ token: string }>();
