@@ -384,7 +384,7 @@ const AdminOrgExpenses = () => {
               ? `${selectedIds.size} von ${filtered.length} ausgewählt`
               : `${exportable.count} Ausgaben`}
           </span>
-          <span className="font-semibold text-foreground">Brutto gesamt: {formatEUR(exportable.totalGross)}</span>
+          <span className="font-semibold text-foreground">Gesamt: {formatEUR(exportable.totalGross)}</span>
         </div>
 
         <div className="flex flex-wrap gap-2">
