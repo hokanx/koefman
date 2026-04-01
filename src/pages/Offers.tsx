@@ -92,6 +92,7 @@ const Offers = () => {
             <Link
               key={offer.id}
               to={`/offers/${offer.id}`}
+              state={{ from: '/offers' }}
               className="card-hover block rounded-xl border border-border bg-card p-4"
             >
               <div className="flex items-start justify-between">

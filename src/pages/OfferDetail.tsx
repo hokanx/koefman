@@ -392,8 +392,8 @@ const OfferDetail = () => {
 
   return (
     <div className="animate-fade-in p-4 md:p-6">
-      <button onClick={() => navigate('/offers')} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> {t.common.back}
+      <button onClick={() => navigate(backPath)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> {backLabel}
       </button>
 
       <div className="max-w-2xl space-y-4">
