@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import BrandMark from '@/components/shared/BrandMark';
 
@@ -9,6 +9,7 @@ interface AnalysisResult {
   practical_meaning: string;
   priorities: string[];
   next_step: string;
+  recommended_package?: string;
 }
 
 const INDUSTRIES = [
@@ -65,47 +66,39 @@ const URGENCY_OPTIONS = [
   { label: 'IRGENDWANN', value: 'irgendwann' },
 ];
 
+const PACKAGE_INFO: Record<string, { title: string; price: string; detail: string }> = {
+  setup_59: {
+    title: 'SYSTEM-SETUP',
+    price: '499 € einmalig + 59 €/Monat',
+    detail: 'Wir richten dein komplettes System ein und betreuen es laufend.',
+  },
+  strategy_299: {
+    title: 'STRATEGIE & BEGLEITUNG',
+    price: '299 €/Monat',
+    detail: 'Wöchentliche Strategie-Calls und laufende Optimierung deines Systems.',
+  },
+};
+
 function computeIntentScore(importance: string, commitment: string, urgency: string): { score: number; level: string } {
   let score = 0;
-
-  // Importance: dringend +2, bald +1, nicht dringend 0
   if (importance === 'hoch') score += 2;
   else if (importance === 'mittel') score += 1;
-
-  // Commitment: ja +2, vielleicht +1, eher nicht 0
   if (commitment === 'ja') score += 2;
   else if (commitment === 'vielleicht') score += 1;
-
-  // Urgency: sofort +2, wochen +1, irgendwann 0
   if (urgency === 'sofort') score += 2;
   else if (urgency === 'wochen') score += 1;
-
-  // Company size bonus
-  // (handled externally if needed)
-
   let level = 'low';
   if (score >= 5) level = 'high';
   else if (score >= 3) level = 'medium';
-
   return { score, level };
-}
-
-function getCtaText(level: string): string {
-  if (level === 'high') return 'JETZT STRATEGIE KLAR FESTLEGEN';
-  if (level === 'medium') return 'STRATEGIE GEMEINSAM KLÄREN';
-  return 'OPTIONAL: STRATEGIE BESPRECHEN';
-}
-
-function getCtaSubtext(level: string): string {
-  if (level === 'high') return 'Das solltest du jetzt konkret angehen.';
-  if (level === 'medium') return 'Lass uns gemeinsam schauen, wo du ansetzt.';
-  return 'Du kannst dir das erstmal in Ruhe anschauen.';
 }
 
 export default function DiagnosticIntake() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const variant = searchParams.get('v') || 'direct';
 
+  // Phases: 0=intro, 1=situation, 2=problems, 3=commitment, 4=analyzing, 5=result, 6=email-capture
   const [phase, setPhase] = useState(0);
 
   // Step 1
@@ -122,31 +115,33 @@ export default function DiagnosticIntake() {
   const [importance, setImportance] = useState('');
   const [commitment, setCommitment] = useState('');
   const [urgency, setUrgency] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
 
   // Result
   const [submitting, setSubmitting] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [analysisFailed, setAnalysisFailed] = useState(false);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
+
+  // Email capture (phase 6)
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [intentLevel, setIntentLevel] = useState('medium');
 
   const canStep1 = industry && companySize && inquiries && revenueClarity;
   const canStep2 = problems.length > 0;
-  const canStep3 = importance && commitment && name.trim() && email.trim();
+  const canStep3 = importance && commitment;
 
   const toggleProblem = (v: string) =>
     setProblems(prev => prev.includes(v) ? prev.filter(p => p !== v) : [...prev, v]);
 
-  const handleSubmit = async () => {
+  // Generate analysis WITHOUT name/email
+  const handleAnalyze = async () => {
     if (!canStep3) return;
     setSubmitting(true);
     setPhase(4);
 
-    const { score, level } = computeIntentScore(importance, commitment, urgency);
-    setIntentLevel(level);
+    const { level } = computeIntentScore(importance, commitment, urgency);
 
     try {
       let qrSessionId: string | null = null;
@@ -154,9 +149,6 @@ export default function DiagnosticIntake() {
 
       const response = await supabase.functions.invoke('generate-lead-analysis', {
         body: {
-          name: name.trim(),
-          email: email.trim(),
-          company: company.trim() || null,
           business_type: industry,
           lead_flow: inquiries,
           revenue_clarity: revenueClarity,
@@ -170,6 +162,7 @@ export default function DiagnosticIntake() {
           commitment,
           urgency,
           intent_score: level,
+          skip_email: true,
         },
       });
 
@@ -177,16 +170,51 @@ export default function DiagnosticIntake() {
       const data = response.data;
       if (data?.success && data?.analysis) {
         setAnalysis(data.analysis);
-        setEmailSent(data.email_sent || false);
-        try { sessionStorage.setItem('intake_completed', 'true'); } catch {}
+        setSubmissionId(data.submission_id || null);
+        setPhase(5);
       } else {
         setAnalysisFailed(true);
+        setPhase(5);
       }
     } catch (err) {
       console.error('Analysis generation error:', err);
       setAnalysisFailed(true);
+      setPhase(5);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Send email after capturing name + email
+  const handleSendEmail = async () => {
+    if (!name.trim() || !email.trim() || !email.includes('@')) return;
+    setSendingEmail(true);
+
+    try {
+      const response = await supabase.functions.invoke('generate-lead-analysis', {
+        body: {
+          capture_lead: true,
+          submission_id: submissionId,
+          name: name.trim(),
+          email: email.trim(),
+        },
+      });
+
+      if (response.error) throw response.error;
+      setEmailSent(true);
+
+      // Navigate to booking page
+      setTimeout(() => {
+        navigate(`/book?sid=${submissionId}`);
+      }, 2000);
+    } catch (err) {
+      console.error('Email capture error:', err);
+      setEmailSent(true); // still proceed
+      setTimeout(() => {
+        navigate(`/book?sid=${submissionId}`);
+      }, 2000);
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -205,6 +233,8 @@ export default function DiagnosticIntake() {
         ? 'border-foreground bg-foreground text-background'
         : 'border-border text-foreground bg-transparent hover:border-foreground/50'
     }`;
+
+  const pkg = analysis?.recommended_package ? PACKAGE_INFO[analysis.recommended_package] : PACKAGE_INFO['setup_59'];
 
   return (
     <div className="bg-background text-foreground min-h-screen flex flex-col">
@@ -248,7 +278,6 @@ export default function DiagnosticIntake() {
               <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
                 WIR SCHAUEN UNS KURZ AN, WO AKTUELL POTENZIAL VERLOREN GEHT.
               </h1>
-
               <div className="space-y-8">
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">BRANCHE</p>
@@ -258,7 +287,6 @@ export default function DiagnosticIntake() {
                     ))}
                   </div>
                 </div>
-
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">UNTERNEHMENSGRÖSSE</p>
                   <div className="grid grid-cols-2 gap-2">
@@ -267,7 +295,6 @@ export default function DiagnosticIntake() {
                     ))}
                   </div>
                 </div>
-
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">AKTUELLE ANFRAGEN</p>
                   <div className="grid grid-cols-2 gap-2">
@@ -276,7 +303,6 @@ export default function DiagnosticIntake() {
                     ))}
                   </div>
                 </div>
-
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">UMSATZKLARHEIT</p>
                   <div className="space-y-2">
@@ -286,7 +312,6 @@ export default function DiagnosticIntake() {
                   </div>
                 </div>
               </div>
-
               <button onClick={() => setPhase(2)} disabled={!canStep1}
                 className="w-full border border-foreground px-8 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed">
                 WEITER →
@@ -305,7 +330,6 @@ export default function DiagnosticIntake() {
                   Die meisten Unternehmen verlieren hier jeden Monat messbar Umsatz.
                 </p>
               </div>
-
               <div className="space-y-8">
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">HAUPTPROBLEM (MEHRFACHAUSWAHL)</p>
@@ -315,7 +339,6 @@ export default function DiagnosticIntake() {
                     ))}
                   </div>
                 </div>
-
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-2">WAS GENAU LÄUFT AKTUELL NICHT SO, WIE ES SOLLTE?</p>
                   <p className="text-[10px] text-muted-foreground/50 tracking-[0.08em] mb-3">Je genauer du bist, desto konkreter wird deine Analyse.</p>
@@ -328,7 +351,6 @@ export default function DiagnosticIntake() {
                   />
                 </div>
               </div>
-
               <div className="flex gap-3">
                 <button onClick={() => setPhase(1)}
                   className="flex-1 border border-border px-6 py-4 text-sm tracking-[0.1em] font-medium text-muted-foreground bg-transparent hover:border-foreground hover:text-foreground transition-colors uppercase">
@@ -342,13 +364,12 @@ export default function DiagnosticIntake() {
             </div>
           )}
 
-          {/* STEP 3 — COMMITMENT + CAPTURE */}
+          {/* STEP 3 — COMMITMENT (no name/email) */}
           {phase === 3 && (
             <div className="space-y-10 animate-fade-in">
               <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
                 NUR NOCH EIN SCHRITT, DANN IST DEINE ANALYSE FERTIG.
               </h1>
-
               <div className="space-y-8">
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WIE DRINGEND IST ES FÜR DICH, DAS AKTUELL ZU LÖSEN?</p>
@@ -358,7 +379,6 @@ export default function DiagnosticIntake() {
                     ))}
                   </div>
                 </div>
-
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WENN DU KONKRET SIEHST, WO DEIN PROBLEM LIEGT – WÄRST DU BEREIT, DAS STRUKTURIERT ZU LÖSEN?</p>
                   <div className="space-y-2">
@@ -367,7 +387,6 @@ export default function DiagnosticIntake() {
                     ))}
                   </div>
                 </div>
-
                 <div>
                   <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WIE SCHNELL MÖCHTEST DU ERGEBNISSE SEHEN?</p>
                   <div className="space-y-2">
@@ -376,72 +395,49 @@ export default function DiagnosticIntake() {
                     ))}
                   </div>
                 </div>
-
-                <div className="border-t border-border pt-8">
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-4">WOHIN SOLLEN WIR DEINE ANALYSE SCHICKEN?</p>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">NAME *</label>
-                      <input type="text" value={name} onChange={e => setName(e.target.value)}
-                        className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide" />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">EMAIL *</label>
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                        className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide" />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">UNTERNEHMEN <span className="text-muted-foreground/50">(OPTIONAL)</span></label>
-                      <input type="text" value={company} onChange={e => setCompany(e.target.value)}
-                        className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Soft pressure */}
                 <p className="text-[10px] text-muted-foreground/40 tracking-[0.08em] text-center">
                   Wir arbeiten nur mit einer begrenzten Anzahl an Anfragen gleichzeitig.
                 </p>
               </div>
-
               <div className="flex gap-3">
                 <button onClick={() => setPhase(2)}
                   className="flex-1 border border-border px-6 py-4 text-sm tracking-[0.1em] font-medium text-muted-foreground bg-transparent hover:border-foreground hover:text-foreground transition-colors uppercase">
                   ← ZURÜCK
                 </button>
-                <button onClick={handleSubmit} disabled={!canStep3 || submitting}
+                <button onClick={handleAnalyze} disabled={!canStep3 || submitting}
                   className="flex-1 border border-foreground px-6 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed">
-                  {submitting ? '...' : 'ANALYSE ERHALTEN'}
+                  {submitting ? '...' : 'ANALYSE STARTEN'}
                 </button>
               </div>
             </div>
           )}
 
-          {/* RESULT */}
+          {/* ANALYZING */}
           {phase === 4 && (
-            <>
-              {submitting && (
-                <div className="space-y-8 text-center animate-fade-in">
-                  <div className="flex justify-center">
-                    <div className="h-6 w-6 border border-foreground border-t-transparent rounded-full animate-spin" />
-                  </div>
-                  <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.1em]">DEINE ANALYSE WIRD ERSTELLT.</h1>
-                  <p className="text-sm text-muted-foreground tracking-[0.08em]">DAS DAUERT NUR EINEN MOMENT.</p>
-                </div>
-              )}
+            <div className="space-y-8 text-center animate-fade-in">
+              <div className="flex justify-center">
+                <div className="h-6 w-6 border border-foreground border-t-transparent rounded-full animate-spin" />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.1em]">DEINE ANALYSE WIRD ERSTELLT.</h1>
+              <p className="text-sm text-muted-foreground tracking-[0.08em]">DAS DAUERT NUR EINEN MOMENT.</p>
+            </div>
+          )}
 
-              {analysisFailed && !analysis && !submitting && (
+          {/* RESULT (shown before name/email) */}
+          {phase === 5 && (
+            <>
+              {analysisFailed && !analysis && (
                 <div className="space-y-10 text-center animate-fade-in">
                   <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">DEINE ANALYSE KONNTE GERADE NICHT VOLLSTÄNDIG GELADEN WERDEN.</h1>
                   <p className="text-sm text-muted-foreground tracking-[0.08em]">DEINE ANGABEN WURDEN GESPEICHERT UND WIR KÜMMERN UNS DARUM.</p>
-                  <button onClick={() => window.location.href = '/start?source=analysis_fail'}
+                  <button onClick={() => navigate('/book')}
                     className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
-                    [ KOSTENLOSE STRATEGIE-SESSION BUCHEN ]
+                    [ STRATEGIEGESPRÄCH BUCHEN ]
                   </button>
                 </div>
               )}
 
-              {analysis && !submitting && (
+              {analysis && (
                 <div className="animate-fade-in">
                   <div className="text-center pb-8">
                     <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em] mb-4">DEINE KURZANALYSE IST BEREIT.</h1>
@@ -477,40 +473,68 @@ export default function DiagnosticIntake() {
                     <p className="text-sm sm:text-base text-foreground leading-[1.7]">{analysis.next_step}</p>
                   </div>
 
-                  {/* Decision Section */}
-                  <div className="border-t border-[hsl(var(--border))] pt-10 pb-4">
-                    <h2 className="text-lg sm:text-xl font-semibold tracking-[0.1em] text-center mb-10">DU HAST JETZT ZWEI MÖGLICHKEITEN.</h2>
-
-                    <div className="mb-6">
-                      <p className="text-sm font-semibold tracking-[0.08em] text-muted-foreground mb-2">1. DU SETZT ES SELBST UM.</p>
-                      <p className="text-sm text-muted-foreground/70 leading-[1.7]">Du kannst die Analyse nutzen und versuchen, die Probleme eigenständig zu lösen.</p>
+                  {/* Package Recommendation */}
+                  {pkg && (
+                    <div className="border-t border-[hsl(var(--border))] py-7">
+                      <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">UNSERE EMPFEHLUNG FÜR DICH</p>
+                      <div className="border border-foreground/20 p-6 space-y-3">
+                        <p className="text-base sm:text-lg font-bold tracking-[0.08em]">{pkg.title}</p>
+                        <p className="text-sm text-foreground/80">{pkg.price}</p>
+                        <p className="text-sm text-muted-foreground leading-[1.6]">{pkg.detail}</p>
+                      </div>
                     </div>
+                  )}
 
-                    <div className="mb-12">
-                      <p className="text-base sm:text-lg font-bold tracking-[0.08em] text-foreground mb-2">2. WIR ZEIGEN DIR KONKRET, WAS DU ÄNDERN MUSST.</p>
-                      <p className="text-sm sm:text-base text-foreground leading-[1.7]">Im Gespräch identifizieren wir die genauen Punkte, an denen du aktuell Umsatz verlierst – und setzen direkt an.</p>
-                    </div>
-
-                    <div className="text-center space-y-4">
-                      <p className="text-xs text-muted-foreground tracking-[0.08em]">
-                        {getCtaSubtext(intentLevel).toUpperCase()}
-                      </p>
-
-                      <button onClick={() => window.location.href = '/start?source=analysis'}
-                        className="border-2 border-foreground px-10 py-5 text-sm sm:text-base tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
-                        [ {getCtaText(intentLevel)} ]
-                      </button>
-
-                      {emailSent && (
-                        <p className="text-xs text-muted-foreground tracking-[0.08em] mt-4">DIE KURZANALYSE WURDE ZUSÄTZLICH PER E-MAIL AN DICH GESENDET.</p>
-                      )}
-
-                      <p className="text-[11px] text-muted-foreground/40 tracking-[0.08em] mt-6 cursor-default">Ich schaue mir das erstmal selbst an.</p>
-                    </div>
+                  {/* CTA to capture email */}
+                  <div className="border-t border-[hsl(var(--border))] pt-10 pb-4 text-center">
+                    <button onClick={() => setPhase(6)}
+                      className="border-2 border-foreground px-10 py-5 text-sm sm:text-base tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
+                      [ ANALYSE PER E-MAIL ERHALTEN ]
+                    </button>
+                    <p className="text-[10px] text-muted-foreground/40 tracking-[0.08em] mt-4">KOSTENLOS. KEINE VERPFLICHTUNG.</p>
                   </div>
                 </div>
               )}
             </>
+          )}
+
+          {/* EMAIL CAPTURE (phase 6) */}
+          {phase === 6 && (
+            <div className="space-y-10 animate-fade-in">
+              {emailSent ? (
+                <div className="text-center space-y-6">
+                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">ANALYSE GESENDET.</h1>
+                  <p className="text-sm text-muted-foreground tracking-[0.08em]">DU WIRST JETZT ZUR TERMINBUCHUNG WEITERGELEITET.</p>
+                  <div className="flex justify-center">
+                    <div className="h-4 w-4 border border-foreground border-t-transparent rounded-full animate-spin" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                    WOHIN SOLLEN WIR DEINE ANALYSE SCHICKEN?
+                  </h1>
+                  <div className="space-y-5">
+                    <div>
+                      <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">NAME *</label>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)}
+                        className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">E-MAIL *</label>
+                      <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                        className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide" />
+                    </div>
+                  </div>
+                  <button onClick={handleSendEmail}
+                    disabled={!name.trim() || !email.trim() || !email.includes('@') || sendingEmail}
+                    className="w-full border-2 border-foreground px-10 py-5 text-sm tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed">
+                    {sendingEmail ? '...' : 'ANALYSE PER E-MAIL ERHALTEN'}
+                  </button>
+                  <p className="text-[10px] text-muted-foreground/40 tracking-[0.08em] text-center">KOSTENLOS. KEINE VERPFLICHTUNG.</p>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
