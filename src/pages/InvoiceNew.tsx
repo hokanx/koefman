@@ -168,6 +168,12 @@ const InvoiceNew = () => {
             <p className="text-[11px] text-muted-foreground/50 mb-1">Standardtext aus Einstellungen (bearbeitbar)</p>
             <input type="text" value={closingText} onChange={(e) => setClosingText(e.target.value)} className={inputClass} />
           </div>
+          {isKleinunternehmer && (
+            <div className="rounded-lg border border-border bg-muted/30 p-2.5 flex items-start gap-2">
+              <span className="text-[11px] mt-px">⚖️</span>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">Steuerhinweis wird automatisch ergänzt: <span className="italic">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet."</span></p>
+            </div>
+          )}
         </FormSection>
 
         <FormSection title={t.invoices.items}>
