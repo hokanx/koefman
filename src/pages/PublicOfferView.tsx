@@ -274,7 +274,7 @@ const PublicOfferView = () => {
   const customer = (offer as any).customer;
   const validityDate = getValidityDate();
   const expired = isExpired();
-  const isSmallBusiness = !!(settings as any)?.small_business_regulation;
+  const isSmallBusiness = (orgData as any)?.organizations?.tax_mode === 'kleinunternehmer' || !!(settings as any)?.small_business_regulation;
 
   // Success screen
   if (isAlreadyAccepted) {
