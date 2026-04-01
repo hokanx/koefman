@@ -334,6 +334,7 @@ async function resolveLegacyDocument(
       recipientEmail: offer.customer?.email || null,
       recipientName: offer.customer?.name || '',
       amountTotal: offer.grand_total,
+      serviceTypeLabel: offer.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
       signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/offer/view/${publicToken}` : undefined),
     };
   }
