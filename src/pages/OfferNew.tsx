@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -45,12 +45,17 @@ const OfferNew = () => {
     enabled: !!user,
   });
 
-  // Auto-fill from settings
+  // Auto-fill from settings (once only)
+  const prefilled = useRef(false);
   useEffect(() => {
-    if (settings) {
-      setIntroText((settings as any).default_offer_intro_text || '');
-      setFooterText((settings as any).default_offer_footer_text || '');
-      setClosingText((settings as any).default_closing_text || '');
+    if (settings && !prefilled.current) {
+      prefilled.current = true;
+      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nwir bieten Ihnen die nachfolgend aufgeführten Leistungen zu den genannten Konditionen an:';
+      const fallbackFooter = 'Dieses Angebot ist 14 Tage gültig.';
+      const fallbackClosing = 'Mit freundlichen Grüßen';
+      setIntroText((settings as any).default_offer_intro_text || fallbackIntro);
+      setFooterText((settings as any).default_offer_footer_text || fallbackFooter);
+      setClosingText((settings as any).default_closing_text || fallbackClosing);
     }
   }, [settings]);
 
