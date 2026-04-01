@@ -189,7 +189,7 @@ export const useCreateOrgDocument = () => {
       notes?: string;
       amount_total?: number;
     }) => {
-      if (!activeOrganizationId) throw new Error('Kein aktiver Workspace');
+      if (!activeOrganizationId) throw new Error('Kein aktives Geschäft');
 
       // Resolve template
       let templateSnapshot: any = {};

@@ -35,7 +35,7 @@ const WorkspaceSwitcher = () => {
         <button
           onClick={exitWorkspace}
           className="ml-1 rounded p-0.5 text-primary/60 hover:text-primary"
-          title="Workspace verlassen"
+          title="Geschäft verlassen"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -46,13 +46,13 @@ const WorkspaceSwitcher = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1.5 rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground" title="Workspace wählen">
+        <button className="flex items-center gap-1.5 rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground" title="Geschäft wählen">
           <Building2 className="h-4 w-4" />
           <ChevronDown className="h-3 w-3" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 p-2">
-        <p className="px-2 pb-2 text-xs font-medium text-muted-foreground">Workspace betreten</p>
+        <p className="px-2 pb-2 text-xs font-medium text-muted-foreground">Geschäft wählen</p>
         <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
           {organizations.map((org) => (
             <button
@@ -74,7 +74,7 @@ const WorkspaceSwitcher = () => {
             </button>
           ))}
           {organizations.length === 0 && (
-            <p className="px-2 py-3 text-center text-xs text-muted-foreground">Keine Organisationen</p>
+            <p className="px-2 py-3 text-center text-xs text-muted-foreground">Keine Geschäfte vorhanden</p>
           )}
         </div>
       </PopoverContent>
