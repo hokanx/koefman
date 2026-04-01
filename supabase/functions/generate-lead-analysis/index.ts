@@ -564,7 +564,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
         needs: problems?.length ? problems : [main_problem || "unknown"],
         contact_method: "email",
         status: "neu",
-        admin_notes: `Intent: ${intent_score || "medium"}. Submission-ID: ${submission.id}. Package: ${recPkg}`,
+        admin_notes: `Intent: ${intent_score || "medium"}. Submission-ID: ${submission.id}`,
       });
     }
 
