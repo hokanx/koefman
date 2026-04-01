@@ -448,10 +448,10 @@ const Contracts = () => {
               )}
 
               {/* Signed indicator */}
-              {c.status === 'unterzeichnet' && (
+              {(c.status === 'unterzeichnet' || c.status === 'aktiv') && (
                 <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-md px-2 py-1 w-fit">
                   <CheckCircle className="h-3.5 w-3.5" />
-                  Digital unterzeichnet
+                  {c.status === 'aktiv' ? 'Aktiv – Digital unterzeichnet' : 'Digital unterzeichnet'}
                 </div>
               )}
 
