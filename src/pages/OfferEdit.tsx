@@ -131,7 +131,6 @@ const OfferEdit = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerId) return;
     mutation.mutate();
   };
 
