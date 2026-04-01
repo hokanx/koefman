@@ -558,7 +558,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Forbidden' }, 403);
     }
 
-    const branding = await loadBranding(supabaseAdmin, organizationId);
+    const branding = await loadBranding(supabaseAdmin, organizationId, userId);
     const legacyDocument = await resolveLegacyDocument(supabaseAdmin, requestData, userId, appUrl);
     const recipientEmail = requestData.to || legacyDocument.recipientEmail;
 
