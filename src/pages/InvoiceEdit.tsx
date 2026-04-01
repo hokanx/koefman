@@ -70,8 +70,8 @@ const InvoiceEdit = () => {
   useEffect(() => {
     if (invoice && !prefilled.current) {
       prefilled.current = true;
-      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:';
-      const fallbackFooter = 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.';
+      const fallbackIntro = 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns folgende Rechnung zu stellen:';
+      const fallbackFooter = 'Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer.';
       const fallbackClosing = 'Mit freundlichen Grüßen';
       setCustomerId(invoice.customer_id);
       setDate(invoice.date);
