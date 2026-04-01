@@ -61,7 +61,7 @@ const Revenue = () => {
     .filter((i: any) => i.status === 'paid')
     .reduce((sum: number, i: any) => sum + Number(i.grand_total), 0);
 
-  const isLoading = tab === 'offers' ? loadingOffers : tab === 'invoices' ? loadingInvoices : loadingContracts;
+  const isLoading = tab === 'offers' ? loadingOffers : loadingInvoices;
 
   const renderList = () => {
     if (tab === 'offers') {
