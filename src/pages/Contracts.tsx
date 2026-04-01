@@ -106,7 +106,7 @@ const Contracts = () => {
 
       // Fetch signature data if contract is signed
       let signatureData: { signedByName: string; signedAt: string; signatureImage: string | null } | undefined;
-      if (contract.status === 'unterzeichnet') {
+      if (contract.status === 'unterzeichnet' || contract.status === 'aktiv') {
         const { data: acceptance } = await supabase
           .from('contract_acceptances')
           .select('*')
