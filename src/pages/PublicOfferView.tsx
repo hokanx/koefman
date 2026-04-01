@@ -72,20 +72,6 @@ const PublicOfferView = () => {
     enabled: !!offer?.user_id,
   });
 
-  // Fetch org tax_mode via membership
-  const { data: orgData } = useQuery({
-    queryKey: ['public-org-tax-mode', offer?.user_id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('organization_memberships')
-        .select('organizations(tax_mode)')
-        .eq('user_id', offer!.user_id)
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!offer?.user_id,
-  });
 
   const { data: existingAcceptance } = useQuery({
     queryKey: ['public-offer-acceptance', offer?.id],
