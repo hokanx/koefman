@@ -197,68 +197,75 @@ function buildEmailHtml(vars: Record<string, string>): string {
   const signingUrl = vars.signing_url ? escapeHtml(vars.signing_url) : '';
   const messageBody = escapeHtml(vars.message_body || getDefaultMessage(vars.sender_name, vars.document_type_label, vars.recipient_name));
 
+  const LOGO_URL = 'https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/email-assets/koefman-wordmark.png';
+
   // Optional org logo below the KÖFMAN header
   const orgLogoRow = vars.logo_url
-    ? `<tr><td align="center" style="padding:8px 20px 0 20px;"><img src="${escapeHtml(vars.logo_url)}" alt="${escapeHtml(vars.sender_name)}" style="max-width:140px;max-height:48px;" /></td></tr>`
+    ? `<tr><td align="center" style="padding:12px 20px 0 20px;background-color:#000000;"><img src="${escapeHtml(vars.logo_url)}" alt="${escapeHtml(vars.sender_name)}" width="140" style="display:block;max-width:140px;max-height:48px;width:auto;height:auto;" /></td></tr>`
     : '';
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>${escapeHtml(vars.document_title)}</title></head>
-<body style="margin:0;padding:0;background-color:#000000;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;min-width:100%;">
-<tr><td align="center" style="padding:0;">
+<body style="margin:0;padding:0;background-color:#000000;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;color:#FFFFFF;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#000000;min-width:100%;">
+<tr><td align="center" valign="top" style="padding:0;background-color:#000000;">
 
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin:0 auto;">
+<!--[if (gte mso 9)|(IE)]><table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;margin:0 auto;background-color:#000000;">
 
-<!-- KÖFMAN Brand Header -->
-<tr><td align="center" style="padding:48px 24px 12px 24px;background-color:#000000;">
-<span style="color:#FFFFFF;font-size:32px;font-weight:bold;letter-spacing:0.25em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">K\u00d6FMAN</span>
+<!-- KÖFMAN Logo Header -->
+<tr><td align="center" valign="middle" style="padding:56px 40px 20px 40px;background-color:#000000;">
+<img src="${LOGO_URL}" alt="K\u00d6FMAN" width="220" height="55" style="display:block;width:220px;height:auto;max-width:100%;border:0;outline:none;text-decoration:none;" />
 </td></tr>
 
 ${orgLogoRow}
 
 <!-- Divider -->
-<tr><td style="padding:20px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-bottom:2px solid #FFFFFF;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:12px 40px 0 40px;background-color:#000000;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-bottom:2px solid #FFFFFF;font-size:1px;line-height:1px;height:1px;">&nbsp;</td></tr></table>
+</td></tr>
 
 <!-- Document Type Label -->
-<tr><td style="padding:28px 40px 4px 40px;">
-<p style="color:#999999;font-size:12px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;margin:0;">${escapeHtml(vars.document_type_label)}</p>
+<tr><td style="padding:32px 40px 6px 40px;background-color:#000000;">
+<p style="color:#BBBBBB;font-size:13px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;margin:0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(vars.document_type_label)}</p>
 </td></tr>
 
 <!-- Headline -->
-<tr><td style="padding:4px 40px 8px 40px;">
-<h1 style="color:#FFFFFF;font-size:26px;font-weight:bold;letter-spacing:0.02em;margin:0;">${escapeHtml(vars.document_title)}</h1>
+<tr><td style="padding:4px 40px 10px 40px;background-color:#000000;">
+<h1 style="color:#FFFFFF;font-size:28px;font-weight:bold;letter-spacing:0.02em;margin:0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(vars.document_title)}</h1>
 </td></tr>
 
 <!-- Amount -->
-${vars.amount_total && vars.amount_total !== '\u2013' ? `<tr><td style="padding:4px 40px 24px 40px;"><p style="color:#FFFFFF;font-size:22px;font-weight:bold;margin:0;">${escapeHtml(vars.amount_total)}</p></td></tr>` : '<tr><td style="padding:0 0 16px 0;"></td></tr>'}
+${vars.amount_total && vars.amount_total !== '\u2013' ? `<tr><td style="padding:6px 40px 28px 40px;background-color:#000000;"><p style="color:#FFFFFF;font-size:24px;font-weight:bold;margin:0;font-family:Arial,Helvetica,sans-serif;">${escapeHtml(vars.amount_total)}</p></td></tr>` : '<tr><td style="padding:0 0 20px 0;background-color:#000000;"></td></tr>'}
 
 <!-- Body text -->
-<tr><td style="padding:0 40px 32px 40px;">
-<p style="color:#FFFFFF;font-size:15px;line-height:1.7;margin:0;white-space:pre-line;">${messageBody}</p>
+<tr><td style="padding:0 40px 36px 40px;background-color:#000000;">
+<p style="color:#EEEEEE;font-size:16px;line-height:1.75;margin:0;white-space:pre-line;font-family:Arial,Helvetica,sans-serif;">${messageBody}</p>
 </td></tr>
 
 <!-- CTA Button -->
-${signingUrl ? `<tr><td align="center" style="padding:0 40px 16px 40px;">
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center" style="background-color:#FFFFFF;border-radius:0;padding:18px 32px;">
-<a href="${signingUrl}" style="color:#000000;font-size:15px;font-weight:bold;letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;display:block;text-align:center;font-family:Arial,Helvetica,sans-serif;">\u2192 ${ctaLabel}</a>
+${signingUrl ? `<tr><td align="center" style="padding:0 40px 20px 40px;background-color:#000000;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" bgcolor="#FFFFFF" style="background-color:#FFFFFF;padding:20px 32px;text-align:center;">
+<a href="${signingUrl}" target="_blank" style="color:#000000;font-size:16px;font-weight:bold;letter-spacing:0.1em;text-decoration:none;text-transform:uppercase;display:inline-block;font-family:Arial,Helvetica,sans-serif;">\u2192 ${ctaLabel}</a>
 </td></tr></table>
 </td></tr>` : ''}
 
 <!-- Fallback link -->
-${signingUrl ? `<tr><td style="padding:4px 40px 32px 40px;">
-<p style="color:#777777;font-size:12px;line-height:1.6;margin:0;">Falls der Link nicht funktioniert:<br/><a href="${signingUrl}" style="color:#AAAAAA;word-break:break-all;text-decoration:underline;">${signingUrl}</a></p>
+${signingUrl ? `<tr><td style="padding:4px 40px 36px 40px;background-color:#000000;">
+<p style="color:#999999;font-size:13px;line-height:1.6;margin:0;font-family:Arial,Helvetica,sans-serif;">Falls der Link nicht funktioniert:<br/><a href="${signingUrl}" style="color:#CCCCCC;word-break:break-all;text-decoration:underline;">${signingUrl}</a></p>
 </td></tr>` : ''}
 
 <!-- Footer divider -->
-<tr><td style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-bottom:1px solid #333333;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:0 40px;background-color:#000000;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-bottom:1px solid #444444;font-size:1px;line-height:1px;height:1px;">&nbsp;</td></tr></table></td></tr>
 
-${footerText ? `<tr><td style="padding:20px 40px 8px 40px;"><p style="color:#888888;font-size:12px;line-height:1.5;margin:0;white-space:pre-line;">${footerText}</p></td></tr>` : ''}
+${footerText ? `<tr><td style="padding:24px 40px 8px 40px;background-color:#000000;"><p style="color:#AAAAAA;font-size:13px;line-height:1.5;margin:0;white-space:pre-line;font-family:Arial,Helvetica,sans-serif;">${footerText}</p></td></tr>` : ''}
 
-<tr><td style="padding:${footerText ? '8' : '24'}px 40px 48px 40px;"><p style="color:#555555;font-size:10px;letter-spacing:0.1em;margin:0;text-transform:uppercase;">Gesendet \u00fcber K\u00d6FMAN</p></td></tr>
+<tr><td style="padding:${footerText ? '12' : '28'}px 40px 52px 40px;background-color:#000000;"><p style="color:#666666;font-size:11px;letter-spacing:0.12em;margin:0;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Gesendet \u00fcber K\u00d6FMAN</p></td></tr>
 
 </table>
+<!--[if (gte mso 9)|(IE)]></td></tr></table><![endif]-->
+
 </td></tr>
 </table>
 </body>
