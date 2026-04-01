@@ -9,7 +9,7 @@ import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { isKleinunternehmer } = useOrgTaxMode();
+  useOrgTaxMode(); // ensure workspace context is loaded
 
   const { data: stats } = useQuery({
     queryKey: ['dashboard-stats'],
