@@ -32,7 +32,7 @@ interface ContractSetupModalProps {
   };
 }
 
-const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, items, subtotal, taxTotal, grandTotal }: ContractSetupModalProps) => {
+const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, items, subtotal, taxTotal, grandTotal, discount }: ContractSetupModalProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const queryClient = useQueryClient();
