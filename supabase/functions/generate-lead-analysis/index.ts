@@ -315,7 +315,6 @@ serve(async (req) => {
 
       const sent = await sendAnalysisEmail(
         sub.email, sub.name, analysis,
-        existingAnalysis.recommended_package || "setup_59",
         sub.id, sub.variant
       );
       if (sent) {
