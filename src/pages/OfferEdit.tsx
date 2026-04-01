@@ -147,6 +147,13 @@ const OfferEdit = () => {
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-4">
         <FormSection title={t.offers.offerDetails}>
           <div>
+            <label className="mb-1 block text-sm text-muted-foreground">Leistungsart</label>
+            <select value={serviceType} onChange={(e) => setServiceType(e.target.value as 'einmalig' | 'laufend')} className={inputClass}>
+              <option value="einmalig">Einmalige Leistung</option>
+              <option value="laufend">Laufender Vertrag</option>
+            </select>
+          </div>
+          <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.customer}</label>
             <p className="text-[11px] text-muted-foreground/50 mb-1">Optional. Kundendaten können später ergänzt werden.</p>
             <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>
