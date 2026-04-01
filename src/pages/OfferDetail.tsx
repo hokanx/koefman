@@ -398,7 +398,7 @@ const OfferDetail = () => {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold text-foreground">{offer.offer_number}</h2>
-              <p className="text-sm text-muted-foreground">{(offer as any).customer?.name}</p>
+              <p className="text-sm text-muted-foreground">{(offer as any).customer?.name || 'Noch kein Kunde zugewiesen'}</p>
             </div>
             <StatusBadge status={offer.status as any} label={statusLabels[offer.status as OfferStatus]} />
           </div>

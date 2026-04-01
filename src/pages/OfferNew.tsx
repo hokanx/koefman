@@ -72,7 +72,7 @@ const OfferNew = () => {
       const offerNumber = generateDocumentNumber(prefix, count ?? 0);
 
       const { data: offer, error } = await supabase.from('offers').insert({
-        user_id: user!.id, customer_id: customerId, offer_number: offerNumber,
+        user_id: user!.id, customer_id: customerId || null, offer_number: offerNumber,
         date, status: 'draft', notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total,
@@ -101,7 +101,6 @@ const OfferNew = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerId) return;
     mutation.mutate();
   };
 
@@ -117,10 +116,11 @@ const OfferNew = () => {
         <FormSection title={t.offers.offerDetails}>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.customer} *</label>
-            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required className={inputClass}>
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>
               <option value="">{t.offers.selectCustomer}</option>
               {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+            <p className="text-[11px] text-muted-foreground/50 mt-1">Optional – Ihr Kunde kann seine Daten selbst beim Bestätigen eingeben</p>
           </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.date}</label>
