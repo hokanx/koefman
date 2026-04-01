@@ -505,11 +505,17 @@ const OfferDetail = () => {
                 <FileText className="h-4 w-4" /> {converting ? t.common.loading : t.offers.convertToInvoice}
               </button>
             )}
-            {offer.status === 'accepted' && (
+            {offer.status === 'accepted' && offer.customer_id && (
               <button onClick={() => setContractOpen(true)}
                 className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10">
                 <ScrollText className="h-4 w-4" /> {(t as any).contracts.createFromOffer}
               </button>
+            )}
+            {offer.status === 'accepted' && !offer.customer_id && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                <ScrollText className="h-4 w-4" />
+                Bitte zuerst Kundendaten vervollständigen, um einen Vertrag zu erstellen.
+              </div>
             )}
             <button onClick={handleDuplicate} disabled={duplicating}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50">

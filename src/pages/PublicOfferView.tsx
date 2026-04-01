@@ -153,40 +153,12 @@ const PublicOfferView = () => {
       } as any);
       if (acceptError) throw acceptError;
 
-      // Freeze accepted snapshot and update status
-      const acceptedSnapshot = {
-        offer_number: offer!.offer_number,
-        date: offer!.date,
-        customer_name: companyName.trim(),
-        contact_person: contactPerson.trim() || null,
-        customer_address: [
-          [street.trim(), houseNumber.trim()].filter(Boolean).join(' '),
-          [postalCode.trim(), city.trim()].filter(Boolean).join(' '),
-        ].filter(Boolean).join(', '),
-        customer_email: email.trim() || null,
-        customer_vat_id: vatId.trim() || null,
-        items: items.map((i: any) => ({
-          title: i.title, description: i.description, quantity: i.quantity,
-          unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
-        })),
-        subtotal: offer!.subtotal,
-        tax_total: offer!.tax_total,
-        grand_total: offer!.grand_total,
-        intro_text: (offer as any).intro_text,
-        footer_text: (offer as any).footer_text,
-        closing_text: (offer as any).closing_text,
-        notes: offer!.notes,
-        accepted_at: new Date().toISOString(),
-      };
-
+      // Update offer status to accepted and link customer
       const { error: updateError } = await supabase
         .from('offers')
         .update({
           status: 'accepted',
           customer_id: customerId,
-          notes: offer!.notes
-            ? `${offer!.notes}\n\n---\nAccepted snapshot: ${JSON.stringify(acceptedSnapshot)}`
-            : `Accepted snapshot: ${JSON.stringify(acceptedSnapshot)}`,
         } as any)
         .eq('id', offer!.id);
       if (updateError) throw updateError;

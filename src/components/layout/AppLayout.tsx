@@ -55,6 +55,7 @@ const AppLayout = () => {
   const secondaryNavItems = [
     { to: '/customers', icon: Users, label: t.nav.customers, badge: 0 },
     { to: '/leads', icon: Inbox, label: t.nav.leads, badge: newLeadsCount },
+    { to: '/contracts', icon: ScrollText, label: 'Verträge', badge: 0 },
     { to: '/settings', icon: Settings, label: t.nav.settings, badge: 0 },
   ];
 
