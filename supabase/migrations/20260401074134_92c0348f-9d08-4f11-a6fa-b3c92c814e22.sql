@@ -1,0 +1,1 @@
+ALTER TABLE public.organizations ADD COLUMN tax_mode text NOT NULL DEFAULT 'standard';

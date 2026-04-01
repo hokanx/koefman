@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Receipt, ScrollText, Plus, ArrowRight } from 'lucide-react';
+import { FileText, Receipt, ScrollText, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +10,7 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE } from '@/lib/generatePdf';
 import { formatEUR } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 type Tab = 'offers' | 'invoices' | 'contracts';
 
@@ -22,6 +23,7 @@ const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
 const Revenue = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const [tab, setTab] = useState<Tab>('offers');
   const [search, setSearch] = useState('');
 
@@ -124,9 +126,15 @@ const Revenue = () => {
         </div>
         <div className="rounded-xl border border-border bg-card p-3 text-center">
           <p className="text-2xl font-bold text-success">{formatEUR(totalPaid)}</p>
-          <p className="text-xs text-muted-foreground">Bezahlt</p>
+          <p className="text-xs text-muted-foreground">{isKleinunternehmer ? 'Erhalten' : 'Bezahlt (brutto)'}</p>
         </div>
       </div>
+
+      {isKleinunternehmer && (
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+          <span>§19 UStG – Keine Umsatzsteuer wird berechnet.</span>
+        </div>
+      )}
 
       {/* Tab switcher */}
       <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">

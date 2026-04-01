@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Download, FolderOpen, Search, Sparkles, Eye, Plus } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, FolderOpen, Search, Sparkles, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { DOCUMENT_GROUPS, getCategoryInfo, getStatusInfo } from '@/lib/documentCategories';
 import { normalizeExtracted, formatAmountDE } from '@/lib/extractedDataUtils';
 import DocumentPreviewModal from '@/components/documents/DocumentPreviewModal';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 const getStoragePath = (fileUrl: string): string => {
   if (fileUrl.includes('/client-documents/')) {
@@ -21,6 +22,7 @@ const getStoragePath = (fileUrl: string): string => {
 const Expenses = () => {
   const { user } = useAuth();
   const { effectiveUserId } = useImpersonation();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
@@ -168,7 +170,7 @@ const Expenses = () => {
         </div>
         <div className="rounded-xl border border-border bg-card p-3 text-center">
           <p className="text-2xl font-bold text-foreground">{formatAmountDE(totalExpenseAmount)}</p>
-          <p className="text-xs text-muted-foreground">Summe</p>
+          <p className="text-xs text-muted-foreground">{isKleinunternehmer ? 'Summe' : 'Summe (brutto)'}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-3 text-center">
           <p className={`text-2xl font-bold ${notExported > 0 ? 'text-warning' : 'text-success'}`}>{notExported}</p>
