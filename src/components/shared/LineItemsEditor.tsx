@@ -128,18 +128,20 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
                 className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">{labels.taxRate}</label>
-              <select
-                value={item.tax_rate}
-                onChange={(e) => updateItem(item.id, 'tax_rate', parseFloat(e.target.value))}
-                className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-              >
-                <option value="19">19%</option>
-                <option value="7">7%</option>
-                <option value="0">0%</option>
-              </select>
-            </div>
+            {!isKleinunternehmer && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">{labels.taxRate}</label>
+                <select
+                  value={item.tax_rate}
+                  onChange={(e) => updateItem(item.id, 'tax_rate', parseFloat(e.target.value))}
+                  className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                >
+                  <option value="19">19%</option>
+                  <option value="7">7%</option>
+                  <option value="0">0%</option>
+                </select>
+              </div>
+            )}
           </div>
           <div className="text-end text-sm font-medium text-foreground">
             {labels.total}: {formatEUR(item.total)}
