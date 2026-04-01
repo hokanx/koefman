@@ -3,6 +3,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { formatEUR } from '@/lib/utils';
 import TemplatePicker from './TemplatePicker';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import { calculateTotals } from '@/lib/taxConfig';
 import type { LineItem } from '@/types';
 
 interface LineItemsEditorProps {
