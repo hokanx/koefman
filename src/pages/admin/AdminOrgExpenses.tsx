@@ -468,9 +468,9 @@ const AdminOrgExpenses = () => {
                   <div><span className="text-xs text-muted-foreground">Netto</span><p className="font-medium">{formatEUR(selectedExpense.amount_net)}</p></div>
                 )}
                 {selectedExpense.amount_tax != null && (
-                  <div><span className="text-xs text-muted-foreground">USt</span><p className="font-medium">{formatEUR(selectedExpense.amount_tax)}</p></div>
+                  <div><span className="text-xs text-muted-foreground">Steuer</span><p className="font-medium">{formatEUR(selectedExpense.amount_tax)}</p></div>
                 )}
-                <div><span className="text-xs text-muted-foreground">Brutto</span><p className="font-medium">{formatEUR(selectedExpense.amount_gross)}</p></div>
+                <div><span className="text-xs text-muted-foreground">Betrag</span><p className="font-medium">{formatEUR(selectedExpense.amount_gross)}</p></div>
                 {selectedExpense.booking_date && (
                   <div><span className="text-xs text-muted-foreground">Buchungsdatum</span><p>{formatDateDE(selectedExpense.booking_date)}</p></div>
                 )}
