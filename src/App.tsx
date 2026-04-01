@@ -32,6 +32,7 @@ import Templates from "@/pages/Templates";
 import IntakeForm from "@/pages/IntakeForm";
 import PublicOfferView from "@/pages/PublicOfferView";
 import PublicContractView from "@/pages/PublicContractView";
+import PublicInvoiceView from "@/pages/PublicInvoiceView";
 import PublicDocumentView from "@/pages/PublicDocumentView";
 import RecurringInvoices from "@/pages/RecurringInvoices";
 import Contracts from "@/pages/Contracts";
@@ -122,6 +123,7 @@ const AppWithImpersonation = () => {
               <Route path="/intake/:token" element={<IntakeForm />} />
               <Route path="/offer/view/:token" element={<PublicOfferView />} />
               <Route path="/contract/view/:token" element={<PublicContractView />} />
+              <Route path="/invoice/view/:token" element={<PublicInvoiceView />} />
               <Route path="/document/view/:token" element={<PublicDocumentView />} />
               <Route path="/truth" element={<Truth />} />
               <Route path="/truth-a" element={<TruthA />} />

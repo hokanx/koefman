@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can view invoices by public_token" ON public.invoices;
