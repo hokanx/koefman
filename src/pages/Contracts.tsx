@@ -9,7 +9,7 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE, generateContractPdf, generateContractConfirmationPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle, ExternalLink, Mail } from 'lucide-react';
+import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle, ExternalLink } from 'lucide-react';
 import EmailModal from '@/components/shared/EmailModal';
 import { formatEUR } from '@/lib/utils';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
