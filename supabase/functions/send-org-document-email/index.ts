@@ -410,6 +410,7 @@ async function resolveLegacyDocument(
     recipientEmail: invoice.customer?.email || null,
     recipientName: invoice.customer?.name || '',
     amountTotal: invoice.grand_total,
+    serviceTypeLabel: invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
     signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/invoice/view/${publicToken}` : undefined),
   };
 }
