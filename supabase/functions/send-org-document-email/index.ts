@@ -365,6 +365,7 @@ async function resolveLegacyDocument(
       }
     }
 
+    const freqMap: Record<string, string> = { weekly: 'Wöchentlich', every_2_weeks: 'Alle 2 Wochen', monthly: 'Monatlich', quarterly: 'Vierteljährlich' };
     return {
       documentId: contract.id,
       documentType: 'contract',
@@ -372,6 +373,7 @@ async function resolveLegacyDocument(
       recipientEmail: contract.customer?.email || null,
       recipientName: contract.customer?.name || '',
       amountTotal: contract.grand_total,
+      serviceTypeLabel: `Wiederkehrend (${freqMap[contract.frequency] || contract.frequency})`,
       signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/contract/view/${publicToken}` : undefined),
     };
   }
