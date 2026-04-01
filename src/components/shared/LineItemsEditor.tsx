@@ -2,6 +2,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatEUR } from '@/lib/utils';
 import TemplatePicker from './TemplatePicker';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import type { LineItem } from '@/types';
 
 interface LineItemsEditorProps {
@@ -24,6 +25,7 @@ interface LineItemsEditorProps {
 
 const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, defaultTaxRate = 19, defaultUnit = 'Pauschal' }: LineItemsEditorProps) => {
   const { t } = useLanguage();
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const addItem = () => {
     onChange([...items, {
