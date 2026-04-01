@@ -14,6 +14,7 @@ import type { InvoiceStatus } from '@/types';
 import { formatEUR } from '@/lib/utils';
 import EmailModal from '@/components/shared/EmailModal';
 import RecurringSetupModal from '@/components/shared/RecurringSetupModal';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 const InvoiceDetail = () => {
   const { t } = useLanguage();
