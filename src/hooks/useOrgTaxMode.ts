@@ -1,39 +1,18 @@
-import { useOrganization } from '@/hooks/useOrganization';
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 /**
- * Returns the effective tax mode for the current user context.
- * Checks org-level tax_mode first, falls back to business_settings.small_business_regulation.
+ * Returns the tax mode from the active organization (single source of truth).
+ * No fallback to user-level business_settings.
  */
 export const useOrgTaxMode = () => {
-  const { user } = useAuth();
-  const { organization, isLoading: orgLoading } = useOrganization();
+  const { activeOrganization, isLoading } = useWorkspace();
 
-  const { data: settings, isLoading: settingsLoading } = useQuery({
-    queryKey: ['business-settings-tax', user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('business_settings')
-        .select('small_business_regulation')
-        .eq('user_id', user!.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  // Org-level takes priority, then user-level business_settings
-  const orgTaxMode = (organization as any)?.tax_mode as string | undefined;
-  
-  const isKleinunternehmer = orgTaxMode
-    ? orgTaxMode === 'kleinunternehmer'
-    : !!settings?.small_business_regulation;
+  const taxMode = (activeOrganization as any)?.tax_mode as string | undefined;
+  const isKleinunternehmer = taxMode === 'kleinunternehmer';
 
   return {
     isKleinunternehmer,
     taxMode: isKleinunternehmer ? 'kleinunternehmer' as const : 'standard' as const,
-    isLoading: orgLoading || settingsLoading,
+    isLoading,
   };
 };

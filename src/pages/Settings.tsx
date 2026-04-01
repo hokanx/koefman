@@ -3,6 +3,7 @@ import { Upload, X, Image as ImageIcon, Sun, Moon, Building2, Receipt, FileText,
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import FormSection from '@/components/shared/FormSection';
@@ -40,6 +41,7 @@ const Settings = () => {
   const { t, language } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
+  const { activeOrganization, activeOrganizationId } = useWorkspace();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -305,7 +307,7 @@ const Settings = () => {
           <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionBillingDesc}</p>
 
           <div className="space-y-3">
-            {/* Tax mode radio */}
+            {/* Tax mode radio — saves to organizations.tax_mode */}
             <div>
               <label className="mb-2 block text-sm font-medium text-foreground">{t.settings.taxModeLabel}</label>
               <div className="space-y-2">
@@ -313,8 +315,13 @@ const Settings = () => {
                   <input
                     type="radio"
                     name="tax_mode"
-                    checked={form.small_business_regulation}
-                    onChange={() => update('small_business_regulation', true)}
+                    checked={(activeOrganization as any)?.tax_mode === 'kleinunternehmer'}
+                    onChange={async () => {
+                      if (!activeOrganizationId) return;
+                      await supabase.from('organizations').update({ tax_mode: 'kleinunternehmer' } as any).eq('id', activeOrganizationId);
+                      queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
+                      queryClient.invalidateQueries({ queryKey: ['user-organization'] });
+                    }}
                     className="mt-0.5"
                   />
                   <div>
@@ -326,8 +333,13 @@ const Settings = () => {
                   <input
                     type="radio"
                     name="tax_mode"
-                    checked={!form.small_business_regulation}
-                    onChange={() => update('small_business_regulation', false)}
+                    checked={(activeOrganization as any)?.tax_mode !== 'kleinunternehmer'}
+                    onChange={async () => {
+                      if (!activeOrganizationId) return;
+                      await supabase.from('organizations').update({ tax_mode: 'standard' } as any).eq('id', activeOrganizationId);
+                      queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
+                      queryClient.invalidateQueries({ queryKey: ['user-organization'] });
+                    }}
                     className="mt-0.5"
                   />
                   <div>
@@ -338,7 +350,7 @@ const Settings = () => {
               </div>
             </div>
 
-            {!form.small_business_regulation && (
+            {(activeOrganization as any)?.tax_mode !== 'kleinunternehmer' && (
               <div>
                 <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultTaxRate} (%)</label>
                 <input type="number" value={form.default_tax_rate} onChange={(e) => update('default_tax_rate', parseFloat(e.target.value) || 0)} className={inputClass} />
