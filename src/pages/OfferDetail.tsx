@@ -21,6 +21,9 @@ const OfferDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backPath = (location.state as any)?.from || '/revenue';
+  const backLabel = backPath === '/offers' ? 'Zurück zu Angebote' : backPath === '/revenue' ? 'Zurück zu Einnahmen' : 'Zurück';
   const queryClient = useQueryClient();
   const [generating, setGenerating] = useState(false);
   const [converting, setConverting] = useState(false);
