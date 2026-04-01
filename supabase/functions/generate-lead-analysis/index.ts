@@ -252,7 +252,6 @@ serve(async (req) => {
 
         emailSent = await sendAnalysisEmail(
           email, name, analysis,
-          existingAnalysis.recommended_package || "setup_59",
           submission_id, sub?.variant
         );
         if (emailSent) {
