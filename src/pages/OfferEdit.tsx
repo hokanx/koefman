@@ -31,6 +31,7 @@ const OfferEdit = () => {
   const [closingText, setClosingText] = useState('');
   const [serviceType, setServiceType] = useState<'einmalig' | 'laufend'>('einmalig');
   const [items, setItems] = useState<LineItem[]>([]);
+  const [discount, setDiscount] = useState<DiscountData>({ enabled: false, type: 'percentage', value: 0, scope: 'both', duration_months: null });
 
   const { data: offer } = useQuery({
     queryKey: ['offer', id],
