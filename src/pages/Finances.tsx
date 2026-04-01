@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 type DateRange = 'month' | 'quarter' | 'year';
 
