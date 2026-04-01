@@ -23,6 +23,7 @@ const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
 const Revenue = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const [tab, setTab] = useState<Tab>('offers');
   const [search, setSearch] = useState('');
 
