@@ -234,7 +234,7 @@ const PublicContractView = () => {
             {contract.end_date && (
               <div>
                 <p className="text-gray-500">Vertragsende</p>
-                <p className="font-medium text-gray-900">{new Date(contract.end_date).toLocaleDateString('de-DE')}</p>
+                <p className="font-medium text-gray-900">{formatDateDE(contract.end_date)}</p>
               </div>
             )}
             {!contract.end_date && (
