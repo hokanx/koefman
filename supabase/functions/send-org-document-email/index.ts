@@ -150,7 +150,7 @@ async function ensureOrganizationAccess(supabaseAdmin: any, userId: string, orga
   return Boolean(membershipResult.data || ownerResult.data || adminResult.data);
 }
 
-async function loadBranding(supabaseAdmin: any, organizationId: string): Promise<BrandingSettings> {
+async function loadBranding(supabaseAdmin: any, organizationId: string, userId?: string): Promise<BrandingSettings> {
   const [{ data: org, error: orgError }, { data: emailSettings, error: emailSettingsError }] = await Promise.all([
     supabaseAdmin
       .from('organizations')
@@ -172,9 +172,20 @@ async function loadBranding(supabaseAdmin: any, organizationId: string): Promise
     throw emailSettingsError;
   }
 
+  // Fallback reply-to: try business_settings email if no reply_to configured
+  let replyTo = emailSettings?.reply_to_email || undefined;
+  if (!replyTo && userId) {
+    const { data: bs } = await supabaseAdmin
+      .from('business_settings')
+      .select('email')
+      .eq('user_id', userId)
+      .maybeSingle();
+    replyTo = bs?.email || undefined;
+  }
+
   return {
     senderName: emailSettings?.sender_name || org.name || 'KÖFMAN',
-    replyTo: emailSettings?.reply_to_email || undefined,
+    replyTo,
     logoUrl: emailSettings?.logo_url || '',
     footerText: emailSettings?.footer_text || '',
   };
