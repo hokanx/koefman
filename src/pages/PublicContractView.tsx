@@ -216,6 +216,9 @@ const PublicContractView = () => {
               </span>
             </div>
             <h2 className="text-xl font-bold text-gray-900">{contract.title}</h2>
+            <p className="mt-1 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Leistungsart: Wiederkehrend ({frequencyLabels[contract.frequency] || contract.frequency})
+            </p>
             {customer && (
               <p className="mt-1 text-sm text-gray-600">Für: {customer.name}</p>
             )}

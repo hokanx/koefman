@@ -415,6 +415,7 @@ const Contracts = () => {
                   <p className="font-semibold text-foreground">{c.contract_number}</p>
                   <p className="text-sm text-muted-foreground">{c.customer?.name}</p>
                   <p className="text-xs text-muted-foreground">{c.title}</p>
+                  <p className="text-xs text-muted-foreground">Leistungsart: Wiederkehrend ({frequencyLabels[c.frequency]?.[language] || c.frequency})</p>
                 </div>
                 <StatusBadge
                   status={statusMap[c.status] as any || 'draft'}

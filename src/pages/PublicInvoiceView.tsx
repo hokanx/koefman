@@ -94,6 +94,9 @@ const PublicInvoiceView = () => {
           <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Rechnung</p>
             <h1 className="text-2xl font-bold text-foreground">{invoice.invoice_number}</h1>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Leistungsart: {invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig'}
+            </p>
           </div>
 
           {/* Status */}
