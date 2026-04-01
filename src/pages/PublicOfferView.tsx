@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileText, XCircle, ShieldCheck } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { formatEUR } from '@/lib/utils';
+import { formatEUR, formatDateDE } from '@/lib/utils';
 
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
