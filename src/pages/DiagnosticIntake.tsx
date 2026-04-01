@@ -9,7 +9,6 @@ interface AnalysisResult {
   practical_meaning: string;
   priorities: string[];
   next_step: string;
-  recommended_package?: string;
 }
 
 const INDUSTRIES = [
