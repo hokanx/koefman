@@ -54,6 +54,7 @@ interface PdfData {
   validity_days?: number;
   legal_note?: string;
   small_business_regulation?: boolean;
+  service_type_label?: string;
   accepted_by_name?: string;
   accepted_at?: string;
   accepted_at_time?: string;
