@@ -147,7 +147,6 @@ async function sendAnalysisEmail(
   email: string,
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
-  recommendedPkg: string,
   submissionId?: string,
   variant?: string
 ): Promise<boolean> {
@@ -157,7 +156,7 @@ async function sendAnalysisEmail(
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
-  const emailHtml = buildEmailHtml(name, analysis, recommendedPkg, submissionId, variant);
+  const emailHtml = buildEmailHtml(name, analysis, submissionId, variant);
 
   // Try gateway first, fall back to direct
   let emailRes: Response;
