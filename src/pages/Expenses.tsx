@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Download, FolderOpen, Search, Sparkles, Plus } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, FolderOpen, Sparkles, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDateDE } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { DOCUMENT_GROUPS, getCategoryInfo, getStatusInfo } from '@/lib/documentCategories';
+import { DOCUMENT_GROUPS, getCategoryInfo } from '@/lib/documentCategories';
 import { normalizeExtracted, formatAmountDE } from '@/lib/extractedDataUtils';
 import DocumentPreviewModal from '@/components/documents/DocumentPreviewModal';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
@@ -25,7 +25,6 @@ const Expenses = () => {
   const { isKleinunternehmer } = useOrgTaxMode();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [description, setDescription] = useState('');
@@ -115,21 +114,10 @@ const Expenses = () => {
     }
   };
 
-  const filtered = documents.filter((doc: any) => {
-    if (!search) return true;
-    const s = search.toLowerCase();
-    const norm = normalizeExtracted(doc.extracted_data);
-    return doc.file_name?.toLowerCase().includes(s)
-      || doc.description?.toLowerCase().includes(s)
-      || norm.vendor?.toLowerCase().includes(s);
-  });
-
   const totalExpenseAmount = documents.reduce((sum: number, doc: any) => {
     const norm = normalizeExtracted(doc.extracted_data);
     return sum + (norm.gross_amount || 0);
   }, 0);
-
-  const notExported = documents.filter((d: any) => d.status === 'neu' || d.status === 'hochgeladen').length;
 
   const handleDownload = async (doc: any) => {
     try {
@@ -162,20 +150,13 @@ const Expenses = () => {
         </Button>
       </div>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-border bg-card p-3 text-center">
-          <p className="text-2xl font-bold text-foreground">{documents.length}</p>
-          <p className="text-xs text-muted-foreground">Belege</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-3 text-center">
-          <p className="text-2xl font-bold text-foreground">{formatAmountDE(totalExpenseAmount)}</p>
-          <p className="text-xs text-muted-foreground">{isKleinunternehmer ? 'Summe' : 'Summe (brutto)'}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-3 text-center">
-          <p className={`text-2xl font-bold ${notExported > 0 ? 'text-warning' : 'text-success'}`}>{notExported}</p>
-          <p className="text-xs text-muted-foreground">Nicht exportiert</p>
-        </div>
+      {/* Single stat */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {isKleinunternehmer ? 'Summe' : 'Summe (brutto)'}
+        </p>
+        <p className="text-3xl font-bold text-foreground mt-1">{formatAmountDE(totalExpenseAmount)}</p>
+        <p className="text-xs text-muted-foreground mt-1">{documents.length} Belege</p>
       </div>
 
       {/* Upload section */}
@@ -210,56 +191,48 @@ const Expenses = () => {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input type="text" placeholder="Beleg suchen…" value={search} onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground" />
-      </div>
-
-      {/* Document list */}
+      {/* List */}
       {isLoading ? (
         <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>
-      ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
-          <FolderOpen className="h-10 w-10" />
-          <p className="text-sm">Keine Belege vorhanden</p>
+      ) : documents.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-16">
+          <FolderOpen className="h-12 w-12 text-muted-foreground" />
+          <p className="text-base font-medium text-foreground">Erste Ausgabe hinzufügen</p>
+          <Button size="sm" onClick={() => setShowUpload(true)}>
+            <Plus className="mr-1 h-4 w-4" /> Ausgabe hinzufügen
+          </Button>
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((doc: any) => {
+          {documents.map((doc: any) => {
             const catInfo = getCategoryInfo(doc.category);
-            const statusInfo = getStatusInfo(doc.status);
             const norm = normalizeExtracted(doc.extracted_data);
             return (
               <div key={doc.id}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 cursor-pointer hover:border-primary/40 transition"
+                className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 cursor-pointer hover:border-primary/40 transition"
                 onClick={() => setPreviewDoc(doc)}>
-                <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
+                <FileText className="h-7 w-7 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">
                     {norm.vendor || doc.file_name}
                   </p>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    {norm.gross_amount != null && (
-                      <span className="text-sm font-medium text-foreground">{formatAmountDE(norm.gross_amount)}</span>
-                    )}
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${catInfo.color}`}>{catInfo.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{formatDateDE(doc.created_at)}</span>
-                    {doc.extracted_data && (
-                      <Sparkles className="h-3 w-3 text-primary" />
-                    )}
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {catInfo.label} · {formatDateDE(doc.created_at)}
+                    {doc.extracted_data && <Sparkles className="inline h-3 w-3 ml-1 text-primary" />}
+                  </p>
                 </div>
-                <div className="flex shrink-0 gap-1" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => handleDownload(doc)}
-                    className="rounded-md p-2 text-muted-foreground hover:text-foreground" title="Download">
-                    <Download className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => { if (confirm('Beleg löschen?')) deleteMutation.mutate(doc); }}
-                    className="rounded-md p-2 text-muted-foreground hover:text-destructive" title="Löschen">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {norm.gross_amount != null && (
+                    <span className="text-sm font-medium text-foreground">{formatAmountDE(norm.gross_amount)}</span>
+                  )}
+                  <div className="flex gap-0.5" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => handleDownload(doc)} className="rounded-md p-1.5 text-muted-foreground hover:text-foreground" title="Download">
+                      <Download className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => { if (confirm('Beleg löschen?')) deleteMutation.mutate(doc); }} className="rounded-md p-1.5 text-muted-foreground hover:text-destructive" title="Löschen">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
