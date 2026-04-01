@@ -367,16 +367,20 @@ const Contracts = () => {
   };
 
   const statusMap: Record<string, string> = {
+    entwurf: 'draft',
     active: 'draft',
     gesendet: 'sent',
+    aktiv: 'accepted',
     unterzeichnet: 'paid',
     abgelehnt: 'cancelled',
     paused: 'draft',
     ended: 'cancelled',
   };
   const statusLabel: Record<string, string> = {
+    entwurf: 'Entwurf',
     active: ct.active,
     gesendet: ct.sent,
+    aktiv: 'Aktiv',
     unterzeichnet: ct.signed,
     abgelehnt: ct.rejected,
     paused: ct.paused,

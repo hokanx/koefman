@@ -152,7 +152,7 @@ const PublicContractView = () => {
     signMutation.mutate();
   };
 
-  const isSigned = contract?.status === 'unterzeichnet' || !!existingAcceptance || signed;
+  const isSigned = contract?.status === 'unterzeichnet' || contract?.status === 'aktiv' || !!existingAcceptance || signed;
   const isRejected = contract?.status === 'abgelehnt' || rejected;
 
   if (isLoading) {
