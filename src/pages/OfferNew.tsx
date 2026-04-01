@@ -28,6 +28,7 @@ const OfferNew = () => {
   const [footerText, setFooterText] = useState('');
   const [closingText, setClosingText] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
+  const [serviceType, setServiceType] = useState<'einmalig' | 'laufend'>('einmalig');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { data: customers = [] } = useQuery({
