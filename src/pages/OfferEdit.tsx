@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import { calculateTotals } from '@/lib/taxConfig';
 import type { Customer, LineItem, OfferStatus } from '@/types';
+import DiscountEditor, { type DiscountData } from '@/components/shared/DiscountEditor';
 
 const OfferEdit = () => {
   const { t } = useLanguage();
