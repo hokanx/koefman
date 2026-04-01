@@ -259,7 +259,7 @@ const OfferDetail = () => {
         invoice_number: invoiceNumber,
         date: new Date().toISOString().split('T')[0],
         due_date: dueDate.toISOString().split('T')[0],
-        status: 'open', notes: offer.notes,
+        status: 'open', notes: sanitizeNotes(offer.notes) || null,
         intro_text: (settings as any)?.default_invoice_intro_text || '',
         footer_text: (settings as any)?.default_invoice_footer_text || '',
         closing_text: (settings as any)?.default_closing_text || '',
