@@ -5,18 +5,28 @@ const corsHeaders = {
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-function injectVariables(template: string, vars: Record<string, string>): string {
-  let result = template;
-  for (const [key, value] of Object.entries(vars)) {
-    result = result.replaceAll(`{{${key}}}`, value ?? '');
-  }
-  return result;
-}
+const DOC_TYPE_LABELS: Record<string, string> = {
+  offer: 'Angebot',
+  invoice: 'Rechnung',
+  contract: 'Vertrag',
+  reminder: 'Mahnung',
+};
+
+const DOC_TYPE_CTA: Record<string, string> = {
+  offer: 'Angebot prüfen & bestätigen',
+  invoice: 'Rechnung ansehen',
+  contract: 'Vertrag prüfen & unterschreiben',
+  reminder: 'Mahnung ansehen',
+};
+
+const SIGNABLE_TYPES = ['offer', 'contract'];
 
 function buildEmailHtml(vars: Record<string, string>): string {
   const logoBlock = vars.logo_url
     ? `<tr><td align="center" style="padding:30px 20px 10px 20px;"><img src="${vars.logo_url}" alt="${vars.sender_name}" style="max-width:180px;max-height:60px;" /></td></tr>`
     : '';
+
+  const ctaLabel = vars.cta_label || 'DOKUMENT ANSEHEN';
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -35,15 +45,14 @@ ${vars.amount_total && vars.amount_total !== '–' ? `<p style="color:#FFFFFF;fo
 <p style="color:#CCCCCC;font-size:14px;line-height:1.6;margin:0;">
 Guten Tag${vars.recipient_name ? ' ' + vars.recipient_name : ''},<br/><br/>
 Sie haben ein neues Dokument von <strong style="color:#FFFFFF;">${vars.sender_name}</strong> erhalten.
-Bitte öffnen Sie den folgenden Link, um das Dokument einzusehen${vars.is_signable === 'true' ? ' und zu unterschreiben' : ''}.
 </p>
 </td></tr>
 <tr><td align="center" style="padding:10px 30px 10px 30px;">
-<p style="margin:0;"><a href="${vars.signing_url}" style="color:#FFFFFF;font-size:16px;font-weight:bold;text-decoration:none;">→ DOKUMENT ANSEHEN${vars.is_signable === 'true' ? ' & UNTERSCHREIBEN' : ''}</a></p>
+<p style="margin:0;"><a href="${vars.signing_url}" style="display:inline-block;background-color:#FFFFFF;color:#000000;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:8px;">→ ${ctaLabel}</a></p>
 </td></tr>
 <tr><td style="padding:10px 30px 20px 30px;">
 <p style="color:#666666;font-size:11px;line-height:1.5;margin:0;">
-Falls der Link nicht direkt funktioniert, kopiere ihn in deinen Browser:<br/>
+Falls der Link nicht funktioniert, kopieren Sie ihn in Ihren Browser:<br/>
 <a href="${vars.signing_url}" style="color:#666666;word-break:break-all;">${vars.signing_url}</a>
 </p>
 </td></tr>
@@ -55,15 +64,6 @@ ${vars.footer_text ? `<tr><td style="padding:10px 30px 30px 30px;border-top:1px 
 </body>
 </html>`;
 }
-
-const DOC_TYPE_LABELS: Record<string, string> = {
-  offer: 'Angebot',
-  invoice: 'Rechnung',
-  contract: 'Vertrag',
-  reminder: 'Mahnung',
-};
-
-const SIGNABLE_TYPES = ['offer', 'contract'];
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -104,7 +104,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'document_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Load document (use admin client to avoid RLS issues for service operations)
     const { data: doc, error: docError } = await supabaseAdmin
       .from('org_documents')
       .select('*')
@@ -118,21 +117,18 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No recipient email on document' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Load organization
     const { data: org } = await supabaseAdmin
       .from('organizations')
       .select('name')
       .eq('id', doc.organization_id)
       .single();
 
-    // Load email settings
     const { data: emailSettings } = await supabaseAdmin
       .from('organization_email_settings')
       .select('*')
       .eq('organization_id', doc.organization_id)
       .maybeSingle();
 
-    // Generate public_token if missing
     let publicToken = doc.public_token;
     if (!publicToken) {
       publicToken = crypto.randomUUID();
@@ -149,11 +145,12 @@ Deno.serve(async (req) => {
     const replyTo = emailSettings?.reply_to_email || undefined;
     const logoUrl = emailSettings?.logo_url || '';
     const footerText = emailSettings?.footer_text || '';
-    const isSignable = SIGNABLE_TYPES.includes(doc.document_type);
 
     const amountFormatted = doc.amount_total != null && doc.amount_total > 0
       ? Number(doc.amount_total).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
       : '–';
+
+    const ctaLabel = DOC_TYPE_CTA[doc.document_type] || 'Dokument ansehen';
 
     const vars: Record<string, string> = {
       sender_name: senderName,
@@ -166,7 +163,7 @@ Deno.serve(async (req) => {
       footer_text: footerText,
       organization_name: org?.name || 'KÖFMAN',
       logo_url: logoUrl,
-      is_signable: isSignable ? 'true' : 'false',
+      cta_label: ctaLabel.toUpperCase(),
     };
 
     const emailHtml = buildEmailHtml(vars);
@@ -197,7 +194,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: `Email failed: ${JSON.stringify(resendData)}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Update document status
     await supabaseAdmin
       .from('org_documents')
       .update({
@@ -208,7 +204,6 @@ Deno.serve(async (req) => {
       })
       .eq('id', document_id);
 
-    // Log email
     await supabaseAdmin
       .from('org_document_emails')
       .insert({
