@@ -144,7 +144,10 @@ const Expenses = () => {
     <div className="animate-fade-in p-4 md:p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">AUSGABEN</h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">AUSGABEN</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Für Steuer & Gewinnberechnung</p>
+        </div>
         <Button size="sm" onClick={() => setShowUpload(!showUpload)}>
           <Plus className="mr-1 h-4 w-4" /> Ausgabe hinzufügen
         </Button>
@@ -152,9 +155,7 @@ const Expenses = () => {
 
       {/* Single stat */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {isKleinunternehmer ? 'Summe' : 'Summe (brutto)'}
-        </p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ausgaben gesamt</p>
         <p className="text-3xl font-bold text-foreground mt-1">{formatAmountDE(totalExpenseAmount)}</p>
         <p className="text-xs text-muted-foreground mt-1">{documents.length} Belege</p>
       </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Receipt, ScrollText, Plus } from 'lucide-react';
+import { FileText, Receipt, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,12 +11,11 @@ import { formatEUR } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
-type Tab = 'offers' | 'invoices' | 'contracts';
+type Tab = 'offers' | 'invoices';
 
 const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: 'offers', label: 'Angebote', icon: FileText },
   { key: 'invoices', label: 'Rechnungen', icon: Receipt },
-  { key: 'contracts', label: 'Verträge', icon: ScrollText },
 ];
 
 const statusLabel: Record<string, string> = {
@@ -57,24 +56,12 @@ const Revenue = () => {
     enabled: !!user,
   });
 
-  const { data: contracts = [], isLoading: loadingContracts } = useQuery({
-    queryKey: ['revenue-contracts'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('contracts')
-        .select('id, contract_number, status, start_date, grand_total, title, customers(name)')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-    enabled: !!user,
-  });
 
   const totalPaid = invoices
     .filter((i: any) => i.status === 'paid')
     .reduce((sum: number, i: any) => sum + Number(i.grand_total), 0);
 
-  const isLoading = tab === 'offers' ? loadingOffers : tab === 'invoices' ? loadingInvoices : loadingContracts;
+  const isLoading = tab === 'offers' ? loadingOffers : loadingInvoices;
 
   const renderList = () => {
     if (tab === 'offers') {
@@ -113,19 +100,7 @@ const Revenue = () => {
       });
     }
 
-    if (contracts.length === 0) return <EmptyState icon={ScrollText} title="Keine Verträge" description="Verträge werden aus Angeboten erstellt." />;
-    return contracts.map((c: any) => (
-      <Link key={c.id} to="/contracts" className="flex items-center justify-between rounded-xl border border-border bg-card p-4 transition hover:border-primary/40">
-        <div className="min-w-0 flex-1">
-          <p className="font-medium text-foreground truncate">{c.title || (c.customers as any)?.name}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{c.contract_number} · {formatDateDE(c.start_date)}</p>
-        </div>
-        <div className="flex items-center gap-3 ml-3 shrink-0">
-          <span className="font-medium text-foreground">{formatEUR(c.grand_total)}</span>
-          <StatusBadge status={c.status} label={statusLabel[c.status] || c.status} />
-        </div>
-      </Link>
-    ));
+    return null;
   };
 
   return (
@@ -134,20 +109,18 @@ const Revenue = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">EINNAHMEN</h1>
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => navigate('/offers/new')}>
-            <Plus className="mr-1 h-4 w-4" /> Angebot
+          <Button size="sm" onClick={() => navigate('/invoices/new')}>
+            <Plus className="mr-1 h-4 w-4" /> Rechnung erstellen
           </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate('/invoices/new')}>
-            <Plus className="mr-1 h-4 w-4" /> Rechnung
+          <Button size="sm" variant="outline" onClick={() => navigate('/offers/new')}>
+            <Plus className="mr-1 h-4 w-4" /> Angebot
           </Button>
         </div>
       </div>
 
       {/* Single stat */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {isKleinunternehmer ? 'Erhalten' : 'Bezahlt (brutto)'}
-        </p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Einnahmen gesamt</p>
         <p className="text-3xl font-bold text-foreground mt-1">{formatEUR(totalPaid)}</p>
       </div>
 

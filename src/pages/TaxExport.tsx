@@ -134,8 +134,11 @@ const TaxExport = () => {
         {isReady ? <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" /> : <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />}
         <div>
           <p className="text-sm font-medium text-foreground">
-            {isReady ? 'Bereit für Export' : 'Hinweis'}
+            {isReady ? 'Bereit für Export' : 'Noch keine Daten vorhanden'}
           </p>
+          {!isReady && invoiceCount === 0 && expenseCount === 0 && (
+            <p className="text-xs text-muted-foreground">Fügen Sie Einnahmen oder Ausgaben hinzu</p>
+          )}
           {warnings.map((w, i) => <p key={i} className="text-xs text-muted-foreground">{w}</p>)}
           {isReady && <p className="text-xs text-muted-foreground">{invoiceCount} Rechnungen · {expenseCount} Belege</p>}
         </div>
@@ -144,7 +147,7 @@ const TaxExport = () => {
       {/* Summary */}
       <div className="rounded-xl border border-border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">{isKleinunternehmer ? 'Umsatz' : 'Einnahmen brutto'}</span>
+          <span className="text-sm text-muted-foreground">Einnahmen</span>
           <span className="text-lg font-bold text-foreground">{formatEUR(summary?.totalIncome ?? 0)}</span>
         </div>
         <div className="flex items-center justify-between">
@@ -153,7 +156,7 @@ const TaxExport = () => {
         </div>
         {!isKleinunternehmer && (
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Umsatzsteuer</span>
+            <span className="text-sm text-muted-foreground">Steuer</span>
             <span className="text-lg font-bold text-foreground">{formatEUR(summary?.totalTax ?? 0)}</span>
           </div>
         )}
@@ -164,6 +167,9 @@ const TaxExport = () => {
       </div>
 
       {/* Export */}
+      {isReady && (
+        <p className="text-sm text-center text-muted-foreground">Bereit für Steuerberater</p>
+      )}
       <Button
         className="w-full h-auto py-4 text-base"
         onClick={handleExport}

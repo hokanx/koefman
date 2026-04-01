@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, Receipt, Upload, FileArchive, Inbox } from 'lucide-react';
+import { ArrowRight, FileArchive, Inbox } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -95,38 +95,6 @@ const Dashboard = () => {
             </div>
             <FileArchive className="h-5 w-5 text-muted-foreground" />
           </div>
-        </button>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => navigate('/offers/new')}
-          className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
-        >
-          <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-          <span className="text-sm font-medium text-foreground">Angebot erstellen</span>
-        </button>
-        <button
-          onClick={() => navigate('/invoices/new')}
-          className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
-        >
-          <Receipt className="h-5 w-5 text-muted-foreground shrink-0" />
-          <span className="text-sm font-medium text-foreground">Rechnung erstellen</span>
-        </button>
-        <button
-          onClick={() => navigate('/expenses')}
-          className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
-        >
-          <Upload className="h-5 w-5 text-muted-foreground shrink-0" />
-          <span className="text-sm font-medium text-foreground">Ausgabe erfassen</span>
-        </button>
-        <button
-          onClick={() => navigate('/tax-export')}
-          className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
-        >
-          <FileArchive className="h-5 w-5 text-muted-foreground shrink-0" />
-          <span className="text-sm font-medium text-foreground">Export starten</span>
         </button>
       </div>
 
