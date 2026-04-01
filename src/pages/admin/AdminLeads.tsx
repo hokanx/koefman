@@ -319,13 +319,18 @@ const AdminLeads = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm truncate">{sub.name}</span>
+                        <span className="font-semibold text-sm truncate">{sub.name || '(kein Name)'}</span>
                         {sub.intent_score && INTENT_BADGES[sub.intent_score] && (
                           <span className={`text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded border ${INTENT_BADGES[sub.intent_score].className}`}>
                             {INTENT_BADGES[sub.intent_score].label}
                           </span>
                         )}
                         {getStatusBadge(sub.lead_status || 'neu')}
+                        {analysis?.recommended_package && (
+                          <span className="text-[9px] font-medium tracking-[0.06em] px-2 py-0.5 rounded border border-border text-muted-foreground">
+                            {PACKAGE_LABELS[analysis.recommended_package] || analysis.recommended_package}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">{sub.email}</p>
                       <div className="flex items-center gap-2 flex-wrap">
