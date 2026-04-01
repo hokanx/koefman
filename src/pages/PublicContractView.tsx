@@ -212,7 +212,7 @@ const PublicContractView = () => {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-500">{contract.contract_number}</span>
               <span className="text-sm text-gray-500">
-                {new Date(contract.created_at).toLocaleDateString('de-DE')}
+                {formatDateDE(contract.created_at)}
               </span>
             </div>
             <h2 className="text-xl font-bold text-gray-900">{contract.title}</h2>
