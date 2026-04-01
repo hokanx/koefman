@@ -410,7 +410,7 @@ const OfferDetail = () => {
             <p>{t.offers.date}: {formatDateDE(offer.date)}</p>
             <p>{t.offers.validUntil}: {getValidityDate()}</p>
           </div>
-          {offer.notes && <p className="mt-2 text-sm text-foreground">{offer.notes}</p>}
+          {sanitizeNotes(offer.notes) && <p className="mt-2 text-sm text-foreground">{sanitizeNotes(offer.notes)}</p>}
 
           {linkedInvoices.length > 0 && (
             <div className="mt-3 rounded-lg bg-success/10 border border-success/20 p-3 text-sm">
