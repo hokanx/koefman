@@ -163,17 +163,23 @@ const TaxExport = () => {
           </div>
           <div className="rounded-lg bg-muted/30 p-3 text-center">
             <p className="text-2xl font-bold text-foreground">{expenseCount}</p>
-            <p className="text-xs text-muted-foreground">Ausgaben</p>
+            <p className="text-xs text-muted-foreground">Belege</p>
           </div>
           <div className="rounded-lg bg-muted/30 p-3 text-center">
             <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.totalIncome ?? 0)}</p>
-            <p className="text-xs text-muted-foreground">Einnahmen brutto</p>
+            <p className="text-xs text-muted-foreground">{isKleinunternehmer ? 'Umsatz gesamt' : 'Einnahmen brutto'}</p>
           </div>
           <div className="rounded-lg bg-muted/30 p-3 text-center">
             <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.totalExpenses ?? 0)}</p>
             <p className="text-xs text-muted-foreground">Ausgaben gesamt</p>
           </div>
-          <div className="rounded-lg bg-muted/30 p-3 text-center col-span-2">
+          {!isKleinunternehmer && (
+            <div className="rounded-lg bg-muted/30 p-3 text-center">
+              <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.totalTax ?? 0)}</p>
+              <p className="text-xs text-muted-foreground">Umsatzsteuer gesamt</p>
+            </div>
+          )}
+          <div className={`rounded-lg bg-muted/30 p-3 text-center ${isKleinunternehmer ? 'col-span-2' : ''}`}>
             <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.profit ?? 0)}</p>
             <p className="text-xs text-muted-foreground">Gewinn</p>
           </div>
