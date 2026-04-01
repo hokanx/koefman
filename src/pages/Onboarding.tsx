@@ -207,6 +207,38 @@ const Onboarding = () => {
 
       if (settingsError) throw settingsError;
 
+      // Auto-create organization + membership for single-business model
+      const { data: existingMembership } = await supabase
+        .from('organization_memberships')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!existingMembership) {
+        const orgSlug = (business.business_name || 'business')
+          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const { data: newOrg, error: orgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: business.business_name || 'Mein Geschäft',
+            slug: orgSlug,
+            owner_user_id: user.id,
+            tax_mode: isKlein ? 'kleinunternehmer' : 'standard',
+          })
+          .select('id')
+          .single();
+        if (orgError) throw orgError;
+
+        const { error: memError } = await supabase
+          .from('organization_memberships')
+          .insert({
+            organization_id: newOrg.id,
+            user_id: user.id,
+            role: 'owner',
+          });
+        if (memError) throw memError;
+      }
+
       // Save service templates
       const validServices = services.filter((s) => s.name.trim());
       for (const svc of validServices) {

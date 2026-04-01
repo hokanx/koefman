@@ -55,8 +55,21 @@ const EmailModal = ({
       toast.error('Bitte E-Mail-Adresse eingeben');
       return;
     }
-    if (!activeOrganizationId) {
-      toast.error('E-Mail konnte nicht gesendet werden. Bitte richten Sie zuerst Ihr Geschäft ein.');
+
+    // Auto-resolve org: use workspace context, or fetch user's single org
+    let orgId = activeOrganizationId;
+    if (!orgId) {
+      try {
+        const { data: membership } = await supabase
+          .from('organization_memberships')
+          .select('organization_id')
+          .limit(1)
+          .maybeSingle();
+        orgId = membership?.organization_id ?? null;
+      } catch {}
+    }
+    if (!orgId) {
+      toast.error('E-Mail konnte nicht gesendet werden. Bitte schließen Sie zuerst die Einrichtung ab.');
       return;
     }
 
