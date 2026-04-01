@@ -460,22 +460,29 @@ const Contracts = () => {
                   <Download className="h-3.5 w-3.5 mr-1" /> {generatingPdf === c.id ? t.common.generating : ct.downloadPdf}
                 </Button>
 
-                {/* Send / Copy link actions for active or gesendet */}
-                {(c.status === 'active' || c.status === 'gesendet') && (
+                {/* Send / Copy link actions for entwurf or gesendet */}
+                {(c.status === 'entwurf' || c.status === 'gesendet') && (
                   <>
-                    {c.status === 'active' && (
-                      <Button size="sm" variant="outline" onClick={() => handleSendContract(c)}>
-                        <Send className="h-3.5 w-3.5 mr-1" /> {ct.sendContract}
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline" onClick={() => handleCopyLink(c)}>
-                      <Copy className="h-3.5 w-3.5 mr-1" /> {ct.copyLink}
+                    <Button size="sm" variant="outline" onClick={() => handleSendContract(c)}>
+                      <Send className="h-3.5 w-3.5 mr-1" /> {ct.sendContract}
                     </Button>
+                    {(c as any).public_token && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => handleCopyLink(c)}>
+                          <Copy className="h-3.5 w-3.5 mr-1" /> {ct.copyLink}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          window.open(`${window.location.origin}/contract/view/${(c as any).public_token}`, '_blank');
+                        }}>
+                          <ExternalLink className="h-3.5 w-3.5 mr-1" /> Link öffnen
+                        </Button>
+                      </>
+                    )}
                   </>
                 )}
 
-                {/* Signed: confirmation PDF + recurring */}
-                {c.status === 'unterzeichnet' && (
+                {/* Active: confirmation PDF + recurring */}
+                {(c.status === 'unterzeichnet' || c.status === 'aktiv') && (
                   <>
                     <Button size="sm" variant="outline" onClick={() => handleDownloadConfirmation(c)}>
                       <CheckCircle className="h-3.5 w-3.5 mr-1" /> Vertragsbestätigung
@@ -486,18 +493,18 @@ const Contracts = () => {
                   </>
                 )}
 
-                {/* Pause/Resume/End for active/gesendet/paused */}
-                {(c.status === 'active' || c.status === 'gesendet' || c.status === 'unterzeichnet') && (
+                {/* Pause/Resume/End only for active (signed) contracts */}
+                {(c.status === 'unterzeichnet' || c.status === 'aktiv') && (
                   <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'paused' })}>
                     <Pause className="h-3.5 w-3.5 mr-1" /> {ct.pause}
                   </Button>
                 )}
                 {c.status === 'paused' && (
-                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'unterzeichnet' })}>
+                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'aktiv' })}>
                     <Play className="h-3.5 w-3.5 mr-1" /> {ct.resume}
                   </Button>
                 )}
-                {!['ended', 'abgelehnt'].includes(c.status) && (
+                {(c.status === 'unterzeichnet' || c.status === 'aktiv' || c.status === 'paused') && (
                   <Button size="sm" variant="outline" className="text-destructive" onClick={() => updateStatus.mutate({ id: c.id, status: 'ended' })}>
                     <XCircle className="h-3.5 w-3.5 mr-1" /> {ct.end}
                   </Button>
