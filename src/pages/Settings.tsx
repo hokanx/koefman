@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 const DEFAULT_TEXTS = {
   de: {
     offer_intro: 'Sehr geehrte Damen und Herren,\n\nwir bieten Ihnen die nachfolgend aufgeführten Leistungen zu den genannten Konditionen an:',
-    offer_footer: 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.\n\nDieses Angebot ist 14 Tage gültig.',
+    offer_footer: 'Dieses Angebot ist 14 Tage gültig.',
     invoice_intro: 'Sehr geehrte Damen und Herren,\n\nfür die erbrachten Leistungen erlauben wir uns, wie folgt abzurechnen:',
     invoice_footer: 'Bitte überweisen Sie den Rechnungsbetrag unter Angabe der Rechnungsnummer auf das unten genannte Konto.',
     payment_terms: 'Zahlbar innerhalb von 14 Tagen ohne Abzug.',
@@ -449,6 +449,12 @@ const Settings = () => {
                   <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultInvoiceFooter}</label>
                   <textarea value={form.default_invoice_footer_text} onChange={(e) => update('default_invoice_footer_text', e.target.value)} rows={2} className={textareaClass} />
                 </div>
+                {(activeOrganization as any)?.tax_mode === 'kleinunternehmer' && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="text-xs font-medium text-foreground">Rechtlicher Hinweis (automatisch)</p>
+                    <p className="text-xs text-muted-foreground mt-1">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet." wird automatisch in alle Dokumente eingefügt und kann nicht bearbeitet werden.</p>
+                  </div>
+                )}
                 <div>
                   <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultClosingText}</label>
                   <input type="text" value={form.default_closing_text} onChange={(e) => update('default_closing_text', e.target.value)} className={inputClass} />

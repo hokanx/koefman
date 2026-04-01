@@ -147,7 +147,6 @@ const OfferDetail = () => {
         validityDate: validityDate || undefined,
         validity_days: validityDays,
         small_business_regulation: isSmallBiz,
-        legal_note: isSmallBiz ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.' : undefined,
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
@@ -340,7 +339,6 @@ const OfferDetail = () => {
       validityDate: validityDate || undefined,
       validity_days: validityDays,
       small_business_regulation: isSmallBiz,
-      legal_note: isSmallBiz ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.' : undefined,
       business: {
         business_name: settings?.business_name || '',
         address: businessAddress || undefined,
