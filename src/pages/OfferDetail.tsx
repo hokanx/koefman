@@ -12,6 +12,7 @@ import { generatePdf, formatDateDE } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import type { OfferStatus } from '@/types';
 import { formatEUR } from '@/lib/utils';
+import { sanitizeNotes } from '@/lib/sanitizeNotes';
 import EmailModal from '@/components/shared/EmailModal';
 import ContractSetupModal from '@/components/shared/ContractSetupModal';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
