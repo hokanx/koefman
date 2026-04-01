@@ -105,20 +105,9 @@ const Revenue = () => {
 
   return (
     <div className="animate-fade-in p-4 md:p-6 space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">EINNAHMEN</h1>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => navigate('/invoices/new')}>
-            <Plus className="mr-1 h-4 w-4" /> Rechnung erstellen
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate('/offers/new')}>
-            <Plus className="mr-1 h-4 w-4" /> Angebot
-          </Button>
-        </div>
-      </div>
+      <h1 className="text-2xl font-bold tracking-tight text-foreground">EINNAHMEN</h1>
 
-      {/* Single stat */}
+      {/* KPI */}
       <div className="rounded-xl border border-border bg-card p-4">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Einnahmen gesamt</p>
         <p className="text-3xl font-bold text-foreground mt-1">{formatEUR(totalPaid)}</p>
@@ -127,6 +116,16 @@ const Revenue = () => {
       {isKleinunternehmer && (
         <p className="text-xs text-muted-foreground">§19 UStG – Keine Umsatzsteuer wird berechnet.</p>
       )}
+
+      {/* CTAs */}
+      <div className="flex gap-2">
+        <Button className="flex-1" onClick={() => navigate('/invoices/new')}>
+          <Plus className="mr-1 h-4 w-4" /> Rechnung erstellen
+        </Button>
+        <Button variant="outline" className="flex-1" onClick={() => navigate('/offers/new')}>
+          <Plus className="mr-1 h-4 w-4" /> Angebot
+        </Button>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
