@@ -150,7 +150,7 @@ async function ensureOrganizationAccess(supabaseAdmin: any, userId: string, orga
   return Boolean(membershipResult.data || ownerResult.data || adminResult.data);
 }
 
-async function loadBranding(supabaseAdmin: any, organizationId: string): Promise<BrandingSettings> {
+async function loadBranding(supabaseAdmin: any, organizationId: string, userId?: string): Promise<BrandingSettings> {
   const [{ data: org, error: orgError }, { data: emailSettings, error: emailSettingsError }] = await Promise.all([
     supabaseAdmin
       .from('organizations')
@@ -172,68 +172,91 @@ async function loadBranding(supabaseAdmin: any, organizationId: string): Promise
     throw emailSettingsError;
   }
 
+  // Fallback reply-to: try business_settings email if no reply_to configured
+  let replyTo = emailSettings?.reply_to_email || undefined;
+  if (!replyTo && userId) {
+    const { data: bs } = await supabaseAdmin
+      .from('business_settings')
+      .select('email')
+      .eq('user_id', userId)
+      .maybeSingle();
+    replyTo = bs?.email || undefined;
+  }
+
   return {
     senderName: emailSettings?.sender_name || org.name || 'KÖFMAN',
-    replyTo: emailSettings?.reply_to_email || undefined,
+    replyTo,
     logoUrl: emailSettings?.logo_url || '',
     footerText: emailSettings?.footer_text || '',
   };
 }
 
 function buildEmailHtml(vars: Record<string, string>): string {
-  const logoBlock = vars.logo_url
-    ? `<tr><td align="center" style="padding:40px 20px 16px 20px;"><img src="${escapeHtml(vars.logo_url)}" alt="${escapeHtml(vars.sender_name)}" style="max-width:160px;max-height:56px;" /></td></tr>`
-    : `<tr><td align="center" style="padding:40px 20px 16px 20px;"><span style="color:#FFFFFF;font-size:20px;font-weight:bold;letter-spacing:0.1em;text-transform:uppercase;">${escapeHtml(vars.sender_name)}</span></td></tr>`;
-
   const ctaLabel = escapeHtml(vars.cta_label || 'DOKUMENT ANSEHEN');
   const footerText = vars.footer_text ? escapeHtml(vars.footer_text) : '';
   const signingUrl = vars.signing_url ? escapeHtml(vars.signing_url) : '';
   const messageBody = escapeHtml(vars.message_body || getDefaultMessage(vars.sender_name, vars.document_type_label, vars.recipient_name));
 
+  // Optional org logo below the KÖFMAN header
+  const orgLogoRow = vars.logo_url
+    ? `<tr><td align="center" style="padding:8px 20px 0 20px;"><img src="${escapeHtml(vars.logo_url)}" alt="${escapeHtml(vars.sender_name)}" style="max-width:140px;max-height:48px;" /></td></tr>`
+    : '';
+
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
-<body style="margin:0;padding:0;background-color:#000000;font-family:Arial,Helvetica,sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;">
-<tr><td align="center" style="padding:20px 0;">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>${escapeHtml(vars.document_title)}</title></head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;min-width:100%;">
+<tr><td align="center" style="padding:0;">
 
-${logoBlock}
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin:0 auto;">
+
+<!-- KÖFMAN Brand Header -->
+<tr><td align="center" style="padding:48px 24px 12px 24px;background-color:#000000;">
+<span style="color:#FFFFFF;font-size:32px;font-weight:bold;letter-spacing:0.25em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">K\u00d6FMAN</span>
+</td></tr>
+
+${orgLogoRow}
 
 <!-- Divider -->
-<tr><td style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-bottom:1px solid #333333;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:20px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-bottom:2px solid #FFFFFF;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+
+<!-- Document Type Label -->
+<tr><td style="padding:28px 40px 4px 40px;">
+<p style="color:#999999;font-size:12px;font-weight:bold;letter-spacing:0.15em;text-transform:uppercase;margin:0;">${escapeHtml(vars.document_type_label)}</p>
+</td></tr>
 
 <!-- Headline -->
-<tr><td style="padding:32px 40px 8px 40px;">
-<h1 style="color:#FFFFFF;font-size:24px;font-weight:bold;letter-spacing:0.02em;margin:0;text-transform:uppercase;">${escapeHtml(vars.document_title)}</h1>
+<tr><td style="padding:4px 40px 8px 40px;">
+<h1 style="color:#FFFFFF;font-size:26px;font-weight:bold;letter-spacing:0.02em;margin:0;">${escapeHtml(vars.document_title)}</h1>
 </td></tr>
 
 <!-- Amount -->
-${vars.amount_total && vars.amount_total !== '–' ? `<tr><td style="padding:0 40px 24px 40px;"><p style="color:#FFFFFF;font-size:18px;font-weight:bold;margin:0;">${escapeHtml(vars.amount_total)}</p></td></tr>` : '<tr><td style="padding:0 0 16px 0;"></td></tr>'}
+${vars.amount_total && vars.amount_total !== '\u2013' ? `<tr><td style="padding:4px 40px 24px 40px;"><p style="color:#FFFFFF;font-size:22px;font-weight:bold;margin:0;">${escapeHtml(vars.amount_total)}</p></td></tr>` : '<tr><td style="padding:0 0 16px 0;"></td></tr>'}
 
 <!-- Body text -->
-<tr><td style="padding:0 40px 28px 40px;">
-<p style="color:#CCCCCC;font-size:14px;line-height:1.7;margin:0;white-space:pre-line;">${messageBody}</p>
+<tr><td style="padding:0 40px 32px 40px;">
+<p style="color:#FFFFFF;font-size:15px;line-height:1.7;margin:0;white-space:pre-line;">${messageBody}</p>
 </td></tr>
 
 <!-- CTA Button -->
-${signingUrl ? `<tr><td align="center" style="padding:0 40px 12px 40px;">
-<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background-color:#FFFFFF;border-radius:0;padding:16px 40px;">
-<a href="${signingUrl}" style="color:#000000;font-size:14px;font-weight:bold;letter-spacing:0.1em;text-decoration:none;text-transform:uppercase;display:block;">\u2192 ${ctaLabel}</a>
+${signingUrl ? `<tr><td align="center" style="padding:0 40px 16px 40px;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center" style="background-color:#FFFFFF;border-radius:0;padding:18px 32px;">
+<a href="${signingUrl}" style="color:#000000;font-size:15px;font-weight:bold;letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;display:block;text-align:center;font-family:Arial,Helvetica,sans-serif;">\u2192 ${ctaLabel}</a>
 </td></tr></table>
 </td></tr>` : ''}
 
 <!-- Fallback link -->
-${signingUrl ? `<tr><td style="padding:8px 40px 28px 40px;">
-<p style="color:#555555;font-size:11px;line-height:1.5;margin:0;">Falls der Link nicht funktioniert, kopieren Sie ihn in Ihren Browser:<br/><a href="${signingUrl}" style="color:#555555;word-break:break-all;text-decoration:underline;">${signingUrl}</a></p>
+${signingUrl ? `<tr><td style="padding:4px 40px 32px 40px;">
+<p style="color:#777777;font-size:12px;line-height:1.6;margin:0;">Falls der Link nicht funktioniert:<br/><a href="${signingUrl}" style="color:#AAAAAA;word-break:break-all;text-decoration:underline;">${signingUrl}</a></p>
 </td></tr>` : ''}
 
-<!-- Footer divider + text -->
-<tr><td style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-bottom:1px solid #222222;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+<!-- Footer divider -->
+<tr><td style="padding:0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-bottom:1px solid #333333;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
-${footerText ? `<tr><td style="padding:20px 40px 8px 40px;"><p style="color:#666666;font-size:11px;line-height:1.5;margin:0;white-space:pre-line;">${footerText}</p></td></tr>` : ''}
+${footerText ? `<tr><td style="padding:20px 40px 8px 40px;"><p style="color:#888888;font-size:12px;line-height:1.5;margin:0;white-space:pre-line;">${footerText}</p></td></tr>` : ''}
 
-<tr><td style="padding:${footerText ? '8' : '20'}px 40px 40px 40px;"><p style="color:#444444;font-size:10px;letter-spacing:0.05em;margin:0;">GESENDET \u00dcBER K\u00d6FMAN</p></td></tr>
+<tr><td style="padding:${footerText ? '8' : '24'}px 40px 48px 40px;"><p style="color:#555555;font-size:10px;letter-spacing:0.1em;margin:0;text-transform:uppercase;">Gesendet \u00fcber K\u00d6FMAN</p></td></tr>
 
 </table>
 </td></tr>
@@ -241,7 +264,6 @@ ${footerText ? `<tr><td style="padding:20px 40px 8px 40px;"><p style="color:#666
 </body>
 </html>`;
 }
-
 async function sendViaResend(resendApiKey: string, emailPayload: Record<string, unknown>) {
   const resendResponse = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -452,7 +474,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: 'Forbidden' }, 403);
       }
 
-      const branding = await loadBranding(supabaseAdmin, doc.organization_id);
+      const branding = await loadBranding(supabaseAdmin, doc.organization_id, userId);
       const recipientEmail = requestData.to || doc.recipient_email;
       if (!recipientEmail) {
         return jsonResponse({ error: 'No recipient email on document' }, 400);
@@ -536,7 +558,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Forbidden' }, 403);
     }
 
-    const branding = await loadBranding(supabaseAdmin, organizationId);
+    const branding = await loadBranding(supabaseAdmin, organizationId, userId);
     const legacyDocument = await resolveLegacyDocument(supabaseAdmin, requestData, userId, appUrl);
     const recipientEmail = requestData.to || legacyDocument.recipientEmail;
 
