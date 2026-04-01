@@ -65,18 +65,6 @@ const URGENCY_OPTIONS = [
   { label: 'IRGENDWANN', value: 'irgendwann' },
 ];
 
-const PACKAGE_INFO: Record<string, { title: string; price: string; detail: string }> = {
-  setup_59: {
-    title: 'SYSTEM-SETUP',
-    price: '499 € einmalig + 59 €/Monat',
-    detail: 'Wir richten dein komplettes System ein und betreuen es laufend.',
-  },
-  strategy_299: {
-    title: 'STRATEGIE & BEGLEITUNG',
-    price: '299 €/Monat',
-    detail: 'Wöchentliche Strategie-Calls und laufende Optimierung deines Systems.',
-  },
-};
 
 function computeIntentScore(importance: string, commitment: string, urgency: string): { score: number; level: string } {
   let score = 0;
