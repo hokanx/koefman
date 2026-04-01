@@ -72,7 +72,7 @@ const OfferNew = () => {
       const offerNumber = generateDocumentNumber(prefix, count ?? 0);
 
       const { data: offer, error } = await supabase.from('offers').insert({
-        user_id: user!.id, customer_id: customerId, offer_number: offerNumber,
+        user_id: user!.id, customer_id: customerId || null, offer_number: offerNumber,
         date, status: 'draft', notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total,
