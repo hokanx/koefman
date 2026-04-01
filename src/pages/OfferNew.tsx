@@ -116,10 +116,11 @@ const OfferNew = () => {
         <FormSection title={t.offers.offerDetails}>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.customer} *</label>
-            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required className={inputClass}>
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>
               <option value="">{t.offers.selectCustomer}</option>
               {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+            <p className="text-[11px] text-muted-foreground/50 mt-1">Optional – Ihr Kunde kann seine Daten selbst beim Bestätigen eingeben</p>
           </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.date}</label>

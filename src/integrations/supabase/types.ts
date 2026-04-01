@@ -1232,7 +1232,7 @@ export type Database = {
         Row: {
           closing_text: string | null
           created_at: string
-          customer_id: string
+          customer_id: string | null
           date: string
           footer_text: string | null
           grand_total: number
@@ -1254,7 +1254,7 @@ export type Database = {
         Insert: {
           closing_text?: string | null
           created_at?: string
-          customer_id: string
+          customer_id?: string | null
           date?: string
           footer_text?: string | null
           grand_total?: number
@@ -1276,7 +1276,7 @@ export type Database = {
         Update: {
           closing_text?: string | null
           created_at?: string
-          customer_id?: string
+          customer_id?: string | null
           date?: string
           footer_text?: string | null
           grand_total?: number
