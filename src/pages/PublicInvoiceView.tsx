@@ -18,10 +18,10 @@ const PublicInvoiceView = () => {
   const { data: invoice, isLoading, error } = useQuery({
     queryKey: ['public-invoice', token],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('invoices')
-        .select('*, customer:customers(name, email, street, house_number, postal_code, city)')
-        .eq('public_token' as any, token!)
+        .select('*, customer:customers(name, email, street, house_number, postal_code, city)') as any)
+        .eq('public_token', token!)
         .single();
       if (error) throw error;
       return data;
