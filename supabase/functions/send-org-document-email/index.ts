@@ -342,7 +342,7 @@ async function resolveLegacyDocument(
   if (legacyDocumentType === 'contract') {
     const { data: contract, error } = await supabaseAdmin
       .from('contracts')
-      .select('id, user_id, contract_number, public_token, grand_total, customer:customers(name, email)')
+      .select('id, user_id, contract_number, public_token, grand_total, frequency, customer:customers(name, email)')
       .eq('id', legacyDocumentId)
       .eq('user_id', userId)
       .single();
