@@ -536,7 +536,6 @@ Erstelle eine strukturierte Mini-Analyse.`,
         next_step: analysis.next_step || "",
         full_analysis_json: analysis,
         error_message: errorMessage,
-        recommended_package: recPkg,
       })
       .select()
       .single();
