@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Calendar, Mail, User, Hash, Layers, StickyNote, Send, Link, ExternalLink, CheckCircle } from 'lucide-react';
+import { FileText, Calendar, Mail, User, Hash, Layers, StickyNote, Send, Link, ExternalLink, CheckCircle, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -90,6 +90,37 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
     }
   };
 
+  const handleConvertToInvoice = async () => {
+    try {
+      const { error: createError } = await supabase
+        .from('org_documents' as any)
+        .insert({
+          organization_id: doc.organization_id,
+          created_by_user_id: doc.created_by_user_id,
+          document_type: 'invoice',
+          title: `Rechnung – ${doc.recipient_name || doc.title || ''}`.trim(),
+          recipient_name: doc.recipient_name,
+          recipient_email: doc.recipient_email,
+          amount_total: doc.amount_total,
+          template_id: doc.template_id,
+          template_snapshot_json: doc.template_snapshot_json,
+          document_payload_json: {
+            ...(doc.document_payload_json ?? {}),
+            source_offer_id: doc.id,
+            source_offer_number: doc.document_number,
+          },
+          status: 'draft',
+          notes: doc.document_number ? `Erstellt aus ${doc.document_number}` : undefined,
+        } as any);
+      if (createError) throw createError;
+      toast.success('Rechnung als Entwurf erstellt');
+      queryClient.invalidateQueries({ queryKey: ['org-documents'] });
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Erstellen der Rechnung');
+    }
+  };
+
   const handleCopyLink = () => {
     if (!publicToken) {
       toast.error('Kein öffentlicher Link vorhanden. Bitte zuerst senden.');
@@ -142,6 +173,12 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
                 Öffnen
               </Button>
             </>
+          )}
+          {doc.document_type === 'offer' && doc.status === 'accepted' && (
+            <Button size="sm" variant="secondary" onClick={handleConvertToInvoice}>
+              <Receipt className="mr-1.5 h-3.5 w-3.5" />
+              In Rechnung umwandeln
+            </Button>
           )}
         </div>
 

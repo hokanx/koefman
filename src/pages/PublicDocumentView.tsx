@@ -4,8 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FileText, CheckCircle, AlertCircle } from 'lucide-react';
-import SignaturePad from 'react-signature-canvas';
+import { Textarea } from '@/components/ui/textarea';
+import { FileText, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react';
+import SignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -20,9 +21,13 @@ const SIGNABLE_TYPES = ['offer', 'contract'];
 const PublicDocumentView = () => {
   const { token } = useParams<{ token: string }>();
   const queryClient = useQueryClient();
-  const sigPadRef = useRef<SignaturePad | null>(null);
+  const sigPadRef = useRef<SignatureCanvas | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const [signerName, setSignerName] = useState('');
+  const [signerAddress, setSignerAddress] = useState('');
   const [signError, setSignError] = useState('');
+  const [accepted, setAccepted] = useState(false);
 
   const { data: doc, isLoading, error } = useQuery({
     queryKey: ['public-org-document', token],
@@ -38,7 +43,7 @@ const PublicDocumentView = () => {
     enabled: !!token,
   });
 
-  const { data: acceptance } = useQuery({
+  const { data: existingAcceptance } = useQuery({
     queryKey: ['public-org-doc-acceptance', doc?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -56,11 +61,24 @@ const PublicDocumentView = () => {
     mutationFn: async () => {
       if (!signerName.trim()) throw new Error('Bitte geben Sie Ihren Namen ein.');
       const sigCanvas = sigPadRef.current;
-      if (!sigCanvas || sigCanvas.isEmpty()) throw new Error('Bitte unterschreiben Sie.');
+      if (!sigCanvas || sigCanvas.isEmpty()) throw new Error('Bitte unterschreiben Sie das Dokument.');
 
       const signatureImage = sigCanvas.toDataURL('image/png');
 
-      // Insert acceptance
+      // Save client data into document if missing
+      const updates: any = { status: 'accepted' };
+      if (!doc.recipient_name && signerName.trim()) {
+        updates.recipient_name = signerName.trim();
+      }
+      if (signerAddress.trim()) {
+        const payload = doc.document_payload_json ?? {};
+        updates.document_payload_json = {
+          ...payload,
+          client_address: signerAddress.trim(),
+        };
+      }
+
+      // Insert acceptance record
       const { error: acceptError } = await supabase
         .from('org_document_acceptances' as any)
         .insert({
@@ -70,20 +88,20 @@ const PublicDocumentView = () => {
         } as any);
       if (acceptError) throw acceptError;
 
-      // Update document status
+      // Update document status + client data
       const { error: updateError } = await supabase
         .from('org_documents' as any)
-        .update({ status: 'accepted' } as any)
+        .update(updates as any)
         .eq('id', doc.id);
       if (updateError) throw updateError;
     },
     onSuccess: () => {
+      setAccepted(true);
       queryClient.invalidateQueries({ queryKey: ['public-org-document', token] });
       queryClient.invalidateQueries({ queryKey: ['public-org-doc-acceptance', doc?.id] });
-      toast.success('Dokument erfolgreich angenommen');
     },
     onError: (err: any) => {
-      setSignError(err.message || 'Fehler');
+      setSignError(err.message || 'Fehler bei der Annahme');
     },
   });
 
@@ -108,11 +126,63 @@ const PublicDocumentView = () => {
   }
 
   const isSignable = SIGNABLE_TYPES.includes(doc.document_type);
-  const isAccepted = doc.status === 'accepted' || !!acceptance;
+  const isAlreadyAccepted = doc.status === 'accepted' || !!existingAcceptance;
+  const showSuccess = accepted || isAlreadyAccepted;
   const payload = doc.document_payload_json ?? {};
   const amountFormatted = doc.amount_total != null && doc.amount_total > 0
     ? Number(doc.amount_total).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
     : null;
+
+  const needsRecipientName = !doc.recipient_name;
+
+  // Success screen
+  if (showSuccess) {
+    const displayAcceptance = existingAcceptance;
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto max-w-lg px-4 py-16 sm:py-24 text-center space-y-6">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+            <ShieldCheck className="h-10 w-10 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Dokument erfolgreich bestätigt</h1>
+          <p className="text-sm text-muted-foreground">
+            {DOC_TYPE_LABELS[doc.document_type] || 'Dokument'}
+            {doc.document_number && ` ${doc.document_number}`}
+            {' '}wurde angenommen.
+          </p>
+
+          {/* Document summary */}
+          <div className="rounded-xl border border-border bg-card p-5 text-left space-y-3">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground truncate">{doc.title || '(Ohne Titel)'}</p>
+                <p className="text-xs text-muted-foreground">
+                  {DOC_TYPE_LABELS[doc.document_type] || doc.document_type}
+                  {doc.document_number && ` · ${doc.document_number}`}
+                </p>
+              </div>
+            </div>
+            {amountFormatted && (
+              <p className="text-lg font-bold text-foreground">{amountFormatted}</p>
+            )}
+            {displayAcceptance?.accepted_by_name && (
+              <p className="text-sm text-muted-foreground">
+                Bestätigt von: <span className="font-medium text-foreground">{displayAcceptance.accepted_by_name}</span>
+              </p>
+            )}
+            {displayAcceptance?.signature_image && (
+              <div className="mt-2 max-w-[200px]">
+                <img src={displayAcceptance.signature_image} alt="Unterschrift" className="border border-border rounded" />
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground pt-4">Bereitgestellt über KÖFMAN</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,7 +221,7 @@ const PublicDocumentView = () => {
           </div>
         )}
 
-        {/* Recipient info */}
+        {/* Recipient info (existing) */}
         {doc.recipient_name && (
           <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm">
             <span className="text-muted-foreground">Empfänger: </span>
@@ -159,63 +229,90 @@ const PublicDocumentView = () => {
           </div>
         )}
 
-        {/* Acceptance status */}
-        {isAccepted && (
-          <div className="rounded-xl border border-border bg-card p-6 text-center space-y-2">
-            <CheckCircle className="mx-auto h-10 w-10 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Dokument angenommen</h2>
-            {acceptance?.accepted_by_name && (
-              <p className="text-sm text-muted-foreground">
-                Unterschrieben von: {acceptance.accepted_by_name}
-              </p>
-            )}
-            {acceptance?.signature_image && (
-              <div className="mx-auto mt-2 max-w-xs">
-                <img src={acceptance.signature_image} alt="Unterschrift" className="border border-border rounded" />
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Signing form */}
-        {isSignable && !isAccepted && (
-          <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Dokument annehmen & unterschreiben</h2>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Ihr Name</label>
-              <Input
-                value={signerName}
-                onChange={(e) => { setSignerName(e.target.value); setSignError(''); }}
-                placeholder="Vor- und Nachname"
-              />
+        {isSignable && (
+          <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+            <h2 className="text-lg font-semibold text-foreground">Annehmen & Unterschreiben</h2>
+
+            {/* Client data fields */}
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  Ihr Name {needsRecipientName && <span className="text-destructive">*</span>}
+                </label>
+                <Input
+                  value={signerName}
+                  onChange={(e) => { setSignerName(e.target.value); setSignError(''); }}
+                  placeholder="Vor- und Nachname"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  Adresse <span className="text-muted-foreground text-xs">(optional)</span>
+                </label>
+                <Textarea
+                  value={signerAddress}
+                  onChange={(e) => setSignerAddress(e.target.value)}
+                  placeholder="Straße, PLZ Ort"
+                  rows={2}
+                  className="resize-none"
+                />
+              </div>
             </div>
+
+            {/* Signature */}
             <div>
-              <label className="mb-2 block text-sm font-medium">Unterschrift</label>
-              <div className="rounded-lg border border-border bg-background">
-                <SignaturePad
+              <label className="mb-2 block text-sm font-medium text-foreground">Unterschrift <span className="text-destructive">*</span></label>
+              <div
+                ref={containerRef}
+                className="rounded-lg border-2 border-dashed border-border bg-background relative"
+                style={{ height: '160px', touchAction: 'none' }}
+              >
+                <SignatureCanvas
                   ref={(ref) => { sigPadRef.current = ref; }}
-                  canvasProps={{ className: 'w-full h-40' }}
+                  penColor="#1a1a1a"
+                  backgroundColor="#ffffff"
+                  minWidth={1.5}
+                  maxWidth={3}
+                  canvasProps={{
+                    className: 'w-full h-full rounded-lg',
+                    style: { touchAction: 'none' },
+                  }}
                   onBegin={() => setSignError('')}
                 />
               </div>
               <button
                 type="button"
                 onClick={() => sigPadRef.current?.clear()}
-                className="mt-1 text-xs text-muted-foreground hover:text-foreground"
+                className="mt-1.5 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
               >
                 Unterschrift löschen
               </button>
             </div>
+
             {signError && (
               <p className="text-sm text-destructive">{signError}</p>
             )}
+
             <Button
               onClick={() => acceptMutation.mutate()}
               disabled={acceptMutation.isPending}
-              className="w-full"
+              className="w-full h-12 text-base"
             >
+              <CheckCircle className="mr-2 h-5 w-5" />
               {acceptMutation.isPending ? 'Wird gesendet…' : 'Annehmen & Unterschreiben'}
             </Button>
+
+            <p className="text-xs text-center text-muted-foreground">
+              Mit Ihrer Unterschrift bestätigen Sie die Annahme dieses Dokuments.
+            </p>
+          </div>
+        )}
+
+        {/* Non-signable info */}
+        {!isSignable && (
+          <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
+            <p className="text-sm text-muted-foreground">Dieses Dokument dient zur Ansicht.</p>
           </div>
         )}
 
