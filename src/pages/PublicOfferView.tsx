@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatAddress } from '@/types';
-import { CheckCircle, FileText, XCircle } from 'lucide-react';
+import { CheckCircle, FileText, XCircle, ShieldCheck } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatEUR } from '@/lib/utils';
@@ -12,11 +12,22 @@ const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
-  const [acceptName, setAcceptName] = useState('');
+
+  // Customer data fields
+  const [companyName, setCompanyName] = useState('');
+  const [contactPerson, setContactPerson] = useState('');
+  const [street, setStreet] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [city, setCity] = useState('');
+  const [email, setEmail] = useState('');
+  const [vatId, setVatId] = useState('');
+
+  // Signature state
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [hasValidSignature, setHasValidSignature] = useState(false);
-  const [showAcceptValidation, setShowAcceptValidation] = useState(false);
-  const [acceptErrorMessage, setAcceptErrorMessage] = useState<string | null>(null);
+  const [showValidation, setShowValidation] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [rejected, setRejected] = useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
@@ -77,64 +88,106 @@ const PublicOfferView = () => {
     enabled: !!offer?.id,
   });
 
+  // Prefill customer data from existing offer customer
+  useEffect(() => {
+    if (offer) {
+      const customer = (offer as any).customer;
+      if (customer) {
+        setCompanyName(customer.name || '');
+        setContactPerson(customer.contact_person || '');
+        setStreet(customer.street || '');
+        setHouseNumber(customer.house_number || '');
+        setPostalCode(customer.postal_code || '');
+        setCity(customer.city || '');
+        setEmail(customer.email || '');
+      }
+    }
+  }, [offer]);
+
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      const trimmedName = acceptName.trim();
+      if (!companyName.trim()) throw new Error('missing_name');
+      if (!street.trim()) throw new Error('missing_street');
+      if (!postalCode.trim()) throw new Error('missing_postal');
+      if (!city.trim()) throw new Error('missing_city');
+      if (!hasValidSignature || !signatureImage) throw new Error('missing_signature');
 
-      if (!trimmedName) {
-        throw new Error('missing_name');
+      // Update customer data
+      const customer = (offer as any).customer;
+      if (customer) {
+        await supabase.from('customers').update({
+          name: companyName.trim(),
+          contact_person: contactPerson.trim() || null,
+          street: street.trim(),
+          house_number: houseNumber.trim() || null,
+          postal_code: postalCode.trim(),
+          city: city.trim(),
+          email: email.trim() || null,
+        } as any).eq('id', customer.id);
       }
 
-      if (!hasValidSignature) {
-        throw new Error('missing_signature');
-      }
-
-      if (!signatureImage) {
-        throw new Error('invalid_signature_data');
-      }
-
+      // Insert acceptance record
       const { error: acceptError } = await supabase.from('offer_acceptances').insert({
         offer_id: offer!.id,
-        accepted_by_name: trimmedName,
+        accepted_by_name: companyName.trim(),
         signature_image: signatureImage,
       } as any);
       if (acceptError) throw acceptError;
 
+      // Freeze accepted snapshot and update status
+      const acceptedSnapshot = {
+        offer_number: offer!.offer_number,
+        date: offer!.date,
+        customer_name: companyName.trim(),
+        contact_person: contactPerson.trim() || null,
+        customer_address: [
+          [street.trim(), houseNumber.trim()].filter(Boolean).join(' '),
+          [postalCode.trim(), city.trim()].filter(Boolean).join(' '),
+        ].filter(Boolean).join(', '),
+        customer_email: email.trim() || null,
+        customer_vat_id: vatId.trim() || null,
+        items: items.map((i: any) => ({
+          title: i.title, description: i.description, quantity: i.quantity,
+          unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
+        })),
+        subtotal: offer!.subtotal,
+        tax_total: offer!.tax_total,
+        grand_total: offer!.grand_total,
+        intro_text: (offer as any).intro_text,
+        footer_text: (offer as any).footer_text,
+        closing_text: (offer as any).closing_text,
+        notes: offer!.notes,
+        accepted_at: new Date().toISOString(),
+      };
+
       const { error: updateError } = await supabase
         .from('offers')
-        .update({ status: 'accepted' })
+        .update({
+          status: 'accepted',
+          notes: offer!.notes
+            ? `${offer!.notes}\n\n---\nAccepted snapshot: ${JSON.stringify(acceptedSnapshot)}`
+            : `Accepted snapshot: ${JSON.stringify(acceptedSnapshot)}`,
+        } as any)
         .eq('id', offer!.id);
       if (updateError) throw updateError;
     },
-    onMutate: () => {
-      setAcceptErrorMessage(null);
-    },
     onSuccess: () => {
       setAccepted(true);
-      setShowAcceptValidation(false);
-      setAcceptErrorMessage(null);
+      setShowValidation(false);
+      setErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: ['public-offer', token] });
       queryClient.invalidateQueries({ queryKey: ['public-offer-acceptance', offer?.id] });
     },
     onError: (error: any) => {
-      setShowAcceptValidation(true);
-
-      if (error?.message === 'missing_name') {
-        setAcceptErrorMessage(t.offers.nameRequired);
-        return;
-      }
-
-      if (error?.message === 'missing_signature') {
-        setAcceptErrorMessage(t.offers.signatureRequired);
-        return;
-      }
-
-      if (error?.message === 'invalid_signature_data') {
-        setAcceptErrorMessage(t.offers.signatureProcessingFailed);
-        return;
-      }
-
-      setAcceptErrorMessage(t.offers.acceptSubmitFailed);
+      setShowValidation(true);
+      const errorMap: Record<string, string> = {
+        missing_name: 'Bitte geben Sie Ihren Firmen-/Namen ein.',
+        missing_street: 'Bitte geben Sie Ihre Straße ein.',
+        missing_postal: 'Bitte geben Sie Ihre Postleitzahl ein.',
+        missing_city: 'Bitte geben Sie Ihren Ort ein.',
+        missing_signature: t.offers.signatureRequired,
+      };
+      setErrorMessage(errorMap[error?.message] || t.offers.acceptSubmitFailed);
     },
   });
 
@@ -159,27 +212,17 @@ const PublicOfferView = () => {
 
   const handleAccept = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const trimmedName = acceptName.trim();
-    const isValid = !!trimmedName && hasValidSignature && !!signatureImage;
-    setShowAcceptValidation(!isValid);
-    setAcceptErrorMessage(null);
-
-    if (!trimmedName) {
-      setAcceptErrorMessage(t.offers.nameRequired);
+    setErrorMessage(null);
+    const valid = !!companyName.trim() && !!street.trim() && !!postalCode.trim() && !!city.trim() && hasValidSignature && !!signatureImage;
+    setShowValidation(!valid);
+    if (!valid) {
+      if (!companyName.trim()) setErrorMessage('Bitte geben Sie Ihren Firmen-/Namen ein.');
+      else if (!street.trim()) setErrorMessage('Bitte geben Sie Ihre Straße ein.');
+      else if (!postalCode.trim()) setErrorMessage('Bitte geben Sie Ihre Postleitzahl ein.');
+      else if (!city.trim()) setErrorMessage('Bitte geben Sie Ihren Ort ein.');
+      else setErrorMessage(t.offers.signatureRequired);
       return;
     }
-
-    if (!hasValidSignature) {
-      setAcceptErrorMessage(t.offers.signatureRequired);
-      return;
-    }
-
-    if (!signatureImage) {
-      setAcceptErrorMessage(t.offers.signatureProcessingFailed);
-      return;
-    }
-
     acceptMutation.mutate();
   };
 
@@ -226,11 +269,74 @@ const PublicOfferView = () => {
   const expired = isExpired();
   const isSmallBusiness = !!(settings as any)?.small_business_regulation;
 
+  // Success screen
+  if (isAlreadyAccepted) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="mx-auto max-w-lg px-4 py-16 sm:py-24 text-center space-y-6">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+            <ShieldCheck className="h-10 w-10 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Angebot erfolgreich bestätigt</h1>
+          <p className="text-sm text-gray-500">
+            Vielen Dank. Sie erhalten die weiteren Unterlagen direkt vom Anbieter.
+          </p>
+          <div className="rounded-xl border border-gray-200 bg-white p-5 text-left space-y-3">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-gray-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-gray-900">{offer.offer_number}</p>
+                <p className="text-xs text-gray-500">
+                  {settings?.business_name || 'Anbieter'}
+                </p>
+              </div>
+            </div>
+            <p className="text-lg font-bold text-gray-900">{formatEUR(offer.grand_total)}</p>
+            {existingAcceptance && (
+              <>
+                <p className="text-sm text-gray-500">
+                  Bestätigt von: <span className="font-medium text-gray-900">{(existingAcceptance as any).accepted_by_name}</span>
+                </p>
+                {(existingAcceptance as any).signature_image && (
+                  <div className="mt-2 max-w-[200px]">
+                    <img src={(existingAcceptance as any).signature_image} alt="Unterschrift" className="border border-gray-200 rounded" />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 pt-4">Bereitgestellt über KÖFMAN</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Rejected screen
+  if (isAlreadyRejected) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="mx-auto max-w-lg">
+          <div className="mt-12 rounded-xl bg-red-50 border border-red-200 p-6 text-center">
+            <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
+            <h3 className="text-lg font-bold text-red-800">Angebot abgelehnt</h3>
+            <p className="mt-1 text-sm text-red-600">
+              {(offer as any).rejected_reason
+                ? `Grund: ${(offer as any).rejected_reason}`
+                : 'Dieses Angebot wurde abgelehnt.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-3xl space-y-6">
         {/* Header with branding */}
-        <div className="mb-6 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
@@ -250,11 +356,7 @@ const PublicOfferView = () => {
               )}
             </div>
             {settings?.logo_url && (
-              <img
-                src={settings.logo_url}
-                alt="Logo"
-                className="h-12 w-auto object-contain"
-              />
+              <img src={settings.logo_url} alt="Logo" className="h-12 w-auto object-contain" />
             )}
           </div>
         </div>
@@ -272,9 +374,7 @@ const PublicOfferView = () => {
               {(settings as any)?.default_offer_title || 'Angebot'}
             </h2>
             {customer && (
-              <p className="mt-1 text-sm text-gray-600">
-                Für: {customer.name}
-              </p>
+              <p className="mt-1 text-sm text-gray-600">Für: {customer.name}</p>
             )}
           </div>
 
@@ -361,13 +461,20 @@ const PublicOfferView = () => {
             </div>
           )}
 
+          {/* Footer / closing text */}
+          {(offer as any).footer_text && (
+            <p className="mb-4 text-sm text-gray-700 whitespace-pre-line">{(offer as any).footer_text}</p>
+          )}
+          {(offer as any).closing_text && (
+            <p className="mb-4 text-sm text-gray-700">{(offer as any).closing_text}</p>
+          )}
+
           {/* Validity */}
           {validityDate && (
             <div className={`mb-4 rounded-lg p-3 text-sm ${expired ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
               {expired
                 ? `Dieses Angebot ist am ${validityDate} abgelaufen.`
-                : `Dieses Angebot ist ${(offer as any).validity_days || 14} Tage gültig (bis ${validityDate}).`
-              }
+                : `Gültig bis ${validityDate}`}
             </div>
           )}
 
@@ -377,122 +484,160 @@ const PublicOfferView = () => {
           )}
         </div>
 
-        {/* Acceptance / Rejection section */}
-        {isAlreadyAccepted ? (
-          <div className="mt-6 rounded-xl bg-green-50 border border-green-200 p-6 text-center">
-            <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-3" />
-            <h3 className="text-lg font-bold text-green-800">Angebot angenommen</h3>
-            <p className="mt-1 text-sm text-green-600">
-              {existingAcceptance
-                ? `Angenommen von ${(existingAcceptance as any).accepted_by_name} am ${new Date((existingAcceptance as any).accepted_at).toLocaleDateString('de-DE')}`
-                : accepted
-                ? `Angenommen von ${acceptName}`
-                : 'Dieses Angebot wurde bereits angenommen.'
-              }
-            </p>
-          </div>
-        ) : isAlreadyRejected ? (
-          <div className="mt-6 rounded-xl bg-red-50 border border-red-200 p-6 text-center">
-            <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
-            <h3 className="text-lg font-bold text-red-800">Angebot abgelehnt</h3>
-            <p className="mt-1 text-sm text-red-600">
-              {(offer as any).rejected_reason
-                ? `Grund: ${(offer as any).rejected_reason}`
-                : 'Dieses Angebot wurde abgelehnt.'
-              }
-            </p>
-          </div>
-        ) : expired ? (
-          <div className="mt-6 rounded-xl bg-red-50 border border-red-200 p-6 text-center">
+        {/* Expired block */}
+        {expired && (
+          <div className="rounded-xl bg-red-50 border border-red-200 p-6 text-center">
             <p className="text-red-700 font-medium">Dieses Angebot ist abgelaufen und kann nicht mehr angenommen werden.</p>
           </div>
-        ) : (
-          <div className="mt-6 space-y-4">
-            {/* Accept form */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-bold text-gray-900">{t.offers.acceptOfferTitle}</h3>
+        )}
+
+        {/* Client completion + signing form */}
+        {!expired && (
+          <form onSubmit={handleAccept} className="space-y-6" noValidate>
+            {/* Customer data confirmation */}
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+              <h3 className="text-lg font-bold text-gray-900">Bitte bestätigen Sie Ihre Daten</h3>
+              <p className="text-sm text-gray-500 -mt-2">
+                Ergänzen oder korrigieren Sie Ihre Angaben vor der Bestätigung.
+              </p>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Firma / Name *</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => { setCompanyName(e.target.value); setErrorMessage(null); }}
+                  placeholder="Firma oder vollständiger Name"
+                  className={inputClass}
+                />
               </div>
-              <form onSubmit={handleAccept} className="space-y-4" noValidate>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Ansprechpartner <span className="text-gray-400 text-xs">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={contactPerson}
+                  onChange={(e) => setContactPerson(e.target.value)}
+                  placeholder="Vor- und Nachname"
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Straße *</label>
+                  <input
+                    type="text"
+                    value={street}
+                    onChange={(e) => { setStreet(e.target.value); setErrorMessage(null); }}
+                    placeholder="Straße"
+                    className={inputClass}
+                  />
+                </div>
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-gray-800">
-                    {t.offers.signerNameLabel} *
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Hausnr.</label>
+                  <input
+                    type="text"
+                    value={houseNumber}
+                    onChange={(e) => setHouseNumber(e.target.value)}
+                    placeholder="Nr."
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">PLZ *</label>
+                  <input
+                    type="text"
+                    value={postalCode}
+                    onChange={(e) => { setPostalCode(e.target.value); setErrorMessage(null); }}
+                    placeholder="PLZ"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Ort *</label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => { setCity(e.target.value); setErrorMessage(null); }}
+                    placeholder="Ort"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    E-Mail <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@beispiel.de"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    USt-IdNr. <span className="text-gray-400 text-xs">(optional)</span>
                   </label>
                   <input
                     type="text"
-                    value={acceptName}
-                    onChange={(e) => {
-                      setAcceptName(e.target.value);
-                      if (showAcceptValidation && e.target.value.trim()) {
-                        setAcceptErrorMessage(hasValidSignature && signatureImage ? null : acceptErrorMessage);
-                      }
-                    }}
-                    placeholder={t.offers.signerNamePlaceholder}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={vatId}
+                    onChange={(e) => setVatId(e.target.value)}
+                    placeholder="DE123456789"
+                    className={inputClass}
                   />
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-gray-800">
-                    {t.offers.signature}
-                  </label>
-                  <SignaturePad
-                    onSignatureChange={(dataUrl) => {
-                      setSignatureImage(dataUrl);
-                      if (dataUrl) {
-                        setAcceptErrorMessage(null);
-                        setShowAcceptValidation(false);
-                      }
-                    }}
-                    onSignatureStateChange={(hasSignature) => {
-                      setHasValidSignature(hasSignature);
-                      if (hasSignature) {
-                        setAcceptErrorMessage(null);
-                        setShowAcceptValidation(false);
-                      }
-                    }}
-                    clearLabel={t.offers.signatureClear}
-                    instructionLabel={t.offers.signatureInstruction}
-                  />
-                </div>
-                {showAcceptValidation && !acceptName.trim() && (
-                  <p className="text-sm font-medium text-red-600">{t.offers.nameRequired}</p>
-                )}
-                {showAcceptValidation && !hasValidSignature && (
-                  <p className="text-sm font-medium text-red-600">{t.offers.signatureRequired}</p>
-                )}
-                {showAcceptValidation && hasValidSignature && !signatureImage && (
-                  <p className="text-sm font-medium text-red-600">{t.offers.signatureProcessingFailed}</p>
-                )}
-                {acceptErrorMessage && (
-                  <p className="text-sm font-medium text-red-600">{acceptErrorMessage}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={acceptMutation.isPending}
-                  aria-busy={acceptMutation.isPending}
-                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {acceptMutation.isPending ? t.offers.acceptSubmitting : t.offers.acceptOfferButton}
-                </button>
-                <p className="text-center text-sm text-gray-500">
-                  {t.offers.acceptOfferHelper}
-                </p>
-                {import.meta.env.DEV && (
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
-                    <p>Name erkannt: {acceptName.trim() ? 'ja' : 'nein'}</p>
-                    <p>Signatur erkannt: {hasValidSignature ? 'ja' : 'nein'}</p>
-                    <p>Signaturdaten vorhanden: {signatureImage ? 'ja' : 'nein'}</p>
-                    <p>Submit gesperrt: {acceptMutation.isPending ? 'ja' : 'nein'}</p>
-                  </div>
-                )}
-              </form>
+              </div>
+            </div>
+
+            {/* Signature section */}
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+              <h3 className="text-lg font-bold text-gray-900">Angebot bestätigen & unterschreiben</h3>
+
+              <SignaturePad
+                onSignatureChange={(dataUrl) => {
+                  setSignatureImage(dataUrl);
+                  if (dataUrl) { setErrorMessage(null); setShowValidation(false); }
+                }}
+                onSignatureStateChange={(has) => {
+                  setHasValidSignature(has);
+                  if (has) { setErrorMessage(null); setShowValidation(false); }
+                }}
+                clearLabel="Unterschrift löschen"
+                instructionLabel="Bitte unterschreiben Sie hier"
+              />
+
+              {errorMessage && (
+                <p className="text-sm font-medium text-red-600">{errorMessage}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={acceptMutation.isPending}
+                className="w-full rounded-lg bg-blue-600 py-3.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {acceptMutation.isPending ? 'Wird verarbeitet…' : 'Angebot verbindlich bestätigen'}
+              </button>
+
+              <p className="text-xs text-center text-gray-500">
+                Mit Ihrer Unterschrift bestätigen Sie die Richtigkeit Ihrer Angaben und die Annahme des Angebots.
+              </p>
             </div>
 
             {/* Reject section */}
             <div className="rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
               {!showRejectConfirm ? (
                 <button
+                  type="button"
                   onClick={() => setShowRejectConfirm(true)}
                   className="w-full rounded-lg border border-red-300 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
                 >
@@ -505,7 +650,7 @@ const PublicOfferView = () => {
                     <h3 className="text-lg font-bold text-gray-900">Angebot ablehnen</h3>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Sind Sie sicher, dass Sie dieses Angebot ablehnen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+                    Sind Sie sicher? Diese Aktion kann nicht rückgängig gemacht werden.
                   </p>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -516,20 +661,19 @@ const PublicOfferView = () => {
                       onChange={(e) => setRejectReason(e.target.value)}
                       placeholder="z.B. Preis zu hoch, anderer Anbieter gewählt..."
                       rows={3}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      className={`${inputClass} resize-none`}
                     />
                   </div>
-                  {rejectMutation.isError && (
-                    <p className="text-sm text-red-600">Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.</p>
-                  )}
                   <div className="flex gap-3">
                     <button
+                      type="button"
                       onClick={() => setShowRejectConfirm(false)}
                       className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                     >
                       Abbrechen
                     </button>
                     <button
+                      type="button"
                       onClick={() => rejectMutation.mutate()}
                       disabled={rejectMutation.isPending}
                       className="flex-1 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
@@ -540,8 +684,13 @@ const PublicOfferView = () => {
                 </div>
               )}
             </div>
-          </div>
+          </form>
         )}
+
+        {/* Footer */}
+        <div className="text-center pt-2 pb-4">
+          <p className="text-xs text-gray-400">Bereitgestellt über KÖFMAN</p>
+        </div>
       </div>
     </div>
   );
