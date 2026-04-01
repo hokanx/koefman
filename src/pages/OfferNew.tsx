@@ -130,6 +130,13 @@ const OfferNew = () => {
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
           <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
           <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Leistungsart</label>
+            <select value={serviceType} onChange={(e) => setServiceType(e.target.value as 'einmalig' | 'laufend')} className={inputClass}>
+              <option value="einmalig">Einmalige Leistung</option>
+              <option value="laufend">Laufender Vertrag</option>
+            </select>
+          </div>
+          <div>
             <label className="mb-1 block text-xs text-muted-foreground">Kunde (optional)</label>
             <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>
               <option value="">– Kein Kunde –</option>
