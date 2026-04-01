@@ -224,6 +224,10 @@ export type Database = {
           contract_number: string
           created_at: string
           customer_id: string
+          discount_duration_months: number | null
+          discount_scope: string | null
+          discount_type: string | null
+          discount_value: number | null
           end_date: string | null
           frequency: string
           grand_total: number
@@ -243,6 +247,10 @@ export type Database = {
           contract_number: string
           created_at?: string
           customer_id: string
+          discount_duration_months?: number | null
+          discount_scope?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           end_date?: string | null
           frequency?: string
           grand_total?: number
@@ -262,6 +270,10 @@ export type Database = {
           contract_number?: string
           created_at?: string
           customer_id?: string
+          discount_duration_months?: number | null
+          discount_scope?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           end_date?: string | null
           frequency?: string
           grand_total?: number
@@ -1267,6 +1279,10 @@ export type Database = {
           created_at: string
           customer_id: string | null
           date: string
+          discount_duration_months: number | null
+          discount_scope: string | null
+          discount_type: string | null
+          discount_value: number | null
           footer_text: string | null
           grand_total: number
           id: string
@@ -1290,6 +1306,10 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           date?: string
+          discount_duration_months?: number | null
+          discount_scope?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           footer_text?: string | null
           grand_total?: number
           id?: string
@@ -1313,6 +1333,10 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           date?: string
+          discount_duration_months?: number | null
+          discount_scope?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
           footer_text?: string | null
           grand_total?: number
           id?: string
