@@ -635,6 +635,12 @@ const OfferDetail = () => {
           subtotal={offer.subtotal}
           taxTotal={offer.tax_total}
           grandTotal={offer.grand_total}
+          discount={{
+            type: (offer as any).discount_type || null,
+            value: (offer as any).discount_value || 0,
+            scope: (offer as any).discount_scope || 'both',
+            duration_months: (offer as any).discount_duration_months ?? null,
+          }}
         />
       )}
     </div>
