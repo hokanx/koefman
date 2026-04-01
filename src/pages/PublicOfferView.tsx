@@ -72,6 +72,7 @@ const PublicOfferView = () => {
     enabled: !!offer?.user_id,
   });
 
+
   const { data: existingAcceptance } = useQuery({
     queryKey: ['public-offer-acceptance', offer?.id],
     queryFn: async () => {

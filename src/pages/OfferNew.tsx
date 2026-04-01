@@ -10,6 +10,7 @@ import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import { toast } from 'sonner';
 import { generateDocumentNumber } from '@/lib/documentUtils';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import { calculateTotals } from '@/lib/taxConfig';
 import type { Customer, LineItem } from '@/types';
 
 const OfferNew = () => {
@@ -61,9 +62,7 @@ const OfferNew = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const subtotal = items.reduce((s, i) => s + i.total, 0);
-      const tax_total = items.reduce((s, i) => s + (i.total * i.tax_rate) / 100, 0);
-      const grand_total = subtotal + tax_total;
+      const { subtotal, taxTotal: tax_total, grandTotal: grand_total } = calculateTotals(items, isKleinunternehmer ? 'kleinunternehmer' : 'standard');
 
       const { count } = await supabase.from('offers').select('*', { count: 'exact', head: true }).eq('user_id', user!.id);
       const prefix = settings?.offer_number_prefix || 'ANG-';

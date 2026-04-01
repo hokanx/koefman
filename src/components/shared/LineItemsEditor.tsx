@@ -3,6 +3,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { formatEUR } from '@/lib/utils';
 import TemplatePicker from './TemplatePicker';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import { calculateTotals } from '@/lib/taxConfig';
 import type { LineItem } from '@/types';
 
 interface LineItemsEditorProps {
@@ -55,9 +56,8 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
     onChange(updated);
   };
 
-  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const taxTotal = items.reduce((sum, item) => sum + (item.total * item.tax_rate) / 100, 0);
-  const grandTotal = subtotal + taxTotal;
+  const { taxMode } = useOrgTaxMode();
+  const { subtotal, taxTotal, grandTotal } = calculateTotals(items, taxMode);
 
   return (
     <div className="space-y-3">
