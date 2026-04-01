@@ -610,6 +610,7 @@ Deno.serve(async (req) => {
       logo_url: branding.logoUrl,
       cta_label: ctaLabel.toUpperCase(),
       message_body: messageBody,
+      service_type_label: legacyDocument.serviceTypeLabel || '',
     });
 
     const resendBody: Record<string, unknown> = {
