@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Download, FolderOpen, Search, Sparkles, Eye, Plus } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, FolderOpen, Search, Sparkles, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
