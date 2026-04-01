@@ -1064,6 +1064,7 @@ export type Database = {
           priority_1: string
           priority_2: string
           priority_3: string
+          recommended_package: string | null
           submission_id: string
         }
         Insert: {
@@ -1081,6 +1082,7 @@ export type Database = {
           priority_1?: string
           priority_2?: string
           priority_3?: string
+          recommended_package?: string | null
           submission_id: string
         }
         Update: {
@@ -1098,6 +1100,7 @@ export type Database = {
           priority_1?: string
           priority_2?: string
           priority_3?: string
+          recommended_package?: string | null
           submission_id?: string
         }
         Relationships: [
@@ -1109,6 +1112,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lead_bookings: {
+        Row: {
+          booking_status: string
+          created_at: string
+          id: string
+          phone: string
+          selected_slot: string
+          submission_id: string
+        }
+        Insert: {
+          booking_status?: string
+          created_at?: string
+          id?: string
+          phone: string
+          selected_slot: string
+          submission_id: string
+        }
+        Update: {
+          booking_status?: string
+          created_at?: string
+          id?: string
+          phone?: string
+          selected_slot?: string
+          submission_id?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {

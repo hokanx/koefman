@@ -8,14 +8,37 @@ const corsHeaders = {
 };
 
 const EMAIL_FROM = "Köfman <no-reply@koefman.de>";
-const STRATEGY_SESSION_URL = "https://koefman.lovable.app/start";
+const BOOKING_URL = "https://koefman.lovable.app/book";
+
+const PACKAGE_INFO: Record<string, { title: string; price: string; detail: string }> = {
+  setup_59: {
+    title: "SYSTEM-SETUP",
+    price: "499 € einmalig + 59 €/Monat",
+    detail: "Wir richten dein komplettes System ein und betreuen es laufend.",
+  },
+  strategy_299: {
+    title: "STRATEGIE & BEGLEITUNG",
+    price: "299 €/Monat",
+    detail: "Wöchentliche Strategie-Calls und laufende Optimierung deines Systems.",
+  },
+};
+
+function recommendPackage(companySize: string, importance: string, commitment: string): string {
+  // Larger companies or high urgency → strategy package
+  if (companySize === "6-15" || companySize === "15+") return "strategy_299";
+  if (importance === "hoch" && commitment === "ja") return "strategy_299";
+  return "setup_59";
+}
 
 function buildEmailHtml(
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
+  recommendedPkg: string,
+  submissionId?: string,
   variant?: string
 ) {
-  const ctaUrl = `${STRATEGY_SESSION_URL}?source=email${variant ? `&variant=${variant}` : ""}`;
+  const ctaUrl = `${BOOKING_URL}?sid=${submissionId || ""}&source=email${variant ? `&variant=${variant}` : ""}`;
+  const pkg = PACKAGE_INFO[recommendedPkg] || PACKAGE_INFO["setup_59"];
 
   const prioritiesHtml = analysis.priorities
     .filter((p: string) => p)
@@ -33,12 +56,6 @@ function buildEmailHtml(
 <meta name="color-scheme" content="light dark" />
 <meta name="supported-color-schemes" content="light dark" />
 <title>Deine K&#246;fman Kurzanalyse</title>
-<!--[if mso]>
-<style type="text/css">
-table {border-collapse:collapse;}
-td {font-family:Arial,Helvetica,sans-serif;}
-</style>
-<![endif]-->
 <style type="text/css">
 :root { color-scheme: light dark; supported-color-schemes: light dark; }
 @media (prefers-color-scheme: dark) {
@@ -49,25 +66,21 @@ td {font-family:Arial,Helvetica,sans-serif;}
 </head>
 <body style="margin:0;padding:0;background-color:#000000;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;font-family:Arial,Helvetica,sans-serif;" class="email-bg">
 
-<!-- Preheader text (hidden) -->
 <div style="display:none;font-size:1px;color:#000000;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
 Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
 </div>
 
-<!-- Outer wrapper -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#000000;" class="email-bg">
 <tr><td align="center" style="padding:32px 16px;">
 
-<!-- Inner container -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;background-color:#000000;border:1px solid #1A1A1A;" class="email-container">
 
-<!-- Logo / Brand Header -->
+<!-- Logo -->
 <tr><td style="padding:48px 32px 36px 32px;text-align:center;background-color:#000000;">
   <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="K&#214;FMAN" width="112" height="112" style="display:block;margin:0 auto 16px auto;width:112px;height:112px;border:0;outline:none;" />
   <span style="color:#FFFFFF;font-size:18px;letter-spacing:0.22em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">K&#214;FMAN</span>
 </td></tr>
 
-<!-- Divider -->
 <tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Greeting -->
@@ -77,23 +90,20 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
   </p>
 </td></tr>
 
-<!-- Intro -->
 <tr><td style="padding:12px 32px 28px 32px;background-color:#000000;">
   <p style="color:#B3B3B3;font-size:14px;line-height:1.7;margin:0;font-family:Arial,Helvetica,sans-serif;">
     Hier ist deine Kurzanalyse basierend auf deinen Angaben.
   </p>
 </td></tr>
 
-<!-- Divider -->
 <tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Main Issue -->
 <tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">WAHRSCHEINLICH GR&#214;SSTE SCHWACHSTELLE</p>
+  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">GR&#214;SSTE SCHWACHSTELLE</p>
   <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.main_issue}</p>
 </td></tr>
 
-<!-- Divider -->
 <tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Practical Meaning -->
@@ -102,7 +112,6 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
   <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.practical_meaning}</p>
 </td></tr>
 
-<!-- Divider -->
 <tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Priorities -->
@@ -111,7 +120,6 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${prioritiesHtml}</table>
 </td></tr>
 
-<!-- Divider -->
 <tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
 <!-- Next Step -->
@@ -120,34 +128,27 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
   <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.next_step}</p>
 </td></tr>
 
-<!-- Divider -->
 <tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
-<!-- Decision Block -->
-<tr><td style="padding:32px 32px 12px 32px;background-color:#000000;">
-  <p style="color:#B3B3B3;font-size:13px;line-height:1.7;margin:0 0 8px 0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
-    Du hast zwei Optionen:
-  </p>
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 0 0;">
-    <tr>
-      <td style="padding:10px 0;color:#9A9A9A;font-size:13px;line-height:1.6;font-family:Arial,Helvetica,sans-serif;text-align:center;">
-        1. Die Analyse f&#252;r dich nutzen und selbst umsetzen.
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:4px 0 10px 0;color:#FFFFFF;font-size:13px;line-height:1.6;font-family:Arial,Helvetica,sans-serif;text-align:center;font-weight:600;">
-        2. Mit uns herausfinden, was sich konkret &#228;ndern l&#228;sst.
-      </td>
-    </tr>
+<!-- Package Recommendation -->
+<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
+  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">UNSERE EMPFEHLUNG F&#220;R DICH</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #2A2A2A;">
+    <tr><td style="padding:20px 24px;background-color:#0A0A0A;">
+      <p style="color:#FFFFFF;font-size:16px;font-weight:700;letter-spacing:0.06em;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">${pkg.title}</p>
+      <p style="color:#FFFFFF;font-size:14px;margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;">${pkg.price}</p>
+      <p style="color:#9A9A9A;font-size:13px;line-height:1.6;margin:0;font-family:Arial,Helvetica,sans-serif;">${pkg.detail}</p>
+    </td></tr>
   </table>
 </td></tr>
 
-<!-- CTA Text Link -->
+<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+
+<!-- CTA -->
 <tr><td style="padding:32px 32px 0 32px;background-color:#000000;" align="center">
-  <a href="${ctaUrl}" target="_blank" style="color:#FFFFFF !important;-webkit-text-fill-color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:28px;font-weight:700;letter-spacing:0.04em;text-decoration:underline;text-transform:uppercase;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">&#8594; STRATEGIE-SESSION BUCHEN</a>
+  <a href="${ctaUrl}" target="_blank" style="color:#FFFFFF !important;-webkit-text-fill-color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:28px;font-weight:700;letter-spacing:0.04em;text-decoration:underline;text-transform:uppercase;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">&#8594; STRATEGIEGESPR&#196;CH BUCHEN</a>
 </td></tr>
 
-<!-- Fallback URL -->
 <tr><td style="padding:16px 32px 0 32px;background-color:#000000;">
   <p style="color:#9A9A9A;font-size:11px;line-height:1.5;margin:0 0 6px 0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
     Falls der Link nicht direkt funktioniert, kopiere ihn in deinen Browser:
@@ -157,28 +158,21 @@ Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
   </p>
 </td></tr>
 
-<!-- Sub-CTA text -->
 <tr><td style="padding:20px 32px 0 32px;background-color:#000000;">
   <p style="color:#A0A0A0;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
     Wir zeigen dir konkret, wo du Geld verlierst &#8211; und wie du es behebst.
   </p>
 </td></tr>
 
-<!-- Footer divider -->
 <tr><td style="padding:32px 32px 0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
 
-<!-- Footer -->
 <tr><td style="padding:24px 32px 40px 32px;background-color:#000000;">
   <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.18em;text-align:center;margin:0;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;font-weight:600;">K&#214;FMAN</p>
 </td></tr>
 
 </table>
-<!-- /Inner container -->
-
 </td></tr>
 </table>
-<!-- /Outer wrapper -->
-
 </body>
 </html>`;
 }
@@ -187,26 +181,50 @@ async function sendAnalysisEmail(
   email: string,
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
+  recommendedPkg: string,
+  submissionId?: string,
   variant?: string
 ): Promise<boolean> {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY || !email) return false;
 
-  const emailHtml = buildEmailHtml(name, analysis, variant);
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
-  const emailRes = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: EMAIL_FROM,
-      to: email,
-      subject: "Deine Köfman Kurzanalyse",
-      html: emailHtml,
-    }),
-  });
+  const emailHtml = buildEmailHtml(name, analysis, recommendedPkg, submissionId, variant);
+
+  // Try gateway first, fall back to direct
+  let emailRes: Response;
+  if (LOVABLE_API_KEY) {
+    emailRes = await fetch(`${RESEND_GATEWAY}/emails`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": RESEND_API_KEY,
+      },
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: [email],
+        subject: "Deine Köfman Kurzanalyse",
+        html: emailHtml,
+      }),
+    });
+  } else {
+    emailRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: email,
+        subject: "Deine Köfman Kurzanalyse",
+        html: emailHtml,
+      }),
+    });
+  }
 
   if (!emailRes.ok) {
     console.error("Email send failed:", emailRes.status, await emailRes.text());
@@ -221,46 +239,103 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const {
-      name,
-      email,
-      company,
-      business_type,
-      lead_flow,
-      revenue_clarity,
-      main_problem,
-      variant,
-      qr_session_id,
-      // Resend-only mode: just re-send email for existing submission
-      resend_submission_id,
-      // New qualification fields
-      company_size,
-      problems,
-      free_text,
-      importance,
-      commitment,
-      urgency,
-      intent_score,
-    } = body;
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // ── RESEND MODE: re-send email for existing analysis ──
-    if (resend_submission_id) {
+    // ── MODE 1: Capture lead (name+email) for existing submission ──
+    if (body.capture_lead && body.submission_id) {
+      const { name, email, submission_id } = body;
+      if (!name || !email) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Name und E-Mail sind erforderlich." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Update submission with name + email
+      await supabase
+        .from("diagnostic_submissions")
+        .update({ name, email, lead_status: "kontaktiert" })
+        .eq("id", submission_id);
+
+      // Get analysis for this submission
+      const { data: existingAnalysis } = await supabase
+        .from("lead_analyses")
+        .select("*")
+        .eq("submission_id", submission_id)
+        .eq("analysis_status", "completed")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      // Send email
+      let emailSent = false;
+      if (existingAnalysis) {
+        const analysis = {
+          main_issue: existingAnalysis.main_issue,
+          practical_meaning: existingAnalysis.practical_meaning,
+          priorities: [existingAnalysis.priority_1, existingAnalysis.priority_2, existingAnalysis.priority_3],
+          next_step: existingAnalysis.next_step,
+        };
+        const { data: sub } = await supabase
+          .from("diagnostic_submissions")
+          .select("variant")
+          .eq("id", submission_id)
+          .single();
+
+        emailSent = await sendAnalysisEmail(
+          email, name, analysis,
+          existingAnalysis.recommended_package || "setup_59",
+          submission_id, sub?.variant
+        );
+        if (emailSent) {
+          await supabase
+            .from("lead_analyses")
+            .update({ email_sent: true, email_sent_at: new Date().toISOString() })
+            .eq("id", existingAnalysis.id);
+        }
+      }
+
+      // Also insert into landing_leads for backward compat
       const { data: sub } = await supabase
         .from("diagnostic_submissions")
         .select("*")
-        .eq("id", resend_submission_id)
+        .eq("id", submission_id)
+        .single();
+      if (sub) {
+        await supabase.from("landing_leads").insert({
+          name, email,
+          company: sub.company || "",
+          industry: sub.business_type || "unknown",
+          situation: `Anfragen: ${sub.lead_flow || "-"}, Größe: ${sub.company_size || "-"}`,
+          needs: sub.problems?.length ? sub.problems : [sub.main_problem || "unknown"],
+          contact_method: "email",
+          status: "neu",
+          admin_notes: `Submission-ID: ${submission_id}`,
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, email_sent: emailSent }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── MODE 2: Resend email for existing submission ──
+    if (body.resend_submission_id) {
+      const { data: sub } = await supabase
+        .from("diagnostic_submissions")
+        .select("*")
+        .eq("id", body.resend_submission_id)
         .single();
       if (!sub) throw new Error("Submission not found");
 
       const { data: existingAnalysis } = await supabase
         .from("lead_analyses")
         .select("*")
-        .eq("submission_id", resend_submission_id)
+        .eq("submission_id", body.resend_submission_id)
         .eq("analysis_status", "completed")
         .order("created_at", { ascending: false })
         .limit(1)
@@ -274,7 +349,11 @@ serve(async (req) => {
         next_step: existingAnalysis.next_step,
       };
 
-      const sent = await sendAnalysisEmail(sub.email, sub.name, analysis, sub.variant);
+      const sent = await sendAnalysisEmail(
+        sub.email, sub.name, analysis,
+        existingAnalysis.recommended_package || "setup_59",
+        sub.id, sub.variant
+      );
       if (sent) {
         await supabase
           .from("lead_analyses")
@@ -288,20 +367,22 @@ serve(async (req) => {
       );
     }
 
-    // ── STANDARD MODE: generate new analysis ──
-    if (!name || !email) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Name und E-Mail sind erforderlich." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // ── MODE 3: Generate new analysis (without name/email if skip_email=true) ──
+    const {
+      name, email, company,
+      business_type, lead_flow, revenue_clarity, main_problem,
+      variant, qr_session_id,
+      company_size, problems, free_text,
+      importance, commitment, urgency, intent_score,
+      skip_email,
+    } = body;
 
-    // 1. Store diagnostic submission
+    // 1. Store diagnostic submission (name/email optional)
     const { data: submission, error: subErr } = await supabase
       .from("diagnostic_submissions")
       .insert({
-        name,
-        email,
+        name: name || "",
+        email: email || "",
         company: company || null,
         business_type: business_type || "",
         lead_flow: lead_flow || "",
@@ -322,20 +403,10 @@ serve(async (req) => {
 
     if (subErr) throw subErr;
 
-    // 2. Also insert into landing_leads for admin backward compatibility
-    await supabase.from("landing_leads").insert({
-      name,
-      email,
-      company: company || "",
-      industry: business_type || "unknown",
-      situation: `Anfragen: ${lead_flow || "-"}, Umsatzverlust: ${revenue_clarity || "-"}, Größe: ${company_size || "-"}`,
-      needs: problems && problems.length > 0 ? problems : [main_problem || "unknown"],
-      contact_method: "email",
-      status: "neu",
-      admin_notes: `QR-Variante: ${variant || "direct"}. Intent: ${intent_score || "medium"}. Submission-ID: ${submission.id}`,
-    });
+    // Determine recommended package
+    const recPkg = recommendPackage(company_size || "", importance || "", commitment || "");
 
-    // 3. Generate AI analysis
+    // 2. Generate AI analysis
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     let analysis: {
       headline: string;
@@ -364,12 +435,11 @@ serve(async (req) => {
         unklare_ablaeufe: "Unklare Abläufe",
         zeitverlust: "Zeitverlust durch fehlende Struktur",
         keine_struktur: "Keine klare Struktur",
-        keine_conversion: "Keine klare Conversion-Struktur",
-        unsicher: "Nicht sicher, wo das Problem liegt",
       };
       const typeLabels: Record<string, string> = {
         dienstleistung: "Dienstleistung",
         lokal: "Lokales Geschäft",
+        handwerk: "Handwerk",
         online: "Online Business",
         andere: "Andere Branche",
       };
@@ -399,7 +469,6 @@ Wichtige Regeln:
 - Klinge nicht generisch, nicht verspielt und nicht wie leeres Marketing.
 - Die Analyse soll kurz, verständlich und nützlich sein.
 - Die Analyse soll dem Lead das Gefühl geben, verstanden worden zu sein.
-- Die Analyse soll Interesse an einer Strategie-Session verstärken.
 - Gib keine vollständige Beratung oder vollständige Lösung.
 - Keine Markdown-Formatierung.
 - Jedes Feld maximal 2 Sätze.
@@ -427,7 +496,6 @@ Vermeide: Übertreibung, künstliche Dramatik, Fachjargon ohne Nutzen, leere Mot
 - Offen für Umsetzung: ${commitment || "keine Angabe"}
 - Gewünschte Geschwindigkeit: ${urgency || "keine Angabe"}
 - Firma: ${company || "nicht angegeben"}
-- Variante: ${variant || "direct"}
 
 Erstelle eine strukturierte Mini-Analyse.`,
               },
@@ -441,47 +509,19 @@ Erstelle eine strukturierte Mini-Analyse.`,
                   parameters: {
                     type: "object",
                     properties: {
-                      headline: {
-                        type: "string",
-                        description: "Kurze Überschrift der Analyse (z.B. 'Deine Kurzanalyse')",
-                      },
-                      main_issue: {
-                        type: "string",
-                        description:
-                          "Wahrscheinlich größte Schwachstelle (1-2 Sätze, konkret)",
-                      },
-                      practical_meaning: {
-                        type: "string",
-                        description:
-                          "Was das praktisch für das Unternehmen bedeutet (1-2 Sätze)",
-                      },
-                      priorities: {
-                        type: "array",
-                        items: { type: "string" },
-                        description: "Genau 3 konkrete Prioritäten (je 1 Satz)",
-                      },
-                      next_step: {
-                        type: "string",
-                        description:
-                          "Der nächste sinnvolle Schritt (1 Satz, konkret)",
-                      },
+                      headline: { type: "string", description: "Kurze Überschrift der Analyse" },
+                      main_issue: { type: "string", description: "Wahrscheinlich größte Schwachstelle (1-2 Sätze)" },
+                      practical_meaning: { type: "string", description: "Was das praktisch bedeutet (1-2 Sätze)" },
+                      priorities: { type: "array", items: { type: "string" }, description: "Genau 3 konkrete Prioritäten (je 1 Satz)" },
+                      next_step: { type: "string", description: "Der nächste sinnvolle Schritt (1 Satz)" },
                     },
-                    required: [
-                      "headline",
-                      "main_issue",
-                      "practical_meaning",
-                      "priorities",
-                      "next_step",
-                    ],
+                    required: ["headline", "main_issue", "practical_meaning", "priorities", "next_step"],
                     additionalProperties: false,
                   },
                 },
               },
             ],
-            tool_choice: {
-              type: "function",
-              function: { name: "create_analysis" },
-            },
+            tool_choice: { type: "function", function: { name: "create_analysis" } },
           }),
         }
       );
@@ -503,12 +543,8 @@ Erstelle eine strukturierte Mini-Analyse.`,
         try {
           const toolCall = aiData.choices[0].message.tool_calls[0];
           analysis = JSON.parse(toolCall.function.arguments);
-          if (!Array.isArray(analysis.priorities)) {
-            analysis.priorities = [];
-          }
-          while (analysis.priorities.length < 3) {
-            analysis.priorities.push("");
-          }
+          if (!Array.isArray(analysis.priorities)) analysis.priorities = [];
+          while (analysis.priorities.length < 3) analysis.priorities.push("");
         } catch (parseErr) {
           console.error("AI parse error:", parseErr);
           analysisStatus = "failed";
@@ -524,7 +560,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
       }
     }
 
-    // 4. Store analysis
+    // 3. Store analysis with package recommendation
     const { data: savedAnalysis } = await supabase
       .from("lead_analyses")
       .insert({
@@ -539,45 +575,55 @@ Erstelle eine strukturierte Mini-Analyse.`,
         next_step: analysis.next_step || "",
         full_analysis_json: analysis,
         error_message: errorMessage,
+        recommended_package: recPkg,
       })
       .select()
       .single();
 
-    // 5. Send email
+    // 4. Send email only if name+email provided AND skip_email is not true
     let emailSent = false;
-    if (analysisStatus === "completed") {
+    if (!skip_email && name && email && analysisStatus === "completed") {
       try {
-        emailSent = await sendAnalysisEmail(email, name, analysis, variant);
+        emailSent = await sendAnalysisEmail(email, name, analysis, recPkg, submission.id, variant);
         if (emailSent && savedAnalysis) {
           await supabase
             .from("lead_analyses")
-            .update({
-              email_sent: true,
-              email_sent_at: new Date().toISOString(),
-            })
+            .update({ email_sent: true, email_sent_at: new Date().toISOString() })
             .eq("id", savedAnalysis.id);
         }
       } catch (emailErr) {
         console.error("Email error:", emailErr);
       }
+
+      // Also insert into landing_leads
+      await supabase.from("landing_leads").insert({
+        name, email,
+        company: company || "",
+        industry: business_type || "unknown",
+        situation: `Anfragen: ${lead_flow || "-"}, Größe: ${company_size || "-"}`,
+        needs: problems?.length ? problems : [main_problem || "unknown"],
+        contact_method: "email",
+        status: "neu",
+        admin_notes: `Intent: ${intent_score || "medium"}. Submission-ID: ${submission.id}. Package: ${recPkg}`,
+      });
     }
 
     return new Response(
       JSON.stringify({
         success: true,
+        submission_id: submission.id,
         analysis: {
           headline: analysis.headline,
           main_issue: analysis.main_issue,
           practical_meaning: analysis.practical_meaning,
           priorities: analysis.priorities,
           next_step: analysis.next_step,
+          recommended_package: recPkg,
         },
         analysis_status: analysisStatus,
         email_sent: emailSent,
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
     console.error("generate-lead-analysis error:", e);
