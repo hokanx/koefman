@@ -55,6 +55,15 @@ const InvoiceEdit = () => {
     enabled: !!user,
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ['business-settings'],
+    queryFn: async () => {
+      const { data } = await supabase.from('business_settings').select('*').eq('user_id', user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   useEffect(() => {
     if (invoice) {
       setCustomerId(invoice.customer_id);
@@ -62,11 +71,11 @@ const InvoiceEdit = () => {
       setDueDate(invoice.due_date);
       setStatus(invoice.status as InvoiceStatus);
       setNotes(invoice.notes || '');
-      setIntroText((invoice as any).intro_text || '');
-      setFooterText((invoice as any).footer_text || '');
-      setClosingText((invoice as any).closing_text || '');
+      setIntroText((invoice as any).intro_text || (settings as any)?.default_invoice_intro_text || '');
+      setFooterText((invoice as any).footer_text || (settings as any)?.default_invoice_footer_text || '');
+      setClosingText((invoice as any).closing_text || (settings as any)?.default_closing_text || '');
     }
-  }, [invoice]);
+  }, [invoice, settings]);
 
   useEffect(() => {
     if (invoiceItems) {
