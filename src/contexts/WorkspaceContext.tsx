@@ -10,6 +10,7 @@ interface Organization {
   slug: string | null;
   status: string;
   is_internal: boolean;
+  tax_mode: string;
   created_at: string;
 }
 
