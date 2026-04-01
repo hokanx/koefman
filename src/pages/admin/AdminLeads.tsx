@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Mail, UserPlus, Search, ChevronRight, CheckCircle2, XCircle, RefreshCw, Eye, Phone, CalendarIcon, FileText, CheckSquare, Clock } from 'lucide-react';
+import { Mail, UserPlus, Search, ChevronRight, RefreshCw, Eye, Phone, CalendarIcon, FileText, CheckSquare, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
