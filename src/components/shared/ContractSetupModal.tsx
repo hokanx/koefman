@@ -24,9 +24,15 @@ interface ContractSetupModalProps {
   subtotal: number;
   taxTotal: number;
   grandTotal: number;
+  discount?: {
+    type: string | null;
+    value: number;
+    scope: string;
+    duration_months: number | null;
+  };
 }
 
-const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, items, subtotal, taxTotal, grandTotal }: ContractSetupModalProps) => {
+const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, items, subtotal, taxTotal, grandTotal, discount }: ContractSetupModalProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -61,6 +67,10 @@ const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, i
         subtotal,
         tax_total: taxTotal,
         grand_total: grandTotal,
+        discount_type: discount?.type || null,
+        discount_value: discount?.value || 0,
+        discount_scope: discount?.scope || 'both',
+        discount_duration_months: discount?.duration_months ?? null,
       } as any).select().single();
       if (error) throw error;
 

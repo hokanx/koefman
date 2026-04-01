@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import { calculateTotals } from '@/lib/taxConfig';
 import type { Customer, LineItem, OfferStatus } from '@/types';
+import DiscountEditor, { type DiscountData } from '@/components/shared/DiscountEditor';
 
 const OfferEdit = () => {
   const { t } = useLanguage();
@@ -30,6 +31,7 @@ const OfferEdit = () => {
   const [closingText, setClosingText] = useState('');
   const [serviceType, setServiceType] = useState<'einmalig' | 'laufend'>('einmalig');
   const [items, setItems] = useState<LineItem[]>([]);
+  const [discount, setDiscount] = useState<DiscountData>({ enabled: false, type: 'percentage', value: 0, scope: 'both', duration_months: null });
 
   const { data: offer } = useQuery({
     queryKey: ['offer', id],
@@ -84,6 +86,13 @@ const OfferEdit = () => {
       setFooterText((offer as any).footer_text || (settings as any)?.default_offer_footer_text || fallbackFooter);
       setClosingText((offer as any).closing_text || (settings as any)?.default_closing_text || fallbackClosing);
       setServiceType((offer as any).service_type || 'einmalig');
+      setDiscount({
+        enabled: !!(offer as any).discount_type,
+        type: (offer as any).discount_type || 'percentage',
+        value: (offer as any).discount_value || 0,
+        scope: (offer as any).discount_scope || 'both',
+        duration_months: (offer as any).discount_duration_months ?? null,
+      });
     }
   }, [offer, settings]);
 
@@ -105,6 +114,10 @@ const OfferEdit = () => {
         customer_id: customerId || null, date, status, notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total, service_type: serviceType,
+        discount_type: discount.enabled ? discount.type : null,
+        discount_value: discount.enabled ? discount.value : 0,
+        discount_scope: discount.enabled ? discount.scope : 'both',
+        discount_duration_months: discount.enabled ? discount.duration_months : null,
       } as any).eq('id', id!);
       if (error) throw error;
 
@@ -213,6 +226,7 @@ const OfferEdit = () => {
         </FormSection>
 
         <FormSection title={t.offers.items}>
+          <DiscountEditor discount={discount} onChange={setDiscount} />
           <LineItemsEditor items={items} onChange={setItems} showTemplatePicker
             defaultTaxRate={19}
             defaultUnit="Pauschal"

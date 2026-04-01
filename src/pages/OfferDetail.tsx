@@ -16,6 +16,7 @@ import { sanitizeNotes } from '@/lib/sanitizeNotes';
 import EmailModal from '@/components/shared/EmailModal';
 import ContractSetupModal from '@/components/shared/ContractSetupModal';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import { applyDiscount, formatDiscountLabel, type DiscountData } from '@/components/shared/DiscountEditor';
 
 const OfferDetail = () => {
   const { t } = useLanguage();
@@ -560,6 +561,32 @@ const OfferDetail = () => {
               <div className={`flex justify-between font-semibold text-foreground ${!isKleinunternehmer ? 'border-t border-border pt-1' : ''}`}>
                 <span>{t.offers.grandTotal}</span><span>{formatEUR(offer.grand_total)}</span>
               </div>
+              {(() => {
+                const disc: DiscountData = {
+                  enabled: !!(offer as any).discount_type,
+                  type: (offer as any).discount_type || 'percentage',
+                  value: (offer as any).discount_value || 0,
+                  scope: (offer as any).discount_scope || 'both',
+                  duration_months: (offer as any).discount_duration_months ?? null,
+                };
+                const discountLabel = formatDiscountLabel(disc);
+                const discountedTotal = applyDiscount(offer.grand_total, disc);
+                if (discountLabel) {
+                  return (
+                    <div className="mt-2 rounded-lg border border-primary/20 bg-primary/5 p-2.5 space-y-1">
+                      <p className="text-xs font-medium text-primary">{discountLabel}</p>
+                      <div className="flex justify-between font-semibold text-foreground">
+                        <span>Nach Rabatt</span>
+                        <span>
+                          <span className="line-through text-muted-foreground mr-2">{formatEUR(offer.grand_total)}</span>
+                          {formatEUR(discountedTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               {isKleinunternehmer && (
                 <p className="text-xs text-muted-foreground italic">Gemäß §19 UStG wird keine Umsatzsteuer berechnet.</p>
               )}
@@ -608,6 +635,12 @@ const OfferDetail = () => {
           subtotal={offer.subtotal}
           taxTotal={offer.tax_total}
           grandTotal={offer.grand_total}
+          discount={{
+            type: (offer as any).discount_type || null,
+            value: (offer as any).discount_value || 0,
+            scope: (offer as any).discount_scope || 'both',
+            duration_months: (offer as any).discount_duration_months ?? null,
+          }}
         />
       )}
     </div>

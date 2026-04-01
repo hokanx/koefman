@@ -12,6 +12,7 @@ import { generateDocumentNumber } from '@/lib/documentUtils';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import { calculateTotals } from '@/lib/taxConfig';
 import type { Customer, LineItem } from '@/types';
+import DiscountEditor, { type DiscountData } from '@/components/shared/DiscountEditor';
 
 const OfferNew = () => {
   const { t } = useLanguage();
@@ -31,6 +32,7 @@ const OfferNew = () => {
   const [items, setItems] = useState<LineItem[]>([]);
   const [serviceType, setServiceType] = useState<'einmalig' | 'laufend'>('einmalig');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [discount, setDiscount] = useState<DiscountData>({ enabled: false, type: 'percentage', value: 0, scope: 'both', duration_months: null });
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
@@ -73,6 +75,10 @@ const OfferNew = () => {
         date, status: 'draft', notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total, service_type: serviceType,
+        discount_type: discount.enabled ? discount.type : null,
+        discount_value: discount.enabled ? discount.value : 0,
+        discount_scope: discount.enabled ? discount.scope : 'both',
+        discount_duration_months: discount.enabled ? discount.duration_months : null,
       } as any).select().single();
       if (error) throw error;
 
@@ -124,6 +130,9 @@ const OfferNew = () => {
               taxRate: t.offers.taxRate, total: t.offers.total,
             }} />
         </FormSection>
+
+        {/* Discount */}
+        <DiscountEditor discount={discount} onChange={setDiscount} />
 
         {/* 2. DETAILS — secondary, smaller */}
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
