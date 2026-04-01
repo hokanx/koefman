@@ -514,6 +514,20 @@ const Contracts = () => {
           ))}
         </div>
       )}
+
+      {emailContract && (
+        <EmailModal
+          open={emailOpen}
+          onClose={() => { setEmailOpen(false); setEmailContract(null); }}
+          recipientEmail={(emailContract as any)?.customer?.email || ''}
+          defaultSubject={`Vertrag ${emailContract?.contract_number} von ${settings?.business_name || 'uns'}`}
+          defaultBody={`Guten Tag,\n\nanbei erhalten Sie Ihren Vertrag ${emailContract?.contract_number}.\n\nBitte prüfen Sie die Details und bestätigen Sie direkt über den Link.\n\nMit freundlichen Grüßen\n${settings?.business_name || ''}`}
+          publicLink={`${window.location.origin}/contract/view/${(emailContract as any)?.public_token}`}
+          documentType="contract"
+          documentId={emailContract?.id}
+          onSent={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })}
+        />
+      )}
     </div>
   );
 };
