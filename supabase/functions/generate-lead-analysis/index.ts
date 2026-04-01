@@ -578,7 +578,7 @@ Erstelle eine strukturierte Mini-Analyse.`,
           practical_meaning: analysis.practical_meaning,
           priorities: analysis.priorities,
           next_step: analysis.next_step,
-          recommended_package: recPkg,
+          
         },
         analysis_status: analysisStatus,
         email_sent: emailSent,
