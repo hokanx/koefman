@@ -28,6 +28,7 @@ const OfferDetail = () => {
   const [duplicating, setDuplicating] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [contractOpen, setContractOpen] = useState(false);
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const statusLabels = t.status as Record<string, string>;
 
