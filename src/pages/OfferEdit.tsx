@@ -86,6 +86,13 @@ const OfferEdit = () => {
       setFooterText((offer as any).footer_text || (settings as any)?.default_offer_footer_text || fallbackFooter);
       setClosingText((offer as any).closing_text || (settings as any)?.default_closing_text || fallbackClosing);
       setServiceType((offer as any).service_type || 'einmalig');
+      setDiscount({
+        enabled: !!(offer as any).discount_type,
+        type: (offer as any).discount_type || 'percentage',
+        value: (offer as any).discount_value || 0,
+        scope: (offer as any).discount_scope || 'both',
+        duration_months: (offer as any).discount_duration_months ?? null,
+      });
     }
   }, [offer, settings]);
 
