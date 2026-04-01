@@ -133,11 +133,11 @@ const Revenue = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">EINNAHMEN</h1>
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => navigate('/offers/new')}>
-            <Plus className="mr-1 h-4 w-4" /> Angebot
+          <Button size="sm" onClick={() => navigate('/invoices/new')}>
+            <Plus className="mr-1 h-4 w-4" /> Rechnung erstellen
           </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate('/invoices/new')}>
-            <Plus className="mr-1 h-4 w-4" /> Rechnung
+          <Button size="sm" variant="outline" onClick={() => navigate('/offers/new')}>
+            <Plus className="mr-1 h-4 w-4" /> Angebot
           </Button>
         </div>
       </div>
