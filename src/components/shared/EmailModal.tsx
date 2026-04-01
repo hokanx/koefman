@@ -56,7 +56,7 @@ const EmailModal = ({
       return;
     }
     if (!activeOrganizationId) {
-      toast.error('E-Mail konnte nicht gesendet werden. Bitte wählen Sie zuerst einen aktiven Mandanten.');
+      toast.error('E-Mail konnte nicht gesendet werden. Bitte richten Sie zuerst Ihr Geschäft ein.');
       return;
     }
 

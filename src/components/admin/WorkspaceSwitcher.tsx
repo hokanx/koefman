@@ -74,7 +74,7 @@ const WorkspaceSwitcher = () => {
             </button>
           ))}
           {organizations.length === 0 && (
-            <p className="px-2 py-3 text-center text-xs text-muted-foreground">Keine Organisationen</p>
+            <p className="px-2 py-3 text-center text-xs text-muted-foreground">Keine Geschäfte vorhanden</p>
           )}
         </div>
       </PopoverContent>

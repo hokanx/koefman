@@ -110,7 +110,7 @@ export const useCreateOrgExpense = () => {
       receipt_file_name?: string;
       linked_document_id?: string;
     }) => {
-      if (!activeOrganizationId) throw new Error('Kein aktiver Workspace');
+      if (!activeOrganizationId) throw new Error('Kein aktives Geschäft');
       const { data, error } = await supabase
         .from('org_expenses' as any)
         .insert({
