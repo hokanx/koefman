@@ -64,20 +64,19 @@ const Contracts = () => {
     enabled: !!user,
   });
 
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailContract, setEmailContract] = useState<any>(null);
+
   const handleSendContract = async (contract: any) => {
-    // Mark as sent
-    if (contract.status === 'active') {
+    // Mark as sent if still draft
+    if (contract.status === 'entwurf') {
       await supabase.from('contracts').update({ status: 'gesendet' } as any).eq('id', contract.id);
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       toast.success(ct.contractSent);
     }
-    // Copy link
-    const publicToken = (contract as any).public_token;
-    if (publicToken) {
-      const url = `${window.location.origin}/contract/view/${publicToken}`;
-      await navigator.clipboard.writeText(url);
-      toast.success(ct.linkCopied);
-    }
+    // Open email modal
+    setEmailContract(contract);
+    setEmailOpen(true);
   };
 
   const handleCopyLink = async (contract: any) => {
