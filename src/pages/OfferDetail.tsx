@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, Download, FileText, Edit, Send, Check, X, Copy, Link as LinkIcon, ClipboardCheck, CopyPlus, Mail, ScrollText } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +21,9 @@ const OfferDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backPath = (location.state as any)?.from || '/revenue';
+  const backLabel = backPath === '/offers' ? 'Zurück zu Angebote' : backPath === '/revenue' ? 'Zurück zu Einnahmen' : 'Zurück';
   const queryClient = useQueryClient();
   const [generating, setGenerating] = useState(false);
   const [converting, setConverting] = useState(false);
@@ -389,8 +392,8 @@ const OfferDetail = () => {
 
   return (
     <div className="animate-fade-in p-4 md:p-6">
-      <button onClick={() => navigate('/offers')} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> {t.common.back}
+      <button onClick={() => navigate(backPath)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> {backLabel}
       </button>
 
       <div className="max-w-2xl space-y-4">

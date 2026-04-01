@@ -67,7 +67,7 @@ const Revenue = () => {
     if (tab === 'offers') {
       if (offers.length === 0) return <EmptyState icon={FileText} title="Erstes Angebot erstellen" description="Erstellen Sie Ihr erstes Angebot." />;
       return offers.map((o: any) => (
-        <Link key={o.id} to={`/offers/${o.id}`} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 transition hover:border-primary/40">
+        <Link key={o.id} to={`/offers/${o.id}`} state={{ from: '/revenue' }} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 transition hover:border-primary/40">
           <div className="min-w-0 flex-1">
             <p className="font-medium text-foreground truncate">{(o.customers as any)?.name || o.offer_number}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{o.offer_number} · {formatDateDE(o.date)}</p>
