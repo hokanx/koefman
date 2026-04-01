@@ -131,6 +131,9 @@ const OfferNew = () => {
             }} />
         </FormSection>
 
+        {/* Discount */}
+        <DiscountEditor discount={discount} onChange={setDiscount} />
+
         {/* 2. DETAILS — secondary, smaller */}
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
           <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
