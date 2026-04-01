@@ -10,25 +10,6 @@ const corsHeaders = {
 const EMAIL_FROM = "Köfman <no-reply@koefman.de>";
 const BOOKING_URL = "https://koefman.lovable.app/book";
 
-const PACKAGE_INFO: Record<string, { title: string; price: string; detail: string }> = {
-  setup_59: {
-    title: "SYSTEM-SETUP",
-    price: "499 € einmalig + 59 €/Monat",
-    detail: "Wir richten dein komplettes System ein und betreuen es laufend.",
-  },
-  strategy_299: {
-    title: "STRATEGIE & BEGLEITUNG",
-    price: "299 €/Monat",
-    detail: "Wöchentliche Strategie-Calls und laufende Optimierung deines Systems.",
-  },
-};
-
-function recommendPackage(companySize: string, importance: string, commitment: string): string {
-  // Larger companies or high urgency → strategy package
-  if (companySize === "6-15" || companySize === "15+") return "strategy_299";
-  if (importance === "hoch" && commitment === "ja") return "strategy_299";
-  return "setup_59";
-}
 
 function buildEmailHtml(
   name: string,
