@@ -82,6 +82,7 @@ const OfferEdit = () => {
       setIntroText((offer as any).intro_text || (settings as any)?.default_offer_intro_text || fallbackIntro);
       setFooterText((offer as any).footer_text || (settings as any)?.default_offer_footer_text || fallbackFooter);
       setClosingText((offer as any).closing_text || (settings as any)?.default_closing_text || fallbackClosing);
+      setServiceType((offer as any).service_type || 'einmalig');
     }
   }, [offer, settings]);
 
