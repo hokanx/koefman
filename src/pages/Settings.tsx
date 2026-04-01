@@ -41,6 +41,7 @@ const Settings = () => {
   const { t, language } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
+  const { activeOrganization, activeOrganizationId } = useWorkspace();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
