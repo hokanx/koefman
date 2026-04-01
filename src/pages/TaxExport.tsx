@@ -35,6 +35,7 @@ const getDateRange = (range: DateRange): { from: string; to: string } => {
 const TaxExport = () => {
   const { user } = useAuth();
   const { effectiveUserId } = useImpersonation();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const [range, setRange] = useState<DateRange>('month');
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState('');
