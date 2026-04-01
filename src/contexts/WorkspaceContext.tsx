@@ -81,8 +81,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (m) return { org: m.organizations, role: m.role, isAdminMode: false };
     }
 
-    // Auto-select if exactly one membership
-    if (memberships.length === 1) {
+    // Auto-select first membership (single-business model)
+    if (memberships.length >= 1) {
       return {
         org: memberships[0].organizations,
         role: memberships[0].role,
