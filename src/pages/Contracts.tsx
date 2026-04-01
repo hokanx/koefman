@@ -217,7 +217,7 @@ const Contracts = () => {
   const handleActivateRecurring = async (contract: any) => {
     if (!user) return;
     // Gate: must be signed
-    if (contract.status !== 'unterzeichnet') {
+    if (contract.status !== 'unterzeichnet' && contract.status !== 'aktiv') {
       toast.error(ct.mustBeSignedForRecurring);
       return;
     }
