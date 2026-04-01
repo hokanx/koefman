@@ -111,9 +111,12 @@ const PublicOfferView = () => {
       if (!city.trim()) throw new Error('missing_city');
       if (!hasValidSignature || !signatureImage) throw new Error('missing_signature');
 
-      // Update customer data
+      // Update or create customer
       const customer = (offer as any).customer;
+      let customerId = offer!.customer_id;
+
       if (customer) {
+        // Update existing customer
         await supabase.from('customers').update({
           name: companyName.trim(),
           contact_person: contactPerson.trim() || null,
@@ -123,6 +126,20 @@ const PublicOfferView = () => {
           city: city.trim(),
           email: email.trim() || null,
         } as any).eq('id', customer.id);
+      } else {
+        // Create new customer from submitted data
+        const { data: newCustomer, error: custError } = await supabase.from('customers').insert({
+          user_id: offer!.user_id,
+          name: companyName.trim(),
+          contact_person: contactPerson.trim() || null,
+          street: street.trim(),
+          house_number: houseNumber.trim() || null,
+          postal_code: postalCode.trim(),
+          city: city.trim(),
+          email: email.trim() || null,
+        } as any).select().single();
+        if (custError) throw custError;
+        customerId = newCustomer!.id;
       }
 
       // Insert acceptance record
@@ -163,6 +180,7 @@ const PublicOfferView = () => {
         .from('offers')
         .update({
           status: 'accepted',
+          customer_id: customerId,
           notes: offer!.notes
             ? `${offer!.notes}\n\n---\nAccepted snapshot: ${JSON.stringify(acceptedSnapshot)}`
             : `Accepted snapshot: ${JSON.stringify(acceptedSnapshot)}`,
