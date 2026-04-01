@@ -143,6 +143,12 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
               </Button>
             </>
           )}
+          {doc.document_type === 'offer' && doc.status === 'accepted' && (
+            <Button size="sm" variant="secondary" onClick={handleConvertToInvoice}>
+              <Receipt className="mr-1.5 h-3.5 w-3.5" />
+              In Rechnung umwandeln
+            </Button>
+          )}
         </div>
 
         {/* Meta grid */}
