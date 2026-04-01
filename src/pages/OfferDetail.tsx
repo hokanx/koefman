@@ -362,7 +362,7 @@ const OfferDetail = () => {
       intro_text: (offer as any).intro_text || undefined,
       footer_text: (offer as any).footer_text || undefined,
       closing_text: (offer as any).closing_text || undefined,
-      notes: offer!.notes || undefined,
+      notes: sanitizeNotes(offer!.notes) || undefined,
       labels: {
         date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
         unitPrice: t.offers.unitPrice, taxRate: t.offers.taxRate, total: t.offers.total,
