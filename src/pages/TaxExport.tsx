@@ -2,13 +2,13 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { formatEUR } from '@/lib/utils';
 import { fetchTaxExportSummary, generateCleanTaxExportZip } from '@/lib/cleanTaxExport';
 import { toast } from 'sonner';
 import { FileArchive, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import { supabase } from '@/integrations/supabase/client';
 
 type DateRange = 'month' | 'quarter' | 'year';
 
@@ -107,97 +107,70 @@ const TaxExport = () => {
 
   return (
     <div className="animate-fade-in p-4 md:p-6 space-y-5 mx-auto max-w-2xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">STEUER EXPORT</h1>
-        <p className="text-sm text-muted-foreground mt-1">{rangeLabel}</p>
-      </div>
+      <h1 className="text-2xl font-bold tracking-tight text-foreground">STEUER EXPORT</h1>
 
       {/* Zeitraum */}
-      <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
-        {rangeOptions.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => setRange(opt.value)}
-            className={`flex-1 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-              range === opt.value
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <div>
+        <div className="flex gap-1 rounded-lg border border-border bg-muted p-1">
+          {rangeOptions.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setRange(opt.value)}
+              className={`flex-1 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+                range === opt.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">{rangeLabel}</p>
       </div>
 
       {/* Readiness */}
       <div className={`flex items-center gap-3 rounded-xl border p-4 ${
         isReady ? 'border-green-500/30 bg-green-500/5' : 'border-yellow-500/30 bg-yellow-500/5'
       }`}>
-        {isReady ? (
-          <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-        ) : (
-          <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
-        )}
+        {isReady ? <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" /> : <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />}
         <div>
           <p className="text-sm font-medium text-foreground">
             {isReady ? 'Bereit für Export' : 'Hinweis'}
           </p>
-          {warnings.map((w, i) => (
-            <p key={i} className="text-xs text-muted-foreground">{w}</p>
-          ))}
-          {isReady && (
-            <p className="text-xs text-muted-foreground">
-              {invoiceCount} bezahlte Rechnungen, {expenseCount} Ausgaben
-            </p>
-          )}
+          {warnings.map((w, i) => <p key={i} className="text-xs text-muted-foreground">{w}</p>)}
+          {isReady && <p className="text-xs text-muted-foreground">{invoiceCount} Rechnungen · {expenseCount} Belege</p>}
         </div>
       </div>
 
       {/* Summary */}
-      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Zusammenfassung</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{invoiceCount}</p>
-            <p className="text-xs text-muted-foreground">Bezahlte Rechnungen</p>
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">{isKleinunternehmer ? 'Umsatz' : 'Einnahmen brutto'}</span>
+          <span className="text-lg font-bold text-foreground">{formatEUR(summary?.totalIncome ?? 0)}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Ausgaben</span>
+          <span className="text-lg font-bold text-foreground">{formatEUR(summary?.totalExpenses ?? 0)}</span>
+        </div>
+        {!isKleinunternehmer && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Umsatzsteuer</span>
+            <span className="text-lg font-bold text-foreground">{formatEUR(summary?.totalTax ?? 0)}</span>
           </div>
-          <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{expenseCount}</p>
-            <p className="text-xs text-muted-foreground">Belege</p>
-          </div>
-          <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.totalIncome ?? 0)}</p>
-            <p className="text-xs text-muted-foreground">{isKleinunternehmer ? 'Umsatz gesamt' : 'Einnahmen brutto'}</p>
-          </div>
-          <div className="rounded-lg bg-muted/30 p-3 text-center">
-            <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.totalExpenses ?? 0)}</p>
-            <p className="text-xs text-muted-foreground">Ausgaben gesamt</p>
-          </div>
-          {!isKleinunternehmer && (
-            <div className="rounded-lg bg-muted/30 p-3 text-center">
-              <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.totalTax ?? 0)}</p>
-              <p className="text-xs text-muted-foreground">Umsatzsteuer gesamt</p>
-            </div>
-          )}
-          <div className={`rounded-lg bg-muted/30 p-3 text-center ${isKleinunternehmer ? 'col-span-2' : ''}`}>
-            <p className="text-2xl font-bold text-foreground">{formatEUR(summary?.profit ?? 0)}</p>
-            <p className="text-xs text-muted-foreground">Gewinn</p>
-          </div>
+        )}
+        <div className="border-t border-border pt-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">Gewinn</span>
+          <span className="text-xl font-bold text-foreground">{formatEUR(summary?.profit ?? 0)}</span>
         </div>
       </div>
 
-      {/* Export action */}
+      {/* Export */}
       <Button
-        className="w-full justify-start gap-3 h-auto py-4"
+        className="w-full h-auto py-4 text-base"
         onClick={handleExport}
         disabled={exporting || !isReady}
       >
-        <FileArchive className="h-5 w-5 shrink-0" />
-        <div className="text-left">
-          <p className="font-medium">{exporting ? exportProgress : 'Export für Steuerberater'}</p>
-          <p className="text-xs font-normal opacity-75">Bezahlte Rechnungen, Ausgaben & Zusammenfassung als ZIP</p>
-        </div>
+        <FileArchive className="h-5 w-5 mr-3 shrink-0" />
+        {exporting ? exportProgress : 'Export für Steuerberater'}
       </Button>
     </div>
   );
