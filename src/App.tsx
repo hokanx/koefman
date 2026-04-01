@@ -32,6 +32,7 @@ import Templates from "@/pages/Templates";
 import IntakeForm from "@/pages/IntakeForm";
 import PublicOfferView from "@/pages/PublicOfferView";
 import PublicContractView from "@/pages/PublicContractView";
+import PublicInvoiceView from "@/pages/PublicInvoiceView";
 import PublicDocumentView from "@/pages/PublicDocumentView";
 import RecurringInvoices from "@/pages/RecurringInvoices";
 import Contracts from "@/pages/Contracts";
