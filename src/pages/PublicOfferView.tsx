@@ -25,7 +25,7 @@ const PublicOfferView = () => {
   // Signature state
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [hasValidSignature, setHasValidSignature] = useState(false);
-  const [showValidation, setShowValidation] = useState(false);
+  const [_showValidation, setShowValidation] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [rejected, setRejected] = useState(false);
