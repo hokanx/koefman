@@ -925,6 +925,7 @@ export type Database = {
           intro_text: string | null
           invoice_number: string
           notes: string | null
+          public_token: string | null
           source_offer_id: string | null
           source_recurring_id: string | null
           status: string
@@ -945,6 +946,7 @@ export type Database = {
           intro_text?: string | null
           invoice_number: string
           notes?: string | null
+          public_token?: string | null
           source_offer_id?: string | null
           source_recurring_id?: string | null
           status?: string
@@ -965,6 +967,7 @@ export type Database = {
           intro_text?: string | null
           invoice_number?: string
           notes?: string | null
+          public_token?: string | null
           source_offer_id?: string | null
           source_recurring_id?: string | null
           status?: string
