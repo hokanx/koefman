@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 type DateRange = 'month' | 'quarter' | 'year';
 
@@ -44,6 +45,7 @@ const Finances = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
   const { effectiveUserId, isImpersonating } = useImpersonation();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [range, setRange] = useState<DateRange>('month');
@@ -133,7 +135,7 @@ const Finances = () => {
     onError: () => toast.error('Fehler beim Speichern'),
   });
 
-  const isSmallBiz = !!settings?.small_business_regulation;
+  const isSmallBiz = isKleinunternehmer;
   const today = new Date().toISOString().split('T')[0];
 
   const stats = useMemo(() => {

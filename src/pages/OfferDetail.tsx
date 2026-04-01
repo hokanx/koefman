@@ -14,6 +14,7 @@ import type { OfferStatus } from '@/types';
 import { formatEUR } from '@/lib/utils';
 import EmailModal from '@/components/shared/EmailModal';
 import ContractSetupModal from '@/components/shared/ContractSetupModal';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 const OfferDetail = () => {
   const { t } = useLanguage();
@@ -27,6 +28,7 @@ const OfferDetail = () => {
   const [duplicating, setDuplicating] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [contractOpen, setContractOpen] = useState(false);
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const statusLabels = t.status as Record<string, string>;
 
@@ -135,7 +137,7 @@ const OfferDetail = () => {
       const validityDays = (offer as any).validity_days || 14;
       const validityDate = getValidityDate();
 
-      const isSmallBiz = !!(settings as any)?.small_business_regulation;
+      const isSmallBiz = isKleinunternehmer;
 
       await generatePdf({
         type: 'offer',
@@ -329,7 +331,7 @@ const OfferDetail = () => {
     const customTitle = (settings as any)?.default_offer_title || t.offers.documentTitle;
     const validityDays = (offer as any)?.validity_days || 14;
     const validityDate = getValidityDate();
-    const isSmallBiz = !!(settings as any)?.small_business_regulation;
+    const isSmallBiz = isKleinunternehmer;
     const result = await generatePdf({
       type: 'offer',
       documentTitle: customTitle,

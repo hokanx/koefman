@@ -14,6 +14,7 @@ import type { InvoiceStatus } from '@/types';
 import { formatEUR } from '@/lib/utils';
 import EmailModal from '@/components/shared/EmailModal';
 import RecurringSetupModal from '@/components/shared/RecurringSetupModal';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 const InvoiceDetail = () => {
   const { t } = useLanguage();
@@ -27,7 +28,7 @@ const InvoiceDetail = () => {
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailType, setEmailType] = useState<'invoice' | 'reminder'>('invoice');
   const [recurringOpen, setRecurringOpen] = useState(false);
-
+  const { isKleinunternehmer } = useOrgTaxMode();
   const statusLabels = t.status as Record<string, string>;
 
   const { data: invoice, isLoading } = useQuery({
@@ -142,7 +143,7 @@ const InvoiceDetail = () => {
       const businessAddress = settings ? formatAddress(settings as any) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
 
-      const isSmallBiz = !!(settings as any)?.small_business_regulation;
+      const isSmallBiz = isKleinunternehmer;
       await generatePdf({
         type: 'invoice',
         small_business_regulation: isSmallBiz,
@@ -250,7 +251,7 @@ const InvoiceDetail = () => {
     const customer = (invoice as any)?.customer;
     const businessAddress = settings ? formatAddress(settings as any) : '';
     const customerAddress = customer ? formatAddress(customer) : '';
-    const isSmallBiz = !!(settings as any)?.small_business_regulation;
+    const isSmallBiz = isKleinunternehmer;
     const result = await generatePdf({
       type: 'invoice',
       small_business_regulation: isSmallBiz,

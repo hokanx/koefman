@@ -11,6 +11,7 @@ import { formatAddress } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle } from 'lucide-react';
 import { formatEUR } from '@/lib/utils';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 const frequencyLabels: Record<string, Record<string, string>> = {
   weekly: { de: 'Wöchentlich', en: 'Weekly', ar: 'أسبوعياً' },
@@ -25,6 +26,7 @@ const Contracts = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const ct = (t as any).contracts;
+  const { isKleinunternehmer } = useOrgTaxMode();
 
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
 
@@ -126,7 +128,7 @@ const Contracts = () => {
 
       const businessAddress = settings ? formatAddress(settings as any) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
-      const isSmallBiz = !!(settings as any)?.small_business_regulation;
+      const isSmallBiz = isKleinunternehmer;
 
       await generateContractPdf({
         contractNumber: contract.contract_number,
@@ -358,7 +360,7 @@ const Contracts = () => {
         frequency: frequencyLabels[contract.frequency]?.[language] || contract.frequency,
         startDate: formatDateDE(contract.start_date),
         endDate: contract.end_date ? formatDateDE(contract.end_date) : null,
-        small_business_regulation: !!(settings as any)?.small_business_regulation,
+        small_business_regulation: isKleinunternehmer,
       });
     } catch {
       toast.error(t.common.error);

@@ -9,6 +9,7 @@ export interface CleanExportOptions {
   from: string;
   to: string;
   businessSettings: any;
+  isKleinunternehmer?: boolean;
   onProgress?: (percent: number, label: string) => void;
 }
 
@@ -79,7 +80,7 @@ export async function fetchTaxExportSummary(
 
 /** Generate clean tax export ZIP */
 export async function generateCleanTaxExportZip(options: CleanExportOptions): Promise<Blob> {
-  const { userId, from, to, businessSettings, onProgress } = options;
+  const { userId, from, to, businessSettings, isKleinunternehmer, onProgress } = options;
   const zip = new JSZip();
 
   const monthLabel = buildMonthLabel(from);
@@ -90,7 +91,7 @@ export async function generateCleanTaxExportZip(options: CleanExportOptions): Pr
   const progress = (p: number, l: string) => onProgress?.(Math.round(p), l);
   progress(0, 'Daten laden…');
 
-  const isSmallBiz = !!businessSettings?.small_business_regulation;
+  const isSmallBiz = isKleinunternehmer ?? !!businessSettings?.small_business_regulation;
   const businessInfo = buildBusinessInfo(businessSettings);
 
   // ── 1. FETCH paid invoices + valid expenses ──
