@@ -97,7 +97,7 @@ const PublicContractView = () => {
 
       const { error: updateError } = await supabase
         .from('contracts')
-        .update({ status: 'unterzeichnet' } as any)
+        .update({ status: 'aktiv' } as any)
         .eq('id', contract!.id);
       if (updateError) throw updateError;
     },
@@ -152,7 +152,7 @@ const PublicContractView = () => {
     signMutation.mutate();
   };
 
-  const isSigned = contract?.status === 'unterzeichnet' || !!existingAcceptance || signed;
+  const isSigned = contract?.status === 'unterzeichnet' || contract?.status === 'aktiv' || !!existingAcceptance || signed;
   const isRejected = contract?.status === 'abgelehnt' || rejected;
 
   if (isLoading) {

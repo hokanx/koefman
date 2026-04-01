@@ -27,6 +27,7 @@ const OfferEdit = () => {
   const [introText, setIntroText] = useState('');
   const [footerText, setFooterText] = useState('');
   const [closingText, setClosingText] = useState('');
+  const [serviceType, setServiceType] = useState<'einmalig' | 'laufend'>('einmalig');
   const [items, setItems] = useState<LineItem[]>([]);
 
   const { data: offer } = useQuery({
@@ -81,6 +82,7 @@ const OfferEdit = () => {
       setIntroText((offer as any).intro_text || (settings as any)?.default_offer_intro_text || fallbackIntro);
       setFooterText((offer as any).footer_text || (settings as any)?.default_offer_footer_text || fallbackFooter);
       setClosingText((offer as any).closing_text || (settings as any)?.default_closing_text || fallbackClosing);
+      setServiceType((offer as any).service_type || 'einmalig');
     }
   }, [offer, settings]);
 
@@ -103,7 +105,7 @@ const OfferEdit = () => {
       const { error } = await supabase.from('offers').update({
         customer_id: customerId || null, date, status, notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
-        subtotal, tax_total, grand_total,
+        subtotal, tax_total, grand_total, service_type: serviceType,
       } as any).eq('id', id!);
       if (error) throw error;
 
@@ -144,6 +146,13 @@ const OfferEdit = () => {
       <h2 className="mb-6 text-xl font-bold text-foreground">{t.offers.editOffer}</h2>
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-4">
         <FormSection title={t.offers.offerDetails}>
+          <div>
+            <label className="mb-1 block text-sm text-muted-foreground">Leistungsart</label>
+            <select value={serviceType} onChange={(e) => setServiceType(e.target.value as 'einmalig' | 'laufend')} className={inputClass}>
+              <option value="einmalig">Einmalige Leistung</option>
+              <option value="laufend">Laufender Vertrag</option>
+            </select>
+          </div>
           <div>
             <label className="mb-1 block text-sm text-muted-foreground">{t.offers.customer}</label>
             <p className="text-[11px] text-muted-foreground/50 mb-1">Optional. Kundendaten können später ergänzt werden.</p>

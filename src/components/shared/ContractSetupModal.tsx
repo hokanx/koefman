@@ -57,7 +57,7 @@ const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, i
         frequency,
         start_date: startDate,
         end_date: endDate || null,
-        status: 'active',
+        status: 'entwurf',
         subtotal,
         tax_total: taxTotal,
         grand_total: grandTotal,

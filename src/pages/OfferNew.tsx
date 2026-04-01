@@ -28,6 +28,7 @@ const OfferNew = () => {
   const [footerText, setFooterText] = useState('');
   const [closingText, setClosingText] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
+  const [serviceType, setServiceType] = useState<'einmalig' | 'laufend'>('einmalig');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const { data: customers = [] } = useQuery({
@@ -72,7 +73,7 @@ const OfferNew = () => {
         user_id: user!.id, customer_id: customerId || null, offer_number: offerNumber,
         date, status: 'draft', notes, internal_notes: internalNotes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
-        subtotal, tax_total, grand_total,
+        subtotal, tax_total, grand_total, service_type: serviceType,
       } as any).select().single();
       if (error) throw error;
 
@@ -128,6 +129,13 @@ const OfferNew = () => {
         {/* 2. DETAILS — secondary, smaller */}
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
           <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Leistungsart</label>
+            <select value={serviceType} onChange={(e) => setServiceType(e.target.value as 'einmalig' | 'laufend')} className={inputClass}>
+              <option value="einmalig">Einmalige Leistung</option>
+              <option value="laufend">Laufender Vertrag</option>
+            </select>
+          </div>
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">Kunde (optional)</label>
             <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputClass}>

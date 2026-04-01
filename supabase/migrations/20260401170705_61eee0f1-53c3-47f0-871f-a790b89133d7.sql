@@ -1,0 +1,1 @@
+ALTER TABLE public.offers ADD COLUMN service_type text NOT NULL DEFAULT 'einmalig';

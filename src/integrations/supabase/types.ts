@@ -1244,6 +1244,7 @@ export type Database = {
           public_token: string | null
           rejected_at: string | null
           rejected_reason: string | null
+          service_type: string
           status: string
           subtotal: number
           tax_total: number
@@ -1266,6 +1267,7 @@ export type Database = {
           public_token?: string | null
           rejected_at?: string | null
           rejected_reason?: string | null
+          service_type?: string
           status?: string
           subtotal?: number
           tax_total?: number
@@ -1288,6 +1290,7 @@ export type Database = {
           public_token?: string | null
           rejected_at?: string | null
           rejected_reason?: string | null
+          service_type?: string
           status?: string
           subtotal?: number
           tax_total?: number

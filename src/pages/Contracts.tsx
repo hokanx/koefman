@@ -9,7 +9,8 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE, generateContractPdf, generateContractConfirmationPdf } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle } from 'lucide-react';
+import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle, ExternalLink } from 'lucide-react';
+import EmailModal from '@/components/shared/EmailModal';
 import { formatEUR } from '@/lib/utils';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
@@ -35,7 +36,7 @@ const Contracts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contracts')
-        .select('*, customer:customers(name), source_offer:offers(offer_number)')
+        .select('*, customer:customers(name, email), source_offer:offers(offer_number)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -64,20 +65,19 @@ const Contracts = () => {
     enabled: !!user,
   });
 
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailContract, setEmailContract] = useState<any>(null);
+
   const handleSendContract = async (contract: any) => {
-    // Mark as sent
-    if (contract.status === 'active') {
+    // Mark as sent if still draft
+    if (contract.status === 'entwurf') {
       await supabase.from('contracts').update({ status: 'gesendet' } as any).eq('id', contract.id);
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       toast.success(ct.contractSent);
     }
-    // Copy link
-    const publicToken = (contract as any).public_token;
-    if (publicToken) {
-      const url = `${window.location.origin}/contract/view/${publicToken}`;
-      await navigator.clipboard.writeText(url);
-      toast.success(ct.linkCopied);
-    }
+    // Open email modal
+    setEmailContract(contract);
+    setEmailOpen(true);
   };
 
   const handleCopyLink = async (contract: any) => {
@@ -106,7 +106,7 @@ const Contracts = () => {
 
       // Fetch signature data if contract is signed
       let signatureData: { signedByName: string; signedAt: string; signatureImage: string | null } | undefined;
-      if (contract.status === 'unterzeichnet') {
+      if (contract.status === 'unterzeichnet' || contract.status === 'aktiv') {
         const { data: acceptance } = await supabase
           .from('contract_acceptances')
           .select('*')
@@ -217,7 +217,7 @@ const Contracts = () => {
   const handleActivateRecurring = async (contract: any) => {
     if (!user) return;
     // Gate: must be signed
-    if (contract.status !== 'unterzeichnet') {
+    if (contract.status !== 'unterzeichnet' && contract.status !== 'aktiv') {
       toast.error(ct.mustBeSignedForRecurring);
       return;
     }
@@ -368,16 +368,20 @@ const Contracts = () => {
   };
 
   const statusMap: Record<string, string> = {
+    entwurf: 'draft',
     active: 'draft',
     gesendet: 'sent',
+    aktiv: 'accepted',
     unterzeichnet: 'paid',
     abgelehnt: 'cancelled',
     paused: 'draft',
     ended: 'cancelled',
   };
   const statusLabel: Record<string, string> = {
+    entwurf: 'Entwurf',
     active: ct.active,
     gesendet: ct.sent,
+    aktiv: 'Aktiv',
     unterzeichnet: ct.signed,
     abgelehnt: ct.rejected,
     paused: ct.paused,
@@ -444,10 +448,10 @@ const Contracts = () => {
               )}
 
               {/* Signed indicator */}
-              {c.status === 'unterzeichnet' && (
+              {(c.status === 'unterzeichnet' || c.status === 'aktiv') && (
                 <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-md px-2 py-1 w-fit">
                   <CheckCircle className="h-3.5 w-3.5" />
-                  Digital unterzeichnet
+                  {c.status === 'aktiv' ? 'Aktiv – Digital unterzeichnet' : 'Digital unterzeichnet'}
                 </div>
               )}
 
@@ -456,22 +460,29 @@ const Contracts = () => {
                   <Download className="h-3.5 w-3.5 mr-1" /> {generatingPdf === c.id ? t.common.generating : ct.downloadPdf}
                 </Button>
 
-                {/* Send / Copy link actions for active or gesendet */}
-                {(c.status === 'active' || c.status === 'gesendet') && (
+                {/* Send / Copy link actions for entwurf or gesendet */}
+                {(c.status === 'entwurf' || c.status === 'gesendet') && (
                   <>
-                    {c.status === 'active' && (
-                      <Button size="sm" variant="outline" onClick={() => handleSendContract(c)}>
-                        <Send className="h-3.5 w-3.5 mr-1" /> {ct.sendContract}
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline" onClick={() => handleCopyLink(c)}>
-                      <Copy className="h-3.5 w-3.5 mr-1" /> {ct.copyLink}
+                    <Button size="sm" variant="outline" onClick={() => handleSendContract(c)}>
+                      <Send className="h-3.5 w-3.5 mr-1" /> {ct.sendContract}
                     </Button>
+                    {(c as any).public_token && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => handleCopyLink(c)}>
+                          <Copy className="h-3.5 w-3.5 mr-1" /> {ct.copyLink}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          window.open(`${window.location.origin}/contract/view/${(c as any).public_token}`, '_blank');
+                        }}>
+                          <ExternalLink className="h-3.5 w-3.5 mr-1" /> Link öffnen
+                        </Button>
+                      </>
+                    )}
                   </>
                 )}
 
-                {/* Signed: confirmation PDF + recurring */}
-                {c.status === 'unterzeichnet' && (
+                {/* Active: confirmation PDF + recurring */}
+                {(c.status === 'unterzeichnet' || c.status === 'aktiv') && (
                   <>
                     <Button size="sm" variant="outline" onClick={() => handleDownloadConfirmation(c)}>
                       <CheckCircle className="h-3.5 w-3.5 mr-1" /> Vertragsbestätigung
@@ -482,18 +493,18 @@ const Contracts = () => {
                   </>
                 )}
 
-                {/* Pause/Resume/End for active/gesendet/paused */}
-                {(c.status === 'active' || c.status === 'gesendet' || c.status === 'unterzeichnet') && (
+                {/* Pause/Resume/End only for active (signed) contracts */}
+                {(c.status === 'unterzeichnet' || c.status === 'aktiv') && (
                   <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'paused' })}>
                     <Pause className="h-3.5 w-3.5 mr-1" /> {ct.pause}
                   </Button>
                 )}
                 {c.status === 'paused' && (
-                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'unterzeichnet' })}>
+                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: c.id, status: 'aktiv' })}>
                     <Play className="h-3.5 w-3.5 mr-1" /> {ct.resume}
                   </Button>
                 )}
-                {!['ended', 'abgelehnt'].includes(c.status) && (
+                {(c.status === 'unterzeichnet' || c.status === 'aktiv' || c.status === 'paused') && (
                   <Button size="sm" variant="outline" className="text-destructive" onClick={() => updateStatus.mutate({ id: c.id, status: 'ended' })}>
                     <XCircle className="h-3.5 w-3.5 mr-1" /> {ct.end}
                   </Button>
@@ -502,6 +513,20 @@ const Contracts = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {emailContract && (
+        <EmailModal
+          open={emailOpen}
+          onClose={() => { setEmailOpen(false); setEmailContract(null); }}
+          recipientEmail={(emailContract as any)?.customer?.email || ''}
+          defaultSubject={`Vertrag ${emailContract?.contract_number} von ${settings?.business_name || 'uns'}`}
+          defaultBody={`Guten Tag,\n\nanbei erhalten Sie Ihren Vertrag ${emailContract?.contract_number}.\n\nBitte prüfen Sie die Details und bestätigen Sie direkt über den Link.\n\nMit freundlichen Grüßen\n${settings?.business_name || ''}`}
+          publicLink={`${window.location.origin}/contract/view/${(emailContract as any)?.public_token}`}
+          documentType="contract"
+          documentId={emailContract?.id}
+          onSent={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })}
+        />
       )}
     </div>
   );
