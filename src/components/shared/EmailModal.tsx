@@ -77,7 +77,7 @@ const EmailModal = ({
     try {
       const { data, error } = await supabase.functions.invoke('send-org-document-email', {
         body: {
-          organization_id: activeOrganizationId,
+          organization_id: orgId,
           legacy_document_id: documentId,
           legacy_document_type: documentType,
           to,
