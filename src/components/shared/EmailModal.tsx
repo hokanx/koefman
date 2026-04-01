@@ -3,6 +3,7 @@ import { Mail, Send, X, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 
 interface EmailModalProps {
   open: boolean;
@@ -32,6 +33,7 @@ const EmailModal = ({
   onSent,
 }: EmailModalProps) => {
   const { t } = useLanguage();
+  const { activeOrganizationId } = useWorkspace();
   const [to, setTo] = useState(recipientEmail);
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState(defaultBody);
@@ -53,41 +55,39 @@ const EmailModal = ({
       toast.error('Bitte E-Mail-Adresse eingeben');
       return;
     }
+    if (!activeOrganizationId) {
+      toast.error('E-Mail konnte nicht gesendet werden. Bitte wählen Sie zuerst einen aktiven Mandanten.');
+      return;
+    }
+
     setSending(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) throw new Error('Not authenticated');
+      const { data, error } = await supabase.functions.invoke('send-org-document-email', {
+        body: {
+          organization_id: activeOrganizationId,
+          legacy_document_id: documentId,
+          legacy_document_type: documentType,
+          to,
+          subject,
+          body,
+          public_link: publicLink || undefined,
+        },
+      });
 
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/send-document-email`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            to,
-            subject,
-            body,
-            publicLink: publicLink || undefined,
-            documentType,
-            documentId,
-          }),
-        }
-      );
+      if (error) {
+        throw error;
+      }
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Send failed');
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       toast.success('E-Mail gesendet');
       onSent?.();
       onClose();
     } catch (err) {
       console.error('Email send error:', err);
-      toast.error('E-Mail konnte nicht gesendet werden');
+      toast.error('E-Mail konnte nicht gesendet werden. Bitte prüfen Sie die E-Mail-Einstellungen.');
     } finally {
       setSending(false);
     }

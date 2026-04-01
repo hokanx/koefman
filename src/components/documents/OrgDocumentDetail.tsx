@@ -84,7 +84,8 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
       queryClient.invalidateQueries({ queryKey: ['org-doc-acceptance', doc.id] });
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || 'Fehler beim Senden');
+      console.error('Org document email send error:', err);
+      toast.error('E-Mail konnte nicht gesendet werden. Bitte prüfen Sie die E-Mail-Einstellungen.');
     } finally {
       setIsSending(false);
     }
