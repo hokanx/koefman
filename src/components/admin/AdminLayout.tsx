@@ -6,7 +6,6 @@ const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Übersicht', end: true },
   { to: '/admin/leads', icon: Inbox, label: 'Leads' },
   { to: '/admin/documents', icon: FileText, label: 'Dokumente' },
-  { to: '/admin/settings', icon: Settings, label: 'Einstellungen' },
 ];
 
 const AdminLayout = () => {
