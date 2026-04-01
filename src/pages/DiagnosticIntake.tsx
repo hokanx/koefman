@@ -188,18 +188,19 @@ export default function DiagnosticIntake() {
       });
 
       if (response.error) throw response.error;
-      setEmailSent(true);
-
-      // Navigate to booking page
-      setTimeout(() => {
-        navigate(`/book?sid=${submissionId}`);
-      }, 2000);
+      const data = response.data;
+      if (data?.email_sent) {
+        setEmailSent(true);
+        setTimeout(() => {
+          navigate(`/book?sid=${submissionId}`);
+        }, 2000);
+      } else {
+        toast.error('E-Mail konnte nicht gesendet werden. Bitte prüfe deine E-Mail-Adresse.');
+        setEmailSent(false);
+      }
     } catch (err) {
       console.error('Email capture error:', err);
-      setEmailSent(true); // still proceed
-      setTimeout(() => {
-        navigate(`/book?sid=${submissionId}`);
-      }, 2000);
+      toast.error('E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.');
     } finally {
       setSendingEmail(false);
     }
