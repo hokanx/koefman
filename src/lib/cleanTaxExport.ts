@@ -9,6 +9,7 @@ export interface CleanExportOptions {
   from: string;
   to: string;
   businessSettings: any;
+  isKleinunternehmer?: boolean;
   onProgress?: (percent: number, label: string) => void;
 }
 
