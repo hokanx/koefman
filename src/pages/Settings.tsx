@@ -307,28 +307,11 @@ const Settings = () => {
           <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionBillingDesc}</p>
 
           <div className="space-y-3">
-            {/* Tax mode radio — saves to organizations.tax_mode */}
+            {/* Tax mode toggle */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">{t.settings.taxModeLabel}</label>
+              <label className="mb-1 block text-sm font-medium text-foreground">Umsatzsteuer</label>
+              <p className="text-xs text-muted-foreground mb-2">Berechnen Sie Umsatzsteuer?</p>
               <div className="space-y-2">
-                <label className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
-                  <input
-                    type="radio"
-                    name="tax_mode"
-                    checked={(activeOrganization as any)?.tax_mode === 'kleinunternehmer'}
-                    onChange={async () => {
-                      if (!activeOrganizationId) return;
-                      await supabase.from('organizations').update({ tax_mode: 'kleinunternehmer' } as any).eq('id', activeOrganizationId);
-                      queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
-                      queryClient.invalidateQueries({ queryKey: ['user-organization'] });
-                    }}
-                    className="mt-0.5"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{t.settings.taxModeSmallBusiness}</p>
-                    <p className="text-xs text-muted-foreground">{t.settings.taxModeSmallBusinessHint}</p>
-                  </div>
-                </label>
                 <label className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
                   <input
                     type="radio"
@@ -338,13 +321,29 @@ const Settings = () => {
                       if (!activeOrganizationId) return;
                       await supabase.from('organizations').update({ tax_mode: 'standard' } as any).eq('id', activeOrganizationId);
                       queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
-                      queryClient.invalidateQueries({ queryKey: ['user-organization'] });
                     }}
                     className="mt-0.5"
                   />
                   <div>
-                    <p className="text-sm font-medium text-foreground">{t.settings.taxModeVat}</p>
-                    <p className="text-xs text-muted-foreground">{t.settings.taxModeVatHint}</p>
+                    <p className="text-sm font-medium text-foreground">Ja</p>
+                    <p className="text-xs text-muted-foreground">Reguläre Umsatzsteuer ausweisen</p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
+                  <input
+                    type="radio"
+                    name="tax_mode"
+                    checked={(activeOrganization as any)?.tax_mode === 'kleinunternehmer'}
+                    onChange={async () => {
+                      if (!activeOrganizationId) return;
+                      await supabase.from('organizations').update({ tax_mode: 'kleinunternehmer' } as any).eq('id', activeOrganizationId);
+                      queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
+                    }}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Nein, Kleinunternehmer (§19 UStG)</p>
+                    <p className="text-xs text-muted-foreground">Keine Umsatzsteuer berechnen</p>
                   </div>
                 </label>
               </div>
