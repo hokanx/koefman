@@ -27,6 +27,7 @@ const OfferEdit = () => {
   const [introText, setIntroText] = useState('');
   const [footerText, setFooterText] = useState('');
   const [closingText, setClosingText] = useState('');
+  const [serviceType, setServiceType] = useState<'einmalig' | 'laufend'>('einmalig');
   const [items, setItems] = useState<LineItem[]>([]);
 
   const { data: offer } = useQuery({
