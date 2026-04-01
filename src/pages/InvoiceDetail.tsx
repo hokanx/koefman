@@ -256,6 +256,7 @@ const InvoiceDetail = () => {
     const result = await generatePdf({
       type: 'invoice',
       small_business_regulation: isSmallBiz,
+      service_type_label: (invoice as any).source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
       documentTitle: t.invoices.documentTitle,
       documentNumber: invoice!.invoice_number,
       date: formatDateDE(invoice!.date),
