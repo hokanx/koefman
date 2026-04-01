@@ -14,6 +14,7 @@ import type { OfferStatus } from '@/types';
 import { formatEUR } from '@/lib/utils';
 import EmailModal from '@/components/shared/EmailModal';
 import ContractSetupModal from '@/components/shared/ContractSetupModal';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 
 const OfferDetail = () => {
   const { t } = useLanguage();
