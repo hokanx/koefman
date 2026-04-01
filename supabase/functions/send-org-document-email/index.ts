@@ -4,6 +4,7 @@ const corsHeaders = {
 };
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.25.76";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
   offer: 'Angebot',
@@ -19,14 +20,175 @@ const DOC_TYPE_CTA: Record<string, string> = {
   reminder: 'Mahnung ansehen',
 };
 
-const SIGNABLE_TYPES = ['offer', 'contract'];
+const LEGACY_DOC_TYPES = ['offer', 'invoice', 'contract', 'reminder'] as const;
+
+const RequestSchema = z.object({
+  document_id: z.string().uuid().optional(),
+  organization_id: z.string().uuid().optional(),
+  legacy_document_id: z.string().uuid().optional(),
+  legacy_document_type: z.enum(LEGACY_DOC_TYPES).optional(),
+  documentId: z.string().uuid().optional(),
+  documentType: z.enum(LEGACY_DOC_TYPES).optional(),
+  to: z.string().email().optional(),
+  subject: z.string().trim().min(1).max(255).optional(),
+  body: z.string().max(10000).optional(),
+  public_link: z.string().url().optional(),
+  publicLink: z.string().url().optional(),
+  pdfBase64: z.string().optional(),
+  pdfFilename: z.string().max(255).optional(),
+}).refine((value) => {
+  const hasOrgDocument = !!value.document_id;
+  const hasLegacyDocument = !!(
+    value.organization_id &&
+    (value.legacy_document_id || value.documentId) &&
+    (value.legacy_document_type || value.documentType)
+  );
+
+  return hasOrgDocument || hasLegacyDocument;
+}, {
+  message: 'document_id or organization_id + legacy document payload is required',
+}).refine((value) => {
+  const hasAttachmentContent = !!value.pdfBase64;
+  const hasAttachmentFilename = !!value.pdfFilename;
+  return hasAttachmentContent === hasAttachmentFilename;
+}, {
+  message: 'pdfBase64 and pdfFilename must be provided together',
+});
+
+type DocType = typeof LEGACY_DOC_TYPES[number];
+
+type BrandingSettings = {
+  footerText: string;
+  logoUrl: string;
+  replyTo?: string;
+  senderName: string;
+};
+
+type ParsedRequest = {
+  body?: string;
+  documentId?: string;
+  legacyDocumentId?: string;
+  legacyDocumentType?: DocType;
+  organizationId?: string;
+  pdfBase64?: string;
+  pdfFilename?: string;
+  publicLink?: string;
+  subject?: string;
+  to?: string;
+};
+
+type LegacyDocumentContext = {
+  amountTotal: number | null;
+  documentId: string;
+  documentTitle: string;
+  documentType: DocType;
+  recipientEmail: string | null;
+  recipientName: string;
+  signingUrl?: string;
+};
+
+function jsonResponse(body: Record<string, unknown>, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatAmount(amount: number | null | undefined): string {
+  return amount != null && amount > 0
+    ? Number(amount).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+    : '–';
+}
+
+function getDefaultMessage(senderName: string, documentType: string, recipientName: string): string {
+  const greeting = recipientName ? `Guten Tag ${recipientName},` : 'Guten Tag,';
+  return `${greeting}\n\nSie haben ein neues ${documentType.toLowerCase()} von ${senderName} erhalten.`;
+}
+
+function buildTextBody(subject: string, messageBody: string, ctaLabel?: string, signingUrl?: string): string {
+  const parts = [subject, '', messageBody];
+
+  if (signingUrl) {
+    parts.push('', `${ctaLabel || 'Dokument ansehen'}: ${signingUrl}`);
+  }
+
+  return parts.join('\n');
+}
+
+async function ensureOrganizationAccess(supabaseAdmin: any, userId: string, organizationId: string) {
+  const [membershipResult, ownerResult, adminResult] = await Promise.all([
+    supabaseAdmin
+      .from('organization_memberships')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from('organizations')
+      .select('id')
+      .eq('id', organizationId)
+      .eq('owner_user_id', userId)
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin.rpc('has_role', { _user_id: userId, _role: 'admin' }),
+  ]);
+
+  if (membershipResult.error) throw membershipResult.error;
+  if (ownerResult.error) throw ownerResult.error;
+  if (adminResult.error) throw adminResult.error;
+
+  return Boolean(membershipResult.data || ownerResult.data || adminResult.data);
+}
+
+async function loadBranding(supabaseAdmin: any, organizationId: string): Promise<BrandingSettings> {
+  const [{ data: org, error: orgError }, { data: emailSettings, error: emailSettingsError }] = await Promise.all([
+    supabaseAdmin
+      .from('organizations')
+      .select('name')
+      .eq('id', organizationId)
+      .single(),
+    supabaseAdmin
+      .from('organization_email_settings')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .maybeSingle(),
+  ]);
+
+  if (orgError || !org) {
+    throw new Error('Organization not found');
+  }
+
+  if (emailSettingsError) {
+    throw emailSettingsError;
+  }
+
+  return {
+    senderName: emailSettings?.sender_name || org.name || 'KÖFMAN',
+    replyTo: emailSettings?.reply_to_email || undefined,
+    logoUrl: emailSettings?.logo_url || '',
+    footerText: emailSettings?.footer_text || '',
+  };
+}
 
 function buildEmailHtml(vars: Record<string, string>): string {
   const logoBlock = vars.logo_url
-    ? `<tr><td align="center" style="padding:30px 20px 10px 20px;"><img src="${vars.logo_url}" alt="${vars.sender_name}" style="max-width:180px;max-height:60px;" /></td></tr>`
+    ? `<tr><td align="center" style="padding:30px 20px 10px 20px;"><img src="${escapeHtml(vars.logo_url)}" alt="${escapeHtml(vars.sender_name)}" style="max-width:180px;max-height:60px;" /></td></tr>`
     : '';
 
-  const ctaLabel = vars.cta_label || 'DOKUMENT ANSEHEN';
+  const ctaLabel = escapeHtml(vars.cta_label || 'DOKUMENT ANSEHEN');
+  const footerText = vars.footer_text ? escapeHtml(vars.footer_text) : '';
+  const signingUrl = vars.signing_url ? escapeHtml(vars.signing_url) : '';
+  const messageBody = escapeHtml(vars.message_body || getDefaultMessage(vars.sender_name, vars.document_type_label, vars.recipient_name));
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -37,26 +199,16 @@ function buildEmailHtml(vars: Record<string, string>): string {
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 ${logoBlock}
 <tr><td style="padding:30px 30px 10px 30px;">
-<h1 style="color:#FFFFFF;font-size:22px;margin:0 0 8px 0;">${vars.document_title}</h1>
-<p style="color:#999999;font-size:14px;margin:0 0 4px 0;">${vars.document_type_label}</p>
-${vars.amount_total && vars.amount_total !== '–' ? `<p style="color:#FFFFFF;font-size:16px;font-weight:bold;margin:8px 0 0 0;">${vars.amount_total}</p>` : ''}
+<h1 style="color:#FFFFFF;font-size:22px;margin:0 0 8px 0;">${escapeHtml(vars.document_title)}</h1>
+<p style="color:#999999;font-size:14px;margin:0 0 4px 0;">${escapeHtml(vars.document_type_label)}</p>
+${vars.amount_total && vars.amount_total !== '–' ? `<p style="color:#FFFFFF;font-size:16px;font-weight:bold;margin:8px 0 0 0;">${escapeHtml(vars.amount_total)}</p>` : ''}
 </td></tr>
 <tr><td style="padding:10px 30px 20px 30px;">
-<p style="color:#CCCCCC;font-size:14px;line-height:1.6;margin:0;">
-Guten Tag${vars.recipient_name ? ' ' + vars.recipient_name : ''},<br/><br/>
-Sie haben ein neues Dokument von <strong style="color:#FFFFFF;">${vars.sender_name}</strong> erhalten.
-</p>
+<p style="color:#CCCCCC;font-size:14px;line-height:1.6;margin:0;white-space:pre-line;">${messageBody}</p>
 </td></tr>
-<tr><td align="center" style="padding:10px 30px 10px 30px;">
-<p style="margin:0;"><a href="${vars.signing_url}" style="display:inline-block;background-color:#FFFFFF;color:#000000;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:8px;">→ ${ctaLabel}</a></p>
-</td></tr>
-<tr><td style="padding:10px 30px 20px 30px;">
-<p style="color:#666666;font-size:11px;line-height:1.5;margin:0;">
-Falls der Link nicht funktioniert, kopieren Sie ihn in Ihren Browser:<br/>
-<a href="${vars.signing_url}" style="color:#666666;word-break:break-all;">${vars.signing_url}</a>
-</p>
-</td></tr>
-${vars.footer_text ? `<tr><td style="padding:10px 30px 30px 30px;border-top:1px solid #222222;"><p style="color:#666666;font-size:11px;line-height:1.5;margin:0;">${vars.footer_text}</p></td></tr>` : ''}
+${signingUrl ? `<tr><td align="center" style="padding:10px 30px 10px 30px;"><p style="margin:0;"><a href="${signingUrl}" style="display:inline-block;background-color:#FFFFFF;color:#000000;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:8px;">→ ${ctaLabel}</a></p></td></tr>` : ''}
+${signingUrl ? `<tr><td style="padding:10px 30px 20px 30px;"><p style="color:#666666;font-size:11px;line-height:1.5;margin:0;">Falls der Link nicht funktioniert, kopieren Sie ihn in Ihren Browser:<br/><a href="${signingUrl}" style="color:#666666;word-break:break-all;">${signingUrl}</a></p></td></tr>` : ''}
+${footerText ? `<tr><td style="padding:10px 30px 30px 30px;border-top:1px solid #222222;"><p style="color:#666666;font-size:11px;line-height:1.5;margin:0;white-space:pre-line;">${footerText}</p></td></tr>` : ''}
 <tr><td style="padding:10px 30px 30px 30px;"><p style="color:#444444;font-size:10px;margin:0;">Gesendet über KÖFMAN</p></td></tr>
 </table>
 </td></tr>
@@ -65,165 +217,360 @@ ${vars.footer_text ? `<tr><td style="padding:10px 30px 30px 30px;border-top:1px 
 </html>`;
 }
 
+async function sendViaResend(resendApiKey: string, emailPayload: Record<string, unknown>) {
+  const resendResponse = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(emailPayload),
+  });
+
+  const resendData = await resendResponse.json();
+
+  if (!resendResponse.ok) {
+    console.error('Resend error:', resendData);
+    throw new Error(`Email failed: ${JSON.stringify(resendData)}`);
+  }
+
+  return resendData;
+}
+
+async function resolveLegacyDocument(
+  supabaseAdmin: any,
+  requestData: ParsedRequest,
+  userId: string,
+  appUrl: string,
+): Promise<LegacyDocumentContext> {
+  const legacyDocumentId = requestData.legacyDocumentId!;
+  const legacyDocumentType = requestData.legacyDocumentType!;
+
+  if (legacyDocumentType === 'offer') {
+    const { data: offer, error } = await supabaseAdmin
+      .from('offers')
+      .select('id, user_id, offer_number, public_token, grand_total, customer:customers(name, email)')
+      .eq('id', legacyDocumentId)
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !offer) {
+      throw new Error('Offer not found');
+    }
+
+    let publicToken = offer.public_token;
+    if (!publicToken && !requestData.publicLink) {
+      publicToken = crypto.randomUUID();
+      const { error: updateError } = await supabaseAdmin
+        .from('offers')
+        .update({ public_token: publicToken })
+        .eq('id', legacyDocumentId)
+        .eq('user_id', userId);
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    return {
+      documentId: offer.id,
+      documentType: 'offer',
+      documentTitle: offer.offer_number || '(Ohne Titel)',
+      recipientEmail: offer.customer?.email || null,
+      recipientName: offer.customer?.name || '',
+      amountTotal: offer.grand_total,
+      signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/offer/view/${publicToken}` : undefined),
+    };
+  }
+
+  if (legacyDocumentType === 'contract') {
+    const { data: contract, error } = await supabaseAdmin
+      .from('contracts')
+      .select('id, user_id, contract_number, public_token, grand_total, customer:customers(name, email)')
+      .eq('id', legacyDocumentId)
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !contract) {
+      throw new Error('Contract not found');
+    }
+
+    let publicToken = contract.public_token;
+    if (!publicToken && !requestData.publicLink) {
+      publicToken = crypto.randomUUID();
+      const { error: updateError } = await supabaseAdmin
+        .from('contracts')
+        .update({ public_token: publicToken })
+        .eq('id', legacyDocumentId)
+        .eq('user_id', userId);
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    return {
+      documentId: contract.id,
+      documentType: 'contract',
+      documentTitle: contract.contract_number || '(Ohne Titel)',
+      recipientEmail: contract.customer?.email || null,
+      recipientName: contract.customer?.name || '',
+      amountTotal: contract.grand_total,
+      signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/contract/view/${publicToken}` : undefined),
+    };
+  }
+
+  const { data: invoice, error } = await supabaseAdmin
+    .from('invoices')
+    .select('id, user_id, invoice_number, grand_total, customer:customers(name, email)')
+    .eq('id', legacyDocumentId)
+    .eq('user_id', userId)
+    .single();
+
+  if (error || !invoice) {
+    throw new Error('Invoice not found');
+  }
+
+  return {
+    documentId: invoice.id,
+    documentType: legacyDocumentType,
+    documentTitle: invoice.invoice_number || '(Ohne Titel)',
+    recipientEmail: invoice.customer?.email || null,
+    recipientName: invoice.customer?.name || '',
+    amountTotal: invoice.grand_total,
+    signingUrl: requestData.publicLink,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const appUrl = (Deno.env.get('PUBLIC_APP_URL') || 'https://koefman.de').replace(/\/+$/, '');
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey || !resendApiKey) {
+      console.error('Missing required environment variables for send-org-document-email', {
+        hasAnonKey: !!anonKey,
+        hasResendApiKey: !!resendApiKey,
+        hasServiceRoleKey: !!serviceRoleKey,
+        hasSupabaseUrl: !!supabaseUrl,
+      });
+      return jsonResponse({ error: 'Server configuration error: missing email service credentials.' }, 500);
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return jsonResponse({ error: 'Unauthorized' }, 401);
+    }
+
+    const supabaseAdmin: any = createClient(
+      supabaseUrl,
+      serviceRoleKey
     );
 
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
+    const supabaseUser: any = createClient(
+      supabaseUrl,
+      anonKey,
       { global: { headers: { Authorization: authHeader } } }
     );
 
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return jsonResponse({ error: 'Unauthorized' }, 401);
     }
     const userId = claimsData.claims.sub;
 
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    if (!RESEND_API_KEY) {
-      return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return jsonResponse({ error: 'Invalid JSON body' }, 400);
     }
 
-    const { document_id } = await req.json();
-    if (!document_id) {
-      return new Response(JSON.stringify({ error: 'document_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const parsed = RequestSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return jsonResponse({ error: parsed.error.issues[0]?.message || 'Invalid request body' }, 400);
     }
 
-    const { data: doc, error: docError } = await supabaseAdmin
-      .from('org_documents')
-      .select('*')
-      .eq('id', document_id)
-      .single();
-    if (docError || !doc) {
-      return new Response(JSON.stringify({ error: 'Document not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
+    const requestData: ParsedRequest = {
+      documentId: parsed.data.document_id,
+      organizationId: parsed.data.organization_id,
+      legacyDocumentId: parsed.data.legacy_document_id || parsed.data.documentId,
+      legacyDocumentType: parsed.data.legacy_document_type || parsed.data.documentType,
+      to: parsed.data.to,
+      subject: parsed.data.subject,
+      body: parsed.data.body,
+      publicLink: parsed.data.public_link || parsed.data.publicLink,
+      pdfBase64: parsed.data.pdfBase64,
+      pdfFilename: parsed.data.pdfFilename,
+    };
 
-    if (!doc.recipient_email) {
-      return new Response(JSON.stringify({ error: 'No recipient email on document' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    const { data: org } = await supabaseAdmin
-      .from('organizations')
-      .select('name')
-      .eq('id', doc.organization_id)
-      .single();
-
-    const { data: emailSettings } = await supabaseAdmin
-      .from('organization_email_settings')
-      .select('*')
-      .eq('organization_id', doc.organization_id)
-      .maybeSingle();
-
-    let publicToken = doc.public_token;
-    if (!publicToken) {
-      publicToken = crypto.randomUUID();
-      await supabaseAdmin
+    if (requestData.documentId) {
+      const { data: doc, error: docError } = await supabaseAdmin
         .from('org_documents')
-        .update({ public_token: publicToken })
-        .eq('id', document_id);
-    }
+        .select('*')
+        .eq('id', requestData.documentId)
+        .single();
+      if (docError || !doc) {
+        return jsonResponse({ error: 'Document not found' }, 404);
+      }
 
-    const appUrl = (Deno.env.get('PUBLIC_APP_URL') || 'https://koefman.de').replace(/\/+$/, '');
-    const signingUrl = `${appUrl}/document/view/${publicToken}`;
+      const hasAccess = await ensureOrganizationAccess(supabaseAdmin, userId, doc.organization_id);
+      if (!hasAccess) {
+        return jsonResponse({ error: 'Forbidden' }, 403);
+      }
 
-    const senderName = emailSettings?.sender_name || org?.name || 'KÖFMAN';
-    const replyTo = emailSettings?.reply_to_email || undefined;
-    const logoUrl = emailSettings?.logo_url || '';
-    const footerText = emailSettings?.footer_text || '';
+      const branding = await loadBranding(supabaseAdmin, doc.organization_id);
+      const recipientEmail = requestData.to || doc.recipient_email;
+      if (!recipientEmail) {
+        return jsonResponse({ error: 'No recipient email on document' }, 400);
+      }
 
-    const amountFormatted = doc.amount_total != null && doc.amount_total > 0
-      ? Number(doc.amount_total).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
-      : '–';
+      let publicToken = doc.public_token;
+      if (!publicToken && !requestData.publicLink) {
+        publicToken = crypto.randomUUID();
+        await supabaseAdmin
+          .from('org_documents')
+          .update({ public_token: publicToken })
+          .eq('id', requestData.documentId);
+      }
 
-    const ctaLabel = DOC_TYPE_CTA[doc.document_type] || 'Dokument ansehen';
+      const signingUrl = requestData.publicLink || (publicToken ? `${appUrl}/document/view/${publicToken}` : undefined);
+      const subject = requestData.subject || `${DOC_TYPE_LABELS[doc.document_type] || 'Dokument'}: ${doc.title || '(Ohne Titel)'}`;
+      const messageBody = requestData.body || getDefaultMessage(branding.senderName, DOC_TYPE_LABELS[doc.document_type] || 'Dokument', doc.recipient_name || '');
+      const ctaLabel = DOC_TYPE_CTA[doc.document_type] || 'Dokument ansehen';
 
-    const vars: Record<string, string> = {
-      sender_name: senderName,
-      recipient_name: doc.recipient_name || '',
-      document_title: doc.title || '(Ohne Titel)',
-      document_type: doc.document_type,
-      document_type_label: DOC_TYPE_LABELS[doc.document_type] || doc.document_type,
-      amount_total: amountFormatted,
-      signing_url: signingUrl,
-      footer_text: footerText,
-      organization_name: org?.name || 'KÖFMAN',
-      logo_url: logoUrl,
-      cta_label: ctaLabel.toUpperCase(),
-    };
-
-    const emailHtml = buildEmailHtml(vars);
-    const subject = `${DOC_TYPE_LABELS[doc.document_type] || 'Dokument'}: ${doc.title || '(Ohne Titel)'}`;
-
-    const resendBody: Record<string, unknown> = {
-      from: `${senderName} via KÖFMAN <no-reply@koefman.de>`,
-      to: [doc.recipient_email],
-      subject,
-      html: emailHtml,
-    };
-    if (replyTo) {
-      resendBody.reply_to = replyTo;
-    }
-
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(resendBody),
-    });
-
-    const resendData = await resendResponse.json();
-    if (!resendResponse.ok) {
-      console.error('Resend error:', resendData);
-      return new Response(JSON.stringify({ error: `Email failed: ${JSON.stringify(resendData)}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    await supabaseAdmin
-      .from('org_documents')
-      .update({
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        sent_by_user_id: userId,
-        public_token: publicToken,
-      })
-      .eq('id', document_id);
-
-    await supabaseAdmin
-      .from('org_document_emails')
-      .insert({
-        document_id,
-        organization_id: doc.organization_id,
-        recipient_email: doc.recipient_email,
-        subject,
-        sent_by_user_id: userId,
+      const emailHtml = buildEmailHtml({
+        sender_name: branding.senderName,
+        recipient_name: doc.recipient_name || '',
+        document_title: doc.title || '(Ohne Titel)',
+        document_type_label: DOC_TYPE_LABELS[doc.document_type] || doc.document_type,
+        amount_total: formatAmount(doc.amount_total),
+        signing_url: signingUrl || '',
+        footer_text: branding.footerText,
+        logo_url: branding.logoUrl,
+        cta_label: ctaLabel.toUpperCase(),
+        message_body: messageBody,
       });
 
-    return new Response(JSON.stringify({ success: true, id: resendData.id }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      const resendBody: Record<string, unknown> = {
+        from: `${branding.senderName} via KÖFMAN <no-reply@koefman.de>`,
+        to: [recipientEmail],
+        subject,
+        html: emailHtml,
+        text: buildTextBody(subject, messageBody, ctaLabel, signingUrl),
+      };
+
+      if (branding.replyTo) {
+        resendBody.reply_to = branding.replyTo;
+      }
+
+      if (requestData.pdfBase64 && requestData.pdfFilename) {
+        resendBody.attachments = [{
+          filename: requestData.pdfFilename,
+          content: requestData.pdfBase64,
+        }];
+      }
+
+      const resendData = await sendViaResend(resendApiKey, resendBody);
+
+      await supabaseAdmin
+        .from('org_documents')
+        .update({
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+          sent_by_user_id: userId,
+          public_token: publicToken,
+          recipient_email: doc.recipient_email || recipientEmail,
+        })
+        .eq('id', requestData.documentId);
+
+      await supabaseAdmin
+        .from('org_document_emails')
+        .insert({
+          document_id: requestData.documentId,
+          organization_id: doc.organization_id,
+          recipient_email: recipientEmail,
+          subject,
+          sent_by_user_id: userId,
+        });
+
+      return jsonResponse({ success: true, id: resendData.id }, 200);
+    }
+
+    const organizationId = requestData.organizationId!;
+    const hasAccess = await ensureOrganizationAccess(supabaseAdmin, userId, organizationId);
+    if (!hasAccess) {
+      return jsonResponse({ error: 'Forbidden' }, 403);
+    }
+
+    const branding = await loadBranding(supabaseAdmin, organizationId);
+    const legacyDocument = await resolveLegacyDocument(supabaseAdmin, requestData, userId, appUrl);
+    const recipientEmail = requestData.to || legacyDocument.recipientEmail;
+
+    if (!recipientEmail) {
+      return jsonResponse({ error: 'No recipient email available' }, 400);
+    }
+
+    const ctaLabel = DOC_TYPE_CTA[legacyDocument.documentType] || 'Dokument ansehen';
+    const subject = requestData.subject || `${DOC_TYPE_LABELS[legacyDocument.documentType] || 'Dokument'}: ${legacyDocument.documentTitle}`;
+    const messageBody = requestData.body || getDefaultMessage(branding.senderName, DOC_TYPE_LABELS[legacyDocument.documentType] || 'Dokument', legacyDocument.recipientName);
+
+    const emailHtml = buildEmailHtml({
+      sender_name: branding.senderName,
+      recipient_name: legacyDocument.recipientName,
+      document_title: legacyDocument.documentTitle,
+      document_type_label: DOC_TYPE_LABELS[legacyDocument.documentType] || legacyDocument.documentType,
+      amount_total: formatAmount(legacyDocument.amountTotal),
+      signing_url: legacyDocument.signingUrl || '',
+      footer_text: branding.footerText,
+      logo_url: branding.logoUrl,
+      cta_label: ctaLabel.toUpperCase(),
+      message_body: messageBody,
     });
+
+    const resendBody: Record<string, unknown> = {
+      from: `${branding.senderName} via KÖFMAN <no-reply@koefman.de>`,
+      to: [recipientEmail],
+      subject,
+      html: emailHtml,
+      text: buildTextBody(subject, messageBody, ctaLabel, legacyDocument.signingUrl),
+    };
+
+    if (branding.replyTo) {
+      resendBody.reply_to = branding.replyTo;
+    }
+
+    if (requestData.pdfBase64 && requestData.pdfFilename) {
+      resendBody.attachments = [{
+        filename: requestData.pdfFilename,
+        content: requestData.pdfBase64,
+      }];
+    }
+
+    const resendData = await sendViaResend(resendApiKey, resendBody);
+
+    await supabaseAdmin
+      .from('document_emails')
+      .insert({
+        user_id: userId,
+        document_type: legacyDocument.documentType,
+        document_id: legacyDocument.documentId,
+        recipient_email: recipientEmail,
+        subject,
+      });
+
+    return jsonResponse({ success: true, id: resendData.id }, 200);
   } catch (error: unknown) {
     console.error('Error:', error);
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: msg }, 500);
   }
 });
