@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import FormSection from '@/components/shared/FormSection';
 import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import { toast } from 'sonner';
+import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import type { Customer, LineItem, OfferStatus } from '@/types';
 
 const OfferEdit = () => {
