@@ -296,7 +296,7 @@ const AdminOrgExpenses = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Brutto *</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Betrag *</label>
               <Input value={form.amount_gross} onChange={(e) => setForm((f) => ({ ...f, amount_gross: e.target.value }))} placeholder="0,00" inputMode="decimal" />
             </div>
             <div>
@@ -304,7 +304,7 @@ const AdminOrgExpenses = () => {
               <Input value={form.amount_net} onChange={(e) => setForm((f) => ({ ...f, amount_net: e.target.value }))} placeholder="0,00" inputMode="decimal" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">USt (optional)</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Steuer (optional)</label>
               <Input value={form.amount_tax} onChange={(e) => setForm((f) => ({ ...f, amount_tax: e.target.value }))} placeholder="0,00" inputMode="decimal" />
             </div>
           </div>
