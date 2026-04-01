@@ -16,6 +16,7 @@ import { sanitizeNotes } from '@/lib/sanitizeNotes';
 import EmailModal from '@/components/shared/EmailModal';
 import ContractSetupModal from '@/components/shared/ContractSetupModal';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import { applyDiscount, formatDiscountLabel, type DiscountData } from '@/components/shared/DiscountEditor';
 
 const OfferDetail = () => {
   const { t } = useLanguage();
