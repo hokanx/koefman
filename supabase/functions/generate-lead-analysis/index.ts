@@ -366,8 +366,6 @@ serve(async (req) => {
 
     if (subErr) throw subErr;
 
-    // Determine recommended package
-    const recPkg = recommendPackage(company_size || "", importance || "", commitment || "");
 
     // 2. Generate AI analysis
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
