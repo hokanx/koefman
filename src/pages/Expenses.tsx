@@ -22,6 +22,7 @@ const getStoragePath = (fileUrl: string): string => {
 const Expenses = () => {
   const { user } = useAuth();
   const { effectiveUserId } = useImpersonation();
+  const { isKleinunternehmer } = useOrgTaxMode();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
