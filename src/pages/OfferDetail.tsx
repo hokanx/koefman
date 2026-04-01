@@ -151,6 +151,7 @@ const OfferDetail = () => {
         validityDate: validityDate || undefined,
         validity_days: validityDays,
         small_business_regulation: isSmallBiz,
+        service_type_label: (offer as any).service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
