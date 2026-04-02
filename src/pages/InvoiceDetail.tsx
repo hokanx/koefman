@@ -27,6 +27,7 @@ const InvoiceDetail = () => {
   const [creatingReminder, setCreatingReminder] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailType, setEmailType] = useState<'invoice' | 'reminder'>('invoice');
+  const [publicToken, setPublicToken] = useState<string | null>(null);
   const [recurringOpen, setRecurringOpen] = useState(false);
   const { isKleinunternehmer } = useOrgTaxMode();
   const statusLabels = t.status as Record<string, string>;
