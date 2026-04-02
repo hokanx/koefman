@@ -545,6 +545,7 @@ const InvoiceDetail = () => {
         defaultBody={emailType === 'reminder'
           ? t.email.reminderBody.replace(/{number}/g, invoice?.invoice_number || '')
           : t.email.invoiceBody.replace(/{number}/g, invoice?.invoice_number || '')}
+        publicLink={emailType === 'invoice' && publicToken ? `${window.location.origin}/invoice/view/${publicToken}` : undefined}
         documentType={emailType === 'reminder' ? 'reminder' : 'invoice'}
         documentId={id!}
         pdfGenerator={emailType === 'reminder' ? getReminderPdfBase64 : getInvoicePdfBase64}
