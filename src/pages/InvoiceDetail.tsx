@@ -27,6 +27,7 @@ const InvoiceDetail = () => {
   const [creatingReminder, setCreatingReminder] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailType, setEmailType] = useState<'invoice' | 'reminder'>('invoice');
+  const [publicToken, setPublicToken] = useState<string | null>(null);
   const [recurringOpen, setRecurringOpen] = useState(false);
   const { isKleinunternehmer } = useOrgTaxMode();
   const statusLabels = t.status as Record<string, string>;
@@ -426,7 +427,18 @@ const InvoiceDetail = () => {
                 <Bell className="h-4 w-4" /> {creatingReminder ? t.common.generating : t.invoices.createReminder}
               </button>
             )}
-            <button onClick={() => { setEmailType('invoice'); setEmailOpen(true); }}
+            <button onClick={async () => {
+                setEmailType('invoice');
+                // Ensure public token exists
+                let token = (invoice as any).public_token;
+                if (!token) {
+                  token = crypto.randomUUID();
+                  await supabase.from('invoices').update({ public_token: token }).eq('id', id!);
+                  queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+                }
+                setPublicToken(token);
+                setEmailOpen(true);
+              }}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
               <Mail className="h-4 w-4" /> {t.email.prepareEmail}
             </button>
@@ -533,6 +545,7 @@ const InvoiceDetail = () => {
         defaultBody={emailType === 'reminder'
           ? t.email.reminderBody.replace(/{number}/g, invoice?.invoice_number || '')
           : t.email.invoiceBody.replace(/{number}/g, invoice?.invoice_number || '')}
+        publicLink={emailType === 'invoice' && publicToken ? `${window.location.origin}/invoice/view/${publicToken}` : undefined}
         documentType={emailType === 'reminder' ? 'reminder' : 'invoice'}
         documentId={id!}
         pdfGenerator={emailType === 'reminder' ? getReminderPdfBase64 : getInvoicePdfBase64}
