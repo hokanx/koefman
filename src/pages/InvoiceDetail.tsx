@@ -427,7 +427,18 @@ const InvoiceDetail = () => {
                 <Bell className="h-4 w-4" /> {creatingReminder ? t.common.generating : t.invoices.createReminder}
               </button>
             )}
-            <button onClick={() => { setEmailType('invoice'); setEmailOpen(true); }}
+            <button onClick={async () => {
+                setEmailType('invoice');
+                // Ensure public token exists
+                let token = (invoice as any).public_token;
+                if (!token) {
+                  token = crypto.randomUUID();
+                  await supabase.from('invoices').update({ public_token: token }).eq('id', id!);
+                  queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+                }
+                setPublicToken(token);
+                setEmailOpen(true);
+              }}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
               <Mail className="h-4 w-4" /> {t.email.prepareEmail}
             </button>
