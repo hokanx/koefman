@@ -75,9 +75,11 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
       id: 'recognition',
       lines: [
         { text: 'DU SPÜRST ES SCHON LÄNGER.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
+        { text: 'ETWAS PASSIERT HINTER DEINEM RÜCKEN.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
         { text: '', spacer: true },
         { text: 'KUNDEN SPRINGEN AB.', size: 'text-base sm:text-lg', weight: 'font-normal' },
-        { text: 'INTERESSENTEN MELDEN SICH – UND VERSCHWINDEN WIEDER.', size: 'text-base sm:text-lg', weight: 'font-normal' },
+        { text: 'INTERESSENTEN MELDEN SICH –', size: 'text-base sm:text-lg', weight: 'font-normal' },
+        { text: 'UND VERSCHWINDEN WIEDER.', size: 'text-base sm:text-lg', weight: 'font-normal' },
         { text: '', spacer: true },
         { text: 'UND DU WEISST NICHT, WARUM.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
       ],
