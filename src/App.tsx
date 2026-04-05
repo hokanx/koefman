@@ -52,7 +52,7 @@ import TruthA from "@/pages/TruthA";
 import TruthB from "@/pages/TruthB";
 import DiagnosticIntake from "@/pages/DiagnosticIntake";
 import SystemPage from "@/pages/SystemPage";
-import StrategyStart from "@/pages/StrategyStart";
+
 import BookingPage from "@/pages/BookingPage";
 import NotFound from "@/pages/NotFound";
 
