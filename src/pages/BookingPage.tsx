@@ -58,7 +58,7 @@ export default function BookingPage() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      await (supabase as any).from('lead_bookings').insert({
+      await supabase.from('lead_bookings').insert({
         submission_id: submissionId || null,
         phone: phone.trim(),
         selected_slot: selectedSlot,
