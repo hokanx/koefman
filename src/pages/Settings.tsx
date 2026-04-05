@@ -521,9 +521,9 @@ const Settings = () => {
         <section>
           <div className="mb-3 flex items-center gap-2">
             <Globe className="h-5 w-5 text-primary" />
-            <h3 className="text-base font-semibold text-foreground">{t.settings.sectionAppearance || 'Darstellung'}</h3>
+            <h3 className="text-base font-semibold text-foreground">Darstellung</h3>
           </div>
-          <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionAppearanceDesc || 'Design der Anwendung anpassen.'}</p>
+          <p className="text-sm text-muted-foreground mb-4">Design der Anwendung anpassen.</p>
 
           <div className="space-y-3">
 
