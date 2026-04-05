@@ -471,10 +471,6 @@ const Settings = () => {
                   <input type="text" value={form.default_closing_text} onChange={(e) => update('default_closing_text', e.target.value)} className={inputClass} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.ownerName}</label>
-                  <p className="text-xs text-muted-foreground mb-1">{t.settings.ownerNameDescription}</p>
-                </div>
-                <div>
                   <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferTitle}</label>
                   <p className="text-xs text-muted-foreground mb-1">{t.settings.defaultOfferTitleDescription}</p>
                   <input type="text" value={form.default_offer_title} onChange={(e) => update('default_offer_title', e.target.value)} className={inputClass} />
