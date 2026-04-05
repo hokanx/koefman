@@ -159,6 +159,11 @@ const LandingPage = () => {
               </FadeSection>
             )}
           </div>
+          {si === 0 && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce opacity-20">
+              <ChevronDown className="h-5 w-5 text-foreground" />
+            </div>
+          )}
         </section>
       ))}
 
