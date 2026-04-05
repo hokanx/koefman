@@ -8,11 +8,11 @@ export const useOrgTaxMode = () => {
   const { activeOrganization, isLoading } = useWorkspace();
 
   const taxMode = (activeOrganization as any)?.tax_mode as string | undefined;
-  const isKleinunternehmer = taxMode === 'kleinunternehmer';
+  const isKleinunternehmer = taxMode === 'small_business';
 
   return {
     isKleinunternehmer,
-    taxMode: isKleinunternehmer ? 'kleinunternehmer' as const : 'standard' as const,
+    taxMode: isKleinunternehmer ? 'small_business' as const : 'standard' as const,
     isLoading,
   };
 };
