@@ -45,6 +45,9 @@ const Settings = () => {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Tax mode is part of the form state — saved only on Submit
+  const [taxMode, setTaxMode] = useState<'standard' | 'small_business'>('standard');
+
   const [form, setForm] = useState({
     business_name: '',
     owner_name: '',
@@ -59,7 +62,6 @@ const Settings = () => {
     // Billing & Tax
     tax_number: '',
     vat_id: '',
-    // small_business_regulation is now derived from organizations.tax_mode
     default_tax_rate: 19,
     account_holder: '',
     bank_name: '',
