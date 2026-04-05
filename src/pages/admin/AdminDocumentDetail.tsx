@@ -35,13 +35,22 @@ const AdminDocumentDetail = () => {
   const { data: doc, isLoading } = useQuery({
     queryKey: ['admin-doc', type, id],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from(config.table)
-        .select('*, customer:customers(*)')
-        .eq('id', id!)
-        .single();
-      if (error) throw error;
-      return data;
+      let result: { data: any; error: any };
+      switch (type) {
+        case 'offer':
+          result = await supabase.from('offers').select('*, customer:customers(*)').eq('id', id!).single();
+          break;
+        case 'invoice':
+          result = await supabase.from('invoices').select('*, customer:customers(*)').eq('id', id!).single();
+          break;
+        case 'contract':
+          result = await supabase.from('contracts').select('*, customer:customers(*)').eq('id', id!).single();
+          break;
+        default:
+          throw new Error('Unknown type');
+      }
+      if (result.error) throw result.error;
+      return result.data;
     },
     enabled: !!config && !!id,
   });
@@ -49,12 +58,21 @@ const AdminDocumentDetail = () => {
   const { data: items = [] } = useQuery({
     queryKey: ['admin-doc-items', type, id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from(config.itemsTable)
-        .select('*')
-        .eq(config.fk, id!)
-        .order('sort_order');
-      return data || [];
+      let result: { data: any[] | null };
+      switch (type) {
+        case 'offer':
+          result = await supabase.from('offer_items').select('*').eq('offer_id', id!).order('sort_order');
+          break;
+        case 'invoice':
+          result = await supabase.from('invoice_items').select('*').eq('invoice_id', id!).order('sort_order');
+          break;
+        case 'contract':
+          result = await supabase.from('contract_items').select('*').eq('contract_id', id!).order('sort_order');
+          break;
+        default:
+          throw new Error('Unknown type');
+      }
+      return result.data || [];
     },
     enabled: !!config && !!id,
   });
