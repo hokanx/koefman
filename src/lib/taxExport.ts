@@ -9,6 +9,7 @@ interface ExportOptions {
   from: string;
   to: string;
   businessSettings: any;
+  isKleinunternehmer?: boolean;
   /** Optional callback for progress updates (0–100) */
   onProgress?: (percent: number, label: string) => void;
 }
