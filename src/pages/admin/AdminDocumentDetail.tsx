@@ -35,13 +35,13 @@ const AdminDocumentDetail = () => {
   const { data: doc, isLoading } = useQuery({
     queryKey: ['admin-doc', type, id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from(config.table)
         .select('*, customer:customers(*)')
         .eq('id', id!)
         .single();
       if (error) throw error;
-      return data as any;
+      return data;
     },
     enabled: !!config && !!id,
   });
