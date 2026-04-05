@@ -357,7 +357,7 @@ async function resolveLegacyDocument(
     }
 
     let publicToken = contract.public_token;
-    if (!publicToken && !requestData.publicLink) {
+    if (!publicToken) {
       publicToken = crypto.randomUUID();
       const { error: updateError } = await supabaseAdmin
         .from('contracts')
@@ -370,6 +370,8 @@ async function resolveLegacyDocument(
       }
     }
 
+    const signingUrl = requestData.publicLink || `${appUrl}/contract/view/${publicToken}`;
+
     const freqMap: Record<string, string> = { weekly: 'Wöchentlich', every_2_weeks: 'Alle 2 Wochen', monthly: 'Monatlich', quarterly: 'Vierteljährlich' };
     return {
       documentId: contract.id,
@@ -379,7 +381,7 @@ async function resolveLegacyDocument(
       recipientName: contract.customer?.name || '',
       amountTotal: contract.grand_total,
       serviceTypeLabel: `Wiederkehrend (${freqMap[contract.frequency] || contract.frequency})`,
-      signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/contract/view/${publicToken}` : undefined),
+      signingUrl,
     };
   }
 
