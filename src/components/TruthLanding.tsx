@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TruthLandingProps {
@@ -50,6 +51,13 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
   const navigate = useNavigate();
   const sessionIdRef = useRef<string | null>(null);
   const variant = campaignId || 'direct';
+  const [scrollHintVisible, setScrollHintVisible] = useState(true);
+
+  useEffect(() => {
+    const onScroll = () => setScrollHintVisible(window.scrollY < 80);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const sections = [
     {
@@ -139,7 +147,7 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
       {sections.map((section) => (
         <section
           key={section.id}
-          className={`flex flex-col items-center justify-center px-6 snap-start ${section.fullScreen ? 'min-h-screen' : 'min-h-screen py-24 sm:py-32'}`}
+          className={`relative flex flex-col items-center justify-center px-6 snap-start ${section.fullScreen ? 'min-h-screen' : 'min-h-screen py-24 sm:py-32'}`}
         >
           <div className="w-full max-w-[480px] space-y-4 text-center">
             {section.lines.map((line, li) => (
@@ -158,6 +166,14 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
                 </p>
               </div>
             )}
+          {section.fullScreen && (
+            <>
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
+              <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce transition-opacity duration-500 ${scrollHintVisible ? 'opacity-15' : 'opacity-0'}`}>
+                <ChevronDown className="h-4 w-4 text-foreground" />
+              </div>
+            </>
+          )}
           </div>
         </section>
       ))}
