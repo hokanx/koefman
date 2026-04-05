@@ -118,9 +118,9 @@ const AdminLeads = () => {
 
   const fetchSubmissions = async () => {
     const [subsRes, analysesRes, bookingsRes] = await Promise.all([
-      (supabase as any).from('diagnostic_submissions').select('*').order('created_at', { ascending: false }),
-      (supabase as any).from('lead_analyses').select('*'),
-      (supabase as any).from('lead_bookings').select('*'),
+      supabase.from('diagnostic_submissions').select('*').order('created_at', { ascending: false }),
+      supabase.from('lead_analyses').select('*'),
+      supabase.from('lead_bookings').select('*'),
     ]);
     const subs = subsRes.data || [];
     const analyses = analysesRes.data || [];
