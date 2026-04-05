@@ -490,13 +490,10 @@ const AdminLeads = () => {
                 <div className="border-t border-border px-6 py-4">
                   <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">AKTIONEN</p>
                   
-                  {/* Primary actions */}
-                  <div className="flex flex-col gap-2 mb-4">
-                    <Button className="w-full justify-start text-xs" onClick={() => convertAndNavigate(selected, 'offer')}>
-                      <FileText className="w-4 h-4 mr-2" /> Angebot erstellen
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start text-xs" onClick={() => convertAndNavigate(selected, 'contract')}>
-                      <FileText className="w-4 h-4 mr-2" /> Vertrag erstellen
+                  {/* Primary action */}
+                  <div className="mb-4">
+                    <Button className="w-full justify-start text-xs" disabled={converting} onClick={() => createOfferFromLead(selected)}>
+                      <FileText className="w-4 h-4 mr-2" /> {converting ? 'Wird erstellt…' : 'Angebot erstellen'}
                     </Button>
                   </div>
 
