@@ -25,7 +25,7 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
   const progress = (p: number, l: string) => onProgress?.(Math.round(p), l);
   progress(0, 'Daten laden…');
 
-  const isSmallBiz = !!businessSettings?.small_business_regulation;
+  const isSmallBiz = options.isKleinunternehmer ?? !!businessSettings?.small_business_regulation;
   const today = new Date().toISOString().split('T')[0];
 
   const businessInfo = buildBusinessInfo(businessSettings);
