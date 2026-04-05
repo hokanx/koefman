@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import FormSection from '@/components/shared/FormSection';
+
 
 import { toast } from 'sonner';
 
@@ -45,6 +45,9 @@ const Settings = () => {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Tax mode is part of the form state — saved only on Submit
+  const [taxMode, setTaxMode] = useState<'standard' | 'small_business'>('standard');
+
   const [form, setForm] = useState({
     business_name: '',
     owner_name: '',
@@ -59,7 +62,6 @@ const Settings = () => {
     // Billing & Tax
     tax_number: '',
     vat_id: '',
-    // small_business_regulation is now derived from organizations.tax_mode
     default_tax_rate: 19,
     account_holder: '',
     bank_name: '',
@@ -93,6 +95,11 @@ const Settings = () => {
     enabled: !!user,
   });
 
+  // Sync tax mode from org
+  useEffect(() => {
+    setTaxMode((activeOrganization as any)?.tax_mode === 'small_business' ? 'small_business' : 'standard');
+  }, [activeOrganization]);
+
   useEffect(() => {
     const defaults = DEFAULT_TEXTS[language as keyof typeof DEFAULT_TEXTS] || DEFAULT_TEXTS.de;
     if (settings) {
@@ -109,7 +116,6 @@ const Settings = () => {
         business_category: settings.business_category || 'general',
         tax_number: settings.tax_number || '',
         vat_id: settings.vat_id || '',
-        // small_business_regulation: derived from org.tax_mode now
         default_tax_rate: settings.default_tax_rate ?? 19,
         account_holder: settings.account_holder || '',
         bank_name: settings.bank_name || '',
@@ -197,6 +203,7 @@ const Settings = () => {
 
       const payload = { ...form, address };
 
+      // Save business settings
       if (settings) {
         const { error } = await supabase
           .from('business_settings')
@@ -209,9 +216,19 @@ const Settings = () => {
           .insert({ ...payload, user_id: user!.id } as any);
         if (error) throw error;
       }
+
+      // Save tax mode to organization
+      if (activeOrganizationId) {
+        const { error: orgError } = await supabase
+          .from('organizations')
+          .update({ tax_mode: taxMode } as any)
+          .eq('id', activeOrganizationId);
+        if (orgError) throw orgError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['business-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
       toast.success(t.settings.saved);
     },
     onError: () => toast.error(t.common.error),
@@ -288,9 +305,12 @@ const Settings = () => {
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t.settings.businessCategory}</label>
               <select value={form.business_category} onChange={(e) => update('business_category', e.target.value)} className={inputClass}>
-                <option value="general">{t.settings.general}</option>
-                <option value="garage">{t.settings.garage}</option>
-                <option value="cleaning">{t.settings.cleaning}</option>
+                <option value="cleaning">Gebäudereinigung</option>
+                <option value="garage">Kfz / Werkstatt</option>
+                <option value="consulting">Beratung</option>
+                <option value="service">Kundenservice / Termine</option>
+                <option value="web">Website / Domain / Betreuung</option>
+                <option value="general">Sonstiges</option>
               </select>
             </div>
           </div>
@@ -307,7 +327,7 @@ const Settings = () => {
           <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionBillingDesc}</p>
 
           <div className="space-y-3">
-            {/* Tax mode toggle */}
+            {/* Tax mode toggle — saved on form submit */}
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Umsatzsteuer</label>
               <p className="text-xs text-muted-foreground mb-2">Berechnen Sie Umsatzsteuer?</p>
@@ -316,18 +336,8 @@ const Settings = () => {
                   <input
                     type="radio"
                     name="tax_mode"
-                    checked={(activeOrganization as any)?.tax_mode !== 'small_business'}
-                    onChange={async () => {
-                      if (!activeOrganizationId) {
-                        toast.error('Geschäft wird eingerichtet, bitte versuchen Sie es gleich erneut.');
-                        return;
-                      }
-                      const { error } = await supabase.from('organizations').update({ tax_mode: 'standard' } as any).eq('id', activeOrganizationId);
-                      if (error) { toast.error('Fehler beim Speichern'); return; }
-                      toast.success('Steuerart gespeichert');
-                      queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
-                      queryClient.invalidateQueries({ queryKey: ['business-settings'] });
-                    }}
+                    checked={taxMode !== 'small_business'}
+                    onChange={() => setTaxMode('standard')}
                     className="mt-0.5"
                   />
                   <div>
@@ -339,18 +349,8 @@ const Settings = () => {
                   <input
                     type="radio"
                     name="tax_mode"
-                    checked={(activeOrganization as any)?.tax_mode === 'small_business'}
-                    onChange={async () => {
-                      if (!activeOrganizationId) {
-                        toast.error('Geschäft wird eingerichtet, bitte versuchen Sie es gleich erneut.');
-                        return;
-                      }
-                      const { error } = await supabase.from('organizations').update({ tax_mode: 'small_business' } as any).eq('id', activeOrganizationId);
-                      if (error) { toast.error('Fehler beim Speichern'); return; }
-                      toast.success('Steuerart gespeichert');
-                      queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
-                      queryClient.invalidateQueries({ queryKey: ['business-settings'] });
-                    }}
+                    checked={taxMode === 'small_business'}
+                    onChange={() => setTaxMode('small_business')}
                     className="mt-0.5"
                   />
                   <div>
@@ -361,7 +361,7 @@ const Settings = () => {
               </div>
             </div>
 
-            {(activeOrganization as any)?.tax_mode !== 'small_business' && (
+            {taxMode !== 'small_business' && (
               <div>
                 <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultTaxRate} (%)</label>
                 <input type="number" value={form.default_tax_rate} onChange={(e) => update('default_tax_rate', parseFloat(e.target.value) || 0)} className={inputClass} />
@@ -460,7 +460,7 @@ const Settings = () => {
                   <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultInvoiceFooter}</label>
                   <textarea value={form.default_invoice_footer_text} onChange={(e) => update('default_invoice_footer_text', e.target.value)} rows={2} className={textareaClass} />
                 </div>
-                {(activeOrganization as any)?.tax_mode === 'small_business' && (
+                {taxMode === 'small_business' && (
                   <div className="rounded-lg border border-border bg-muted/30 p-3">
                     <p className="text-xs font-medium text-foreground">Rechtlicher Hinweis (automatisch)</p>
                     <p className="text-xs text-muted-foreground mt-1">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet." wird automatisch in alle Dokumente eingefügt und kann nicht bearbeitet werden.</p>
@@ -469,10 +469,6 @@ const Settings = () => {
                 <div>
                   <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultClosingText}</label>
                   <input type="text" value={form.default_closing_text} onChange={(e) => update('default_closing_text', e.target.value)} className={inputClass} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm text-muted-foreground">{t.settings.ownerName}</label>
-                  <p className="text-xs text-muted-foreground mb-1">{t.settings.ownerNameDescription}</p>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultOfferTitle}</label>
@@ -521,13 +517,13 @@ const Settings = () => {
 
         <hr className="border-border" />
 
-        {/* ── 5. SPRACHE & DARSTELLUNG ── */}
+        {/* ── 5. DARSTELLUNG ── */}
         <section>
           <div className="mb-3 flex items-center gap-2">
             <Globe className="h-5 w-5 text-primary" />
-            <h3 className="text-base font-semibold text-foreground">{t.settings.sectionLanguage}</h3>
+            <h3 className="text-base font-semibold text-foreground">Darstellung</h3>
           </div>
-          <p className="text-sm text-muted-foreground mb-4">{t.settings.sectionLanguageDesc}</p>
+          <p className="text-sm text-muted-foreground mb-4">Design der Anwendung anpassen.</p>
 
           <div className="space-y-3">
 
