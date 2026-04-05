@@ -8,7 +8,8 @@ const corsHeaders = {
 };
 
 const EMAIL_FROM = "Köfman <no-reply@koefman.de>";
-const BOOKING_URL = "https://koefman.lovable.app/book";
+const APP_URL = (Deno.env.get("PUBLIC_APP_URL") || "https://koefman.de").replace(/\/+$/, "");
+const BOOKING_URL = `${APP_URL}/book`;
 
 
 function buildEmailHtml(
