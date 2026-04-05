@@ -95,6 +95,11 @@ const Settings = () => {
     enabled: !!user,
   });
 
+  // Sync tax mode from org
+  useEffect(() => {
+    setTaxMode((activeOrganization as any)?.tax_mode === 'small_business' ? 'small_business' : 'standard');
+  }, [activeOrganization]);
+
   useEffect(() => {
     const defaults = DEFAULT_TEXTS[language as keyof typeof DEFAULT_TEXTS] || DEFAULT_TEXTS.de;
     if (settings) {
@@ -111,7 +116,6 @@ const Settings = () => {
         business_category: settings.business_category || 'general',
         tax_number: settings.tax_number || '',
         vat_id: settings.vat_id || '',
-        // small_business_regulation: derived from org.tax_mode now
         default_tax_rate: settings.default_tax_rate ?? 19,
         account_holder: settings.account_holder || '',
         bank_name: settings.bank_name || '',
