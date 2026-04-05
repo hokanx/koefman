@@ -569,7 +569,6 @@ export default function DiagnosticIntake() {
                   <p className="text-sm text-foreground/60 tracking-[0.08em]">
                     BITTE PRÜFE DEIN POSTFACH IN KÜRZE.
                   </p>
-                  </p>
                   <div className="flex justify-center">
                     <div className="h-4 w-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
                   </div>
