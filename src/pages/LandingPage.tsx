@@ -32,6 +32,13 @@ const FadeSection = ({ children, className = '' }: { children: React.ReactNode; 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [scrollHintVisible, setScrollHintVisible] = useState(true);
+
+  useEffect(() => {
+    const onScroll = () => setScrollHintVisible(window.scrollY < 80);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     // Homescreen / standalone launch → go straight to login
