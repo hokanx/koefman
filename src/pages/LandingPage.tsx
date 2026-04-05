@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import BrandMark from '@/components/shared/BrandMark';
 
@@ -131,7 +132,7 @@ const LandingPage = () => {
       {sections.map((section, si) => (
         <section
           key={section.id}
-          className={`flex flex-col items-center justify-center px-6 snap-start ${si === 0 ? 'min-h-screen pt-14' : 'min-h-screen py-24 sm:py-32'}`}
+          className={`relative flex flex-col items-center justify-center px-6 snap-start ${si === 0 ? 'min-h-screen pt-14' : 'min-h-screen py-24 sm:py-32'}`}
         >
           <div className="w-full max-w-[520px] space-y-5 text-center">
             {section.lines.map((line, li) => (
@@ -158,6 +159,11 @@ const LandingPage = () => {
               </FadeSection>
             )}
           </div>
+          {si === 0 && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce opacity-20">
+              <ChevronDown className="h-5 w-5 text-foreground" />
+            </div>
+          )}
         </section>
       ))}
 
