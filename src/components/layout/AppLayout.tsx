@@ -86,7 +86,7 @@ const AppLayout = () => {
           <BrandMark variant="wordmark" size="md" />
         </div>
         <div className="flex items-center gap-1">
-          {isAdmin && !isImpersonating && <WorkspaceSwitcher />}
+          
           <NotificationBell />
           {isAdmin && !isImpersonating && (
             <button
