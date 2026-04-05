@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Copy, ExternalLink, Download } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Copy, ExternalLink } from 'lucide-react';
 import { formatEUR } from '@/lib/utils';
 import { formatDateDE } from '@/lib/generatePdf';
 import { toast } from 'sonner';
