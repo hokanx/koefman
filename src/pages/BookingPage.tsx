@@ -66,7 +66,7 @@ export default function BookingPage() {
       });
 
       if (submissionId) {
-        await (supabase as any)
+        await supabase
           .from('diagnostic_submissions')
           .update({ lead_status: 'gespraech_geplant' })
           .eq('id', submissionId);

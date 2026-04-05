@@ -51,7 +51,7 @@ export default function StrategyStart() {
     setSubmitting(true);
 
     try {
-      await (supabase as any).from('strategy_requests').insert({
+      await supabase.from('strategy_requests').insert({
         name: name.trim(),
         email: email.trim(),
         main_problem: problem.trim() || null,
