@@ -109,7 +109,7 @@ const Settings = () => {
         business_category: settings.business_category || 'general',
         tax_number: settings.tax_number || '',
         vat_id: settings.vat_id || '',
-        small_business_regulation: !!settings.small_business_regulation,
+        // small_business_regulation: derived from org.tax_mode now
         default_tax_rate: settings.default_tax_rate ?? 19,
         account_holder: settings.account_holder || '',
         bank_name: settings.bank_name || '',
