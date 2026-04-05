@@ -108,7 +108,7 @@ const OfferEdit = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { subtotal, taxTotal: tax_total, grandTotal: grand_total } = calculateTotals(items, isKleinunternehmer ? 'kleinunternehmer' : 'standard');
+      const { subtotal, taxTotal: tax_total, grandTotal: grand_total } = calculateTotals(items, isKleinunternehmer ? 'small_business' : 'standard');
 
       const { error } = await supabase.from('offers').update({
         customer_id: customerId || null, date, status, notes, internal_notes: internalNotes,

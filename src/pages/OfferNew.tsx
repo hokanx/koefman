@@ -64,7 +64,7 @@ const OfferNew = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { subtotal, taxTotal: tax_total, grandTotal: grand_total } = calculateTotals(items, isKleinunternehmer ? 'kleinunternehmer' : 'standard');
+      const { subtotal, taxTotal: tax_total, grandTotal: grand_total } = calculateTotals(items, isKleinunternehmer ? 'small_business' : 'standard');
 
       const { count } = await supabase.from('offers').select('*', { count: 'exact', head: true }).eq('user_id', user!.id);
       const prefix = settings?.offer_number_prefix || 'ANG-';

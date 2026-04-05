@@ -59,7 +59,7 @@ const Settings = () => {
     // Billing & Tax
     tax_number: '',
     vat_id: '',
-    small_business_regulation: false,
+    // small_business_regulation is now derived from organizations.tax_mode
     default_tax_rate: 19,
     account_holder: '',
     bank_name: '',
@@ -109,7 +109,7 @@ const Settings = () => {
         business_category: settings.business_category || 'general',
         tax_number: settings.tax_number || '',
         vat_id: settings.vat_id || '',
-        small_business_regulation: !!settings.small_business_regulation,
+        // small_business_regulation: derived from org.tax_mode now
         default_tax_rate: settings.default_tax_rate ?? 19,
         account_holder: settings.account_holder || '',
         bank_name: settings.bank_name || '',
@@ -316,7 +316,7 @@ const Settings = () => {
                   <input
                     type="radio"
                     name="tax_mode"
-                    checked={(activeOrganization as any)?.tax_mode !== 'kleinunternehmer'}
+                    checked={(activeOrganization as any)?.tax_mode !== 'small_business'}
                     onChange={async () => {
                       if (!activeOrganizationId) {
                         toast.error('Geschäft wird eingerichtet, bitte versuchen Sie es gleich erneut.');
@@ -324,10 +324,6 @@ const Settings = () => {
                       }
                       const { error } = await supabase.from('organizations').update({ tax_mode: 'standard' } as any).eq('id', activeOrganizationId);
                       if (error) { toast.error('Fehler beim Speichern'); return; }
-                      // Sync to business_settings for public views
-                      if (settings) {
-                        await supabase.from('business_settings').update({ small_business_regulation: false } as any).eq('id', settings.id);
-                      }
                       toast.success('Steuerart gespeichert');
                       queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
                       queryClient.invalidateQueries({ queryKey: ['business-settings'] });
@@ -343,18 +339,14 @@ const Settings = () => {
                   <input
                     type="radio"
                     name="tax_mode"
-                    checked={(activeOrganization as any)?.tax_mode === 'kleinunternehmer'}
+                    checked={(activeOrganization as any)?.tax_mode === 'small_business'}
                     onChange={async () => {
                       if (!activeOrganizationId) {
                         toast.error('Geschäft wird eingerichtet, bitte versuchen Sie es gleich erneut.');
                         return;
                       }
-                      const { error } = await supabase.from('organizations').update({ tax_mode: 'kleinunternehmer' } as any).eq('id', activeOrganizationId);
+                      const { error } = await supabase.from('organizations').update({ tax_mode: 'small_business' } as any).eq('id', activeOrganizationId);
                       if (error) { toast.error('Fehler beim Speichern'); return; }
-                      // Sync to business_settings for public views
-                      if (settings) {
-                        await supabase.from('business_settings').update({ small_business_regulation: true } as any).eq('id', settings.id);
-                      }
                       toast.success('Steuerart gespeichert');
                       queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
                       queryClient.invalidateQueries({ queryKey: ['business-settings'] });
@@ -369,7 +361,7 @@ const Settings = () => {
               </div>
             </div>
 
-            {(activeOrganization as any)?.tax_mode !== 'kleinunternehmer' && (
+            {(activeOrganization as any)?.tax_mode !== 'small_business' && (
               <div>
                 <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultTaxRate} (%)</label>
                 <input type="number" value={form.default_tax_rate} onChange={(e) => update('default_tax_rate', parseFloat(e.target.value) || 0)} className={inputClass} />
@@ -468,7 +460,7 @@ const Settings = () => {
                   <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultInvoiceFooter}</label>
                   <textarea value={form.default_invoice_footer_text} onChange={(e) => update('default_invoice_footer_text', e.target.value)} rows={2} className={textareaClass} />
                 </div>
-                {(activeOrganization as any)?.tax_mode === 'kleinunternehmer' && (
+                {(activeOrganization as any)?.tax_mode === 'small_business' && (
                   <div className="rounded-lg border border-border bg-muted/30 p-3">
                     <p className="text-xs font-medium text-foreground">Rechtlicher Hinweis (automatisch)</p>
                     <p className="text-xs text-muted-foreground mt-1">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet." wird automatisch in alle Dokumente eingefügt und kann nicht bearbeitet werden.</p>

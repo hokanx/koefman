@@ -9,12 +9,12 @@ export interface TaxConfig {
   legalNote: string | null;
 }
 
-export type TaxMode = 'standard' | 'kleinunternehmer';
+export type TaxMode = 'standard' | 'small_business';
 
 const KLEINUNTERNEHMER_NOTE = 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.';
 
 export function getTaxConfig(taxMode: TaxMode | string | undefined): TaxConfig {
-  if (taxMode === 'kleinunternehmer') {
+  if (taxMode === 'small_business' || taxMode === 'kleinunternehmer') {
     return {
       vatEnabled: false,
       vatRate: 0,

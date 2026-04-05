@@ -9,6 +9,7 @@ interface ExportOptions {
   from: string;
   to: string;
   businessSettings: any;
+  isKleinunternehmer?: boolean;
   /** Optional callback for progress updates (0–100) */
   onProgress?: (percent: number, label: string) => void;
 }
@@ -24,7 +25,7 @@ export async function generateTaxExportZip(options: ExportOptions): Promise<Blob
   const progress = (p: number, l: string) => onProgress?.(Math.round(p), l);
   progress(0, 'Daten laden…');
 
-  const isSmallBiz = !!businessSettings?.small_business_regulation;
+  const isSmallBiz = options.isKleinunternehmer ?? !!businessSettings?.small_business_regulation;
   const today = new Date().toISOString().split('T')[0];
 
   const businessInfo = buildBusinessInfo(businessSettings);
@@ -123,7 +124,7 @@ export async function generateFullArchiveZip(options: ExportOptions): Promise<Bl
   const progress = (p: number, l: string) => onProgress?.(Math.round(p), l);
   progress(0, 'Daten laden…');
 
-  const isSmallBiz = !!businessSettings?.small_business_regulation;
+  const isSmallBiz = options.isKleinunternehmer ?? !!businessSettings?.small_business_regulation;
   const businessInfo = buildBusinessInfo(businessSettings);
 
   const [{ data: invoices = [] }, { data: offers = [] }, { data: docs = [] }] = await Promise.all([

@@ -81,7 +81,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         const name = settings.business_name || 'Mein Geschäft';
         const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        const taxMode = settings.small_business_regulation ? 'kleinunternehmer' : 'standard';
+        const taxMode = settings.small_business_regulation ? 'small_business' : 'standard';
 
         const { data: newOrg, error: orgErr } = await supabase
           .from('organizations')
