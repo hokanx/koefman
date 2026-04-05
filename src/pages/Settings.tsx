@@ -460,7 +460,7 @@ const Settings = () => {
                   <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultInvoiceFooter}</label>
                   <textarea value={form.default_invoice_footer_text} onChange={(e) => update('default_invoice_footer_text', e.target.value)} rows={2} className={textareaClass} />
                 </div>
-                {(activeOrganization as any)?.tax_mode === 'kleinunternehmer' && (
+                {(activeOrganization as any)?.tax_mode === 'small_business' && (
                   <div className="rounded-lg border border-border bg-muted/30 p-3">
                     <p className="text-xs font-medium text-foreground">Rechtlicher Hinweis (automatisch)</p>
                     <p className="text-xs text-muted-foreground mt-1">„Gemäß §19 UStG wird keine Umsatzsteuer berechnet." wird automatisch in alle Dokumente eingefügt und kann nicht bearbeitet werden.</p>
