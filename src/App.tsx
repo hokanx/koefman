@@ -51,7 +51,7 @@ import Truth from "@/pages/Truth";
 import TruthA from "@/pages/TruthA";
 import TruthB from "@/pages/TruthB";
 import DiagnosticIntake from "@/pages/DiagnosticIntake";
-import SystemPage from "@/pages/SystemPage";
+
 
 import BookingPage from "@/pages/BookingPage";
 import NotFound from "@/pages/NotFound";
@@ -112,7 +112,7 @@ const AppWithImpersonation = () => {
               <Route path="/truth-b" element={<TruthB />} />
               <Route path="/truth-:campaignId" element={<Truth />} />
               <Route path="/diagnose" element={<DiagnosticIntake />} />
-              <Route path="/system" element={<SystemPage />} />
+              
               <Route path="/start" element={<Navigate to="/book" replace />} />
               <Route path="/book" element={<BookingPage />} />
               <Route path="*" element={<NotFound />} />
