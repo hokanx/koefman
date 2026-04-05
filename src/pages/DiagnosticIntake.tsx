@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,6 +11,24 @@ interface AnalysisResult {
   priorities: string[];
   next_step: string;
 }
+
+const STEPS = {
+  INTRO: 0,
+  INDUSTRY: 1,
+  SIZE: 2,
+  INQUIRIES: 3,
+  REVENUE: 4,
+  PROBLEMS: 5,
+  FREETEXT: 6,
+  IMPORTANCE: 7,
+  COMMITMENT: 8,
+  URGENCY: 9,
+  ANALYZING: 10,
+  RESULT: 11,
+  EMAIL: 12,
+} as const;
+
+const TOTAL_QUESTION_STEPS = 9; // steps 1–9
 
 const INDUSTRIES = [
   { label: 'DIENSTLEISTUNG', value: 'dienstleistung' },
@@ -66,7 +84,6 @@ const URGENCY_OPTIONS = [
   { label: 'IRGENDWANN', value: 'irgendwann' },
 ];
 
-
 function computeIntentScore(importance: string, commitment: string, urgency: string): { score: number; level: string } {
   let score = 0;
   if (importance === 'hoch') score += 2;
@@ -81,25 +98,87 @@ function computeIntentScore(importance: string, commitment: string, urgency: str
   return { score, level };
 }
 
+/* ─── Reusable UI pieces ─── */
+
+function OptionButton({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full border px-6 py-4 text-sm tracking-[0.1em] font-medium transition-all duration-200 uppercase min-h-[52px]
+        ${selected
+          ? 'border-foreground bg-foreground text-background'
+          : 'border-[hsl(var(--foreground)/0.25)] text-foreground/90 bg-transparent hover:border-foreground hover:bg-foreground hover:text-background'
+        }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function MultiButton({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full border px-6 py-4 text-sm tracking-[0.1em] font-medium transition-all duration-200 uppercase min-h-[52px]
+        ${selected
+          ? 'border-foreground bg-foreground text-background'
+          : 'border-[hsl(var(--foreground)/0.25)] text-foreground/90 bg-transparent hover:border-foreground/60'
+        }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ContinueButton({ onClick, disabled, children = 'WEITER →' }: { onClick: () => void; disabled?: boolean; children?: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full border-2 border-foreground px-8 py-5 text-sm tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-200 uppercase disabled:opacity-20 disabled:cursor-not-allowed"
+    >
+      {children}
+    </button>
+  );
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="text-[11px] text-foreground/50 tracking-[0.1em] uppercase hover:text-foreground/80 transition-colors"
+    >
+      ← ZURÜCK
+    </button>
+  );
+}
+
+function StepShell({ children, step }: { children: React.ReactNode; step: number }) {
+  return (
+    <div key={step} className="space-y-8 animate-fade-in">
+      {children}
+    </div>
+  );
+}
+
+/* ─── Main Component ─── */
+
 export default function DiagnosticIntake() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const variant = searchParams.get('v') || 'direct';
 
-  // Phases: 0=intro, 1=situation, 2=problems, 3=commitment, 4=analyzing, 5=result, 6=email-capture
-  const [phase, setPhase] = useState(0);
+  const [step, setStep] = useState(STEPS.INTRO);
 
-  // Step 1
+  // Data
   const [industry, setIndustry] = useState('');
   const [companySize, setCompanySize] = useState('');
   const [inquiries, setInquiries] = useState('');
   const [revenueClarity, setRevenueClarity] = useState('');
-
-  // Step 2
   const [problems, setProblems] = useState<string[]>([]);
   const [freeText, setFreeText] = useState('');
-
-  // Step 3
   const [importance, setImportance] = useState('');
   const [commitment, setCommitment] = useState('');
   const [urgency, setUrgency] = useState('');
@@ -110,25 +189,18 @@ export default function DiagnosticIntake() {
   const [analysisFailed, setAnalysisFailed] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
 
-  // Email capture (phase 6)
+  // Email
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
-  const canStep1 = industry && companySize && inquiries && revenueClarity;
-  const canStep2 = problems.length > 0;
-  const canStep3 = importance && commitment;
-
   const toggleProblem = (v: string) =>
     setProblems(prev => prev.includes(v) ? prev.filter(p => p !== v) : [...prev, v]);
 
-  // Generate analysis WITHOUT name/email
-  const handleAnalyze = async () => {
-    if (!canStep3) return;
+  const handleAnalyze = useCallback(async () => {
     setSubmitting(true);
-    setPhase(4);
-
+    setStep(STEPS.ANALYZING);
     const { level } = computeIntentScore(importance, commitment, urgency);
 
     try {
@@ -159,22 +231,21 @@ export default function DiagnosticIntake() {
       if (data?.success && data?.analysis) {
         setAnalysis(data.analysis);
         setSubmissionId(data.submission_id || null);
-        setPhase(5);
+        setStep(STEPS.RESULT);
       } else {
         setAnalysisFailed(true);
-        setPhase(5);
+        setStep(STEPS.RESULT);
       }
     } catch (err) {
       console.error('Analysis generation error:', err);
       setAnalysisFailed(true);
-      setPhase(5);
+      setStep(STEPS.RESULT);
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [industry, companySize, inquiries, revenueClarity, problems, freeText, importance, commitment, urgency, variant]);
 
-  // Send email after capturing name + email
-  const handleSendEmail = async () => {
+  const handleSendEmail = useCallback(async () => {
     if (!name.trim() || !email.trim() || !email.includes('@')) return;
     setSendingEmail(true);
 
@@ -192,51 +263,28 @@ export default function DiagnosticIntake() {
       const data = response.data;
       if (data?.email_sent) {
         setEmailSent(true);
-        setTimeout(() => {
-          navigate(`/book?sid=${submissionId}`);
-        }, 2000);
+        setTimeout(() => navigate(`/book?sid=${submissionId}`), 2000);
       } else {
-        toast.error('E-Mail konnte nicht gesendet werden. Bitte prüfe deine E-Mail-Adresse.');
-        setEmailSent(false);
+        toast.error('E-Mail konnte nicht gesendet werden.');
       }
-    } catch (err) {
-      console.error('Email capture error:', err);
-      toast.error('E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.');
+    } catch {
+      toast.error('E-Mail konnte nicht gesendet werden.');
     } finally {
       setSendingEmail(false);
     }
-  };
+  }, [name, email, submissionId, navigate]);
 
-  const progress = phase === 0 ? 0 : phase >= 4 ? 100 : (phase / 3) * 100;
-
-  const optionBtn = (selected: boolean) =>
-    `w-full border px-6 py-4 text-sm tracking-[0.1em] font-medium transition-colors duration-200 uppercase ${
-      selected
-        ? 'border-foreground bg-foreground text-background'
-        : 'border-border text-foreground bg-transparent hover:bg-foreground hover:text-background'
-    }`;
-
-  const multiBtn = (selected: boolean) =>
-    `w-full border px-6 py-4 text-sm tracking-[0.1em] font-medium transition-colors duration-200 uppercase ${
-      selected
-        ? 'border-foreground bg-foreground text-background'
-        : 'border-border text-foreground bg-transparent hover:border-foreground/50'
-    }`;
-
-  
+  const progress = step >= 1 && step <= TOTAL_QUESTION_STEPS
+    ? Math.round((step / TOTAL_QUESTION_STEPS) * 100)
+    : step > TOTAL_QUESTION_STEPS ? 100 : 0;
 
   return (
     <div className="bg-background text-foreground min-h-screen flex flex-col">
-      {/* Progress */}
-      {phase > 0 && phase < 4 && (
+      {/* Progress bar */}
+      {step >= 1 && step <= TOTAL_QUESTION_STEPS && (
         <div className="fixed top-0 left-0 right-0 z-50">
-          <div className="h-[2px] bg-border">
-            <div className="h-full bg-foreground transition-all duration-500" style={{ width: `${progress}%` }} />
-          </div>
-          <div className="text-center py-3">
-            <span className="text-[10px] text-muted-foreground tracking-[0.15em] uppercase">
-              SCHRITT {phase} VON 3
-            </span>
+          <div className="h-[2px] bg-[hsl(var(--foreground)/0.1)]">
+            <div className="h-full bg-foreground transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
           </div>
         </div>
       )}
@@ -244,276 +292,325 @@ export default function DiagnosticIntake() {
       <div className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-[480px]">
 
-          {/* INTRO */}
-          {phase === 0 && (
-            <div className="space-y-8 text-center animate-fade-in">
-              <div className="mb-6">
+          {/* ── INTRO ── */}
+          {step === STEPS.INTRO && (
+            <StepShell step={0}>
+              <div className="text-center space-y-8">
                 <BrandMark variant="wordmark" size="md" align="center" />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.08em] leading-relaxed">
-                WO VERLIERST DU GELD?
-              </h1>
-              <p className="text-sm text-muted-foreground tracking-[0.1em]">3 SCHRITTE. KLARE ANTWORT.</p>
-              <button onClick={() => setPhase(1)}
-                className="border border-foreground px-8 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
-                [ START ]
-              </button>
-            </div>
-          )}
-
-          {/* STEP 1 — SITUATION */}
-          {phase === 1 && (
-            <div className="space-y-10 animate-fade-in">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
-                WIR SCHAUEN UNS KURZ AN, WO AKTUELL POTENZIAL VERLOREN GEHT.
-              </h1>
-              <div className="space-y-8">
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">BRANCHE</p>
-                  <div className="space-y-2">
-                    {INDUSTRIES.map(o => (
-                      <button key={o.value} onClick={() => setIndustry(o.value)} className={optionBtn(industry === o.value)}>{o.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">UNTERNEHMENSGRÖSSE</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {COMPANY_SIZES.map(o => (
-                      <button key={o.value} onClick={() => setCompanySize(o.value)} className={optionBtn(companySize === o.value)}>{o.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">AKTUELLE ANFRAGEN</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {INQUIRY_LEVELS.map(o => (
-                      <button key={o.value} onClick={() => setInquiries(o.value)} className={optionBtn(inquiries === o.value)}>{o.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">UMSATZKLARHEIT</p>
-                  <div className="space-y-2">
-                    {REVENUE_CLARITY.map(o => (
-                      <button key={o.value} onClick={() => setRevenueClarity(o.value)} className={optionBtn(revenueClarity === o.value)}>{o.label}</button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => setPhase(2)} disabled={!canStep1}
-                className="w-full border border-foreground px-8 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed">
-                WEITER →
-              </button>
-            </div>
-          )}
-
-          {/* STEP 2 — PROBLEM DEPTH */}
-          {phase === 2 && (
-            <div className="space-y-10 animate-fade-in">
-              <div className="text-center space-y-3">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] leading-relaxed">
-                  AN WELCHER STELLE VERLIERST DU AKTUELL DIE MEISTEN ANFRAGEN ODER UMSÄTZE?
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.08em] leading-relaxed">
+                  WO VERLIERST DU GELD?
                 </h1>
-                <p className="text-[11px] text-muted-foreground/60 tracking-[0.08em]">
-                  Die meisten Unternehmen verlieren hier jeden Monat messbar Umsatz.
-                </p>
+                <p className="text-sm text-foreground/60 tracking-[0.1em]">9 KURZE FRAGEN. KLARE ANTWORT.</p>
+                <ContinueButton onClick={() => setStep(STEPS.INDUSTRY)}>
+                  [ START ]
+                </ContinueButton>
               </div>
-              <div className="space-y-8">
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">HAUPTPROBLEM (MEHRFACHAUSWAHL)</p>
-                  <div className="space-y-2">
-                    {PROBLEMS.map(o => (
-                      <button key={o.value} onClick={() => toggleProblem(o.value)} className={multiBtn(problems.includes(o.value))}>{o.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-2">WAS GENAU LÄUFT AKTUELL NICHT SO, WIE ES SOLLTE?</p>
-                  <p className="text-[10px] text-muted-foreground/50 tracking-[0.08em] mb-3">Je genauer du bist, desto konkreter wird deine Analyse.</p>
-                  <textarea
-                    value={freeText}
-                    onChange={e => setFreeText(e.target.value)}
-                    rows={4}
-                    className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide resize-none"
-                    placeholder="z. B. viele Anfragen, aber wenig Abschlüsse / Chaos im Ablauf / keine Struktur…"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setPhase(1)}
-                  className="flex-1 border border-border px-6 py-4 text-sm tracking-[0.1em] font-medium text-muted-foreground bg-transparent hover:border-foreground hover:text-foreground transition-colors uppercase">
-                  ← ZURÜCK
-                </button>
-                <button onClick={() => setPhase(3)} disabled={!canStep2}
-                  className="flex-1 border border-foreground px-6 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed">
-                  WEITER →
-                </button>
-              </div>
-            </div>
+            </StepShell>
           )}
 
-          {/* STEP 3 — COMMITMENT (no name/email) */}
-          {phase === 3 && (
-            <div className="space-y-10 animate-fade-in">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
-                NUR NOCH EIN SCHRITT, DANN IST DEINE ANALYSE FERTIG.
-              </h1>
-              <div className="space-y-8">
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WIE DRINGEND IST ES FÜR DICH, DAS AKTUELL ZU LÖSEN?</p>
-                  <div className="space-y-2">
-                    {IMPORTANCE_LEVELS.map(o => (
-                      <button key={o.value} onClick={() => setImportance(o.value)} className={optionBtn(importance === o.value)}>{o.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WENN DU KONKRET SIEHST, WO DEIN PROBLEM LIEGT – WÄRST DU BEREIT, DAS STRUKTURIERT ZU LÖSEN?</p>
-                  <div className="space-y-2">
-                    {COMMITMENT_OPTIONS.map(o => (
-                      <button key={o.value} onClick={() => setCommitment(o.value)} className={optionBtn(commitment === o.value)}>{o.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WIE SCHNELL MÖCHTEST DU ERGEBNISSE SEHEN?</p>
-                  <div className="space-y-2">
-                    {URGENCY_OPTIONS.map(o => (
-                      <button key={o.value} onClick={() => setUrgency(o.value)} className={optionBtn(urgency === o.value)}>{o.label}</button>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[10px] text-muted-foreground/40 tracking-[0.08em] text-center">
-                  Wir arbeiten nur mit einer begrenzten Anzahl an Anfragen gleichzeitig.
-                </p>
+          {/* ── 1. INDUSTRY ── */}
+          {step === STEPS.INDUSTRY && (
+            <StepShell step={1}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                IN WELCHER BRANCHE BIST DU TÄTIG?
+              </h2>
+              <div className="space-y-2">
+                {INDUSTRIES.map(o => (
+                  <OptionButton key={o.value} selected={industry === o.value} onClick={() => setIndustry(o.value)}>
+                    {o.label}
+                  </OptionButton>
+                ))}
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => setPhase(2)}
-                  className="flex-1 border border-border px-6 py-4 text-sm tracking-[0.1em] font-medium text-muted-foreground bg-transparent hover:border-foreground hover:text-foreground transition-colors uppercase">
-                  ← ZURÜCK
-                </button>
-                <button onClick={handleAnalyze} disabled={!canStep3 || submitting}
-                  className="flex-1 border border-foreground px-6 py-4 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed">
-                  {submitting ? '...' : 'ANALYSE STARTEN'}
-                </button>
-              </div>
-            </div>
+              <ContinueButton onClick={() => setStep(STEPS.SIZE)} disabled={!industry} />
+            </StepShell>
           )}
 
-          {/* ANALYZING */}
-          {phase === 4 && (
-            <div className="space-y-8 text-center animate-fade-in">
-              <div className="flex justify-center">
-                <div className="h-6 w-6 border border-foreground border-t-transparent rounded-full animate-spin" />
+          {/* ── 2. SIZE ── */}
+          {step === STEPS.SIZE && (
+            <StepShell step={2}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                WIE GROSS IST DEIN UNTERNEHMEN?
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {COMPANY_SIZES.map(o => (
+                  <OptionButton key={o.value} selected={companySize === o.value} onClick={() => setCompanySize(o.value)}>
+                    {o.label}
+                  </OptionButton>
+                ))}
               </div>
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.1em]">DEINE ANALYSE WIRD ERSTELLT.</h1>
-              <p className="text-sm text-muted-foreground tracking-[0.08em]">DAS DAUERT NUR EINEN MOMENT.</p>
-            </div>
+              <ContinueButton onClick={() => setStep(STEPS.INQUIRIES)} disabled={!companySize} />
+              <BackButton onClick={() => setStep(STEPS.INDUSTRY)} />
+            </StepShell>
           )}
 
-          {/* RESULT (shown before name/email) */}
-          {phase === 5 && (
-            <>
-              {analysisFailed && !analysis && (
-                <div className="space-y-10 text-center animate-fade-in">
-                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">DEINE ANALYSE KONNTE GERADE NICHT VOLLSTÄNDIG GELADEN WERDEN.</h1>
-                  <p className="text-sm text-muted-foreground tracking-[0.08em]">DEINE ANGABEN WURDEN GESPEICHERT UND WIR KÜMMERN UNS DARUM.</p>
-                  <button onClick={() => navigate('/book')}
-                    className="border border-foreground px-10 py-5 text-sm tracking-[0.12em] font-semibold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
+          {/* ── 3. INQUIRIES ── */}
+          {step === STEPS.INQUIRIES && (
+            <StepShell step={3}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                WIE VIELE ANFRAGEN BEKOMMST DU AKTUELL?
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {INQUIRY_LEVELS.map(o => (
+                  <OptionButton key={o.value} selected={inquiries === o.value} onClick={() => setInquiries(o.value)}>
+                    {o.label}
+                  </OptionButton>
+                ))}
+              </div>
+              <ContinueButton onClick={() => setStep(STEPS.REVENUE)} disabled={!inquiries} />
+              <BackButton onClick={() => setStep(STEPS.SIZE)} />
+            </StepShell>
+          )}
+
+          {/* ── 4. REVENUE CLARITY ── */}
+          {step === STEPS.REVENUE && (
+            <StepShell step={4}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                WIE KLAR IST DIR, WOHER DEIN UMSATZ KOMMT?
+              </h2>
+              <div className="space-y-2">
+                {REVENUE_CLARITY.map(o => (
+                  <OptionButton key={o.value} selected={revenueClarity === o.value} onClick={() => setRevenueClarity(o.value)}>
+                    {o.label}
+                  </OptionButton>
+                ))}
+              </div>
+              <ContinueButton onClick={() => setStep(STEPS.PROBLEMS)} disabled={!revenueClarity} />
+              <BackButton onClick={() => setStep(STEPS.INQUIRIES)} />
+            </StepShell>
+          )}
+
+          {/* ── 5. PROBLEMS ── */}
+          {step === STEPS.PROBLEMS && (
+            <StepShell step={5}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                WO VERLIERST DU AKTUELL AM MEISTEN?
+              </h2>
+              <p className="text-sm text-foreground/60 tracking-[0.08em] text-center">
+                Wähle alles, was zutrifft.
+              </p>
+              <div className="space-y-2">
+                {PROBLEMS.map(o => (
+                  <MultiButton key={o.value} selected={problems.includes(o.value)} onClick={() => toggleProblem(o.value)}>
+                    {o.label}
+                  </MultiButton>
+                ))}
+              </div>
+              <ContinueButton onClick={() => setStep(STEPS.FREETEXT)} disabled={problems.length === 0} />
+              <BackButton onClick={() => setStep(STEPS.REVENUE)} />
+            </StepShell>
+          )}
+
+          {/* ── 6. FREE TEXT ── */}
+          {step === STEPS.FREETEXT && (
+            <StepShell step={6}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                WAS GENAU LÄUFT AKTUELL NICHT?
+              </h2>
+              <p className="text-sm text-foreground/60 tracking-[0.08em] text-center">
+                Je genauer, desto konkreter deine Analyse. Optional.
+              </p>
+              <textarea
+                value={freeText}
+                onChange={e => setFreeText(e.target.value)}
+                rows={4}
+                className="w-full border border-[hsl(var(--foreground)/0.25)] bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide resize-none"
+                placeholder="z. B. viele Anfragen, aber wenig Abschlüsse…"
+              />
+              <ContinueButton onClick={() => setStep(STEPS.IMPORTANCE)} />
+              <BackButton onClick={() => setStep(STEPS.PROBLEMS)} />
+            </StepShell>
+          )}
+
+          {/* ── 7. IMPORTANCE ── */}
+          {step === STEPS.IMPORTANCE && (
+            <StepShell step={7}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                WIE DRINGEND IST ES, DAS ZU LÖSEN?
+              </h2>
+              <div className="space-y-2">
+                {IMPORTANCE_LEVELS.map(o => (
+                  <OptionButton key={o.value} selected={importance === o.value} onClick={() => setImportance(o.value)}>
+                    {o.label}
+                  </OptionButton>
+                ))}
+              </div>
+              <ContinueButton onClick={() => setStep(STEPS.COMMITMENT)} disabled={!importance} />
+              <BackButton onClick={() => setStep(STEPS.FREETEXT)} />
+            </StepShell>
+          )}
+
+          {/* ── 8. COMMITMENT ── */}
+          {step === STEPS.COMMITMENT && (
+            <StepShell step={8}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                WÄRST DU BEREIT, DAS STRUKTURIERT ZU LÖSEN?
+              </h2>
+              <div className="space-y-2">
+                {COMMITMENT_OPTIONS.map(o => (
+                  <OptionButton key={o.value} selected={commitment === o.value} onClick={() => setCommitment(o.value)}>
+                    {o.label}
+                  </OptionButton>
+                ))}
+              </div>
+              <ContinueButton onClick={() => setStep(STEPS.URGENCY)} disabled={!commitment} />
+              <BackButton onClick={() => setStep(STEPS.IMPORTANCE)} />
+            </StepShell>
+          )}
+
+          {/* ── 9. URGENCY ── */}
+          {step === STEPS.URGENCY && (
+            <StepShell step={9}>
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                WIE SCHNELL MÖCHTEST DU ERGEBNISSE SEHEN?
+              </h2>
+              <div className="space-y-2">
+                {URGENCY_OPTIONS.map(o => (
+                  <OptionButton key={o.value} selected={urgency === o.value} onClick={() => setUrgency(o.value)}>
+                    {o.label}
+                  </OptionButton>
+                ))}
+              </div>
+              <ContinueButton onClick={handleAnalyze} disabled={!urgency || submitting}>
+                {submitting ? '...' : 'ANALYSE STARTEN'}
+              </ContinueButton>
+              <BackButton onClick={() => setStep(STEPS.COMMITMENT)} />
+            </StepShell>
+          )}
+
+          {/* ── ANALYZING ── */}
+          {step === STEPS.ANALYZING && (
+            <StepShell step={10}>
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="h-6 w-6 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.1em]">
+                  ANALYSE WIRD ERSTELLT.
+                </h2>
+                <p className="text-sm text-foreground/60 tracking-[0.08em]">NUR EINEN MOMENT.</p>
+              </div>
+            </StepShell>
+          )}
+
+          {/* ── RESULT ── */}
+          {step === STEPS.RESULT && (
+            <StepShell step={11}>
+              {analysisFailed && !analysis ? (
+                <div className="text-center space-y-8">
+                  <h2 className="text-2xl font-semibold tracking-[0.1em]">
+                    ANALYSE KONNTE NICHT GELADEN WERDEN.
+                  </h2>
+                  <p className="text-sm text-foreground/60 tracking-[0.08em]">
+                    DEINE ANGABEN WURDEN GESPEICHERT.
+                  </p>
+                  <ContinueButton onClick={() => navigate('/book')}>
                     [ STRATEGIEGESPRÄCH BUCHEN ]
-                  </button>
+                  </ContinueButton>
                 </div>
-              )}
-
-              {analysis && (
-                <div className="animate-fade-in">
-                  <div className="text-center pb-8">
-                    <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em] mb-4">DEINE KURZANALYSE IST BEREIT.</h1>
-                    <p className="text-xs sm:text-sm text-muted-foreground tracking-[0.08em] leading-relaxed max-w-[360px] mx-auto">
-                      BASIEREND AUF DEINEN ANGABEN ZEIGT SICH AKTUELL VOR ALLEM EIN SYSTEMPROBLEM.
+              ) : analysis ? (
+                <div className="space-y-8">
+                  <div className="text-center space-y-3">
+                    <h2 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">
+                      DEINE KURZANALYSE
+                    </h2>
+                    <p className="text-sm text-foreground/60 tracking-[0.08em]">
+                      Basierend auf deinen Angaben:
                     </p>
                   </div>
 
-                  <div className="border-t border-[hsl(var(--border))] py-7">
-                    <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">GRÖSSTE SCHWACHSTELLE</p>
-                    <p className="text-sm sm:text-base text-foreground leading-[1.7]">{analysis.main_issue}</p>
-                  </div>
-
-                  <div className="border-t border-[hsl(var(--border))] py-7">
-                    <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">WAS DAS PRAKTISCH BEDEUTET</p>
-                    <p className="text-sm sm:text-base text-foreground leading-[1.7]">{analysis.practical_meaning}</p>
-                  </div>
-
-                  <div className="border-t border-[hsl(var(--border))] py-7">
-                    <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-5">DIE 3 WICHTIGSTEN HEBEL</p>
-                    <div className="space-y-4">
-                      {analysis.priorities.filter(p => p).map((priority, i) => (
-                        <div key={i} className="flex gap-4 items-baseline">
-                          <span className="text-muted-foreground text-xs font-semibold tracking-[0.1em] shrink-0 w-5 text-right">{i + 1}.</span>
-                          <p className="text-sm sm:text-base text-foreground leading-[1.7]">{priority}</p>
-                        </div>
-                      ))}
+                  <div className="space-y-5 pt-2">
+                    <div className="flex gap-4 items-start">
+                      <span className="text-foreground/40 text-sm font-bold shrink-0 mt-0.5">▸</span>
+                      <p className="text-sm sm:text-base text-foreground leading-[1.7]">
+                        <span className="font-semibold">Größte Schwachstelle:</span> {analysis.main_issue}
+                      </p>
                     </div>
+                    <div className="flex gap-4 items-start">
+                      <span className="text-foreground/40 text-sm font-bold shrink-0 mt-0.5">▸</span>
+                      <p className="text-sm sm:text-base text-foreground leading-[1.7]">
+                        <span className="font-semibold">Was das bedeutet:</span> {analysis.practical_meaning}
+                      </p>
+                    </div>
+                    {analysis.priorities.filter(Boolean).slice(0, 2).map((p, i) => (
+                      <div key={i} className="flex gap-4 items-start">
+                        <span className="text-foreground/40 text-sm font-bold shrink-0 mt-0.5">▸</span>
+                        <p className="text-sm sm:text-base text-foreground leading-[1.7]">{p}</p>
+                      </div>
+                    ))}
                   </div>
 
-                  <div className="border-t border-[hsl(var(--border))] py-7">
-                    <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">NÄCHSTER SINNVOLLER SCHRITT</p>
-                    <p className="text-sm sm:text-base text-foreground leading-[1.7]">{analysis.next_step}</p>
-                  </div>
-
-
-                  {/* CTA to capture email */}
-                  <div className="border-t border-[hsl(var(--border))] pt-10 pb-4 text-center">
-                    <button onClick={() => setPhase(6)}
-                      className="border-2 border-foreground px-10 py-5 text-sm sm:text-base tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase">
-                      [ ANALYSE PER E-MAIL ERHALTEN ]
-                    </button>
-                    <p className="text-[10px] text-muted-foreground/40 tracking-[0.08em] mt-4">KOSTENLOS. KEINE VERPFLICHTUNG.</p>
+                  <div className="pt-4 border-t border-[hsl(var(--foreground)/0.1)]">
+                    <p className="text-xs text-foreground/50 tracking-[0.08em] text-center mb-6">
+                      Die vollständige Analyse erhältst du per E-Mail.
+                    </p>
+                    <ContinueButton onClick={() => setStep(STEPS.EMAIL)}>
+                      ANALYSE PER E-MAIL ERHALTEN
+                    </ContinueButton>
+                    <p className="text-[10px] text-foreground/30 tracking-[0.08em] text-center mt-4">
+                      KOSTENLOS. KEINE VERPFLICHTUNG.
+                    </p>
                   </div>
                 </div>
-              )}
-            </>
+              ) : null}
+            </StepShell>
           )}
 
-          {/* EMAIL CAPTURE (phase 6) */}
-          {phase === 6 && (
-            <div className="space-y-10 animate-fade-in">
+          {/* ── EMAIL CAPTURE ── */}
+          {step === STEPS.EMAIL && (
+            <StepShell step={12}>
               {emailSent ? (
                 <div className="text-center space-y-6">
-                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">ANALYSE GESENDET.</h1>
-                  <p className="text-sm text-muted-foreground tracking-[0.08em]">DU WIRST JETZT ZUR TERMINBUCHUNG WEITERGELEITET.</p>
+                  <h2 className="text-2xl font-semibold tracking-[0.1em]">ANALYSE GESENDET.</h2>
+                  <p className="text-sm text-foreground/60 tracking-[0.08em]">
+                    DU WIRST ZUR TERMINBUCHUNG WEITERGELEITET.
+                  </p>
                   <div className="flex justify-center">
-                    <div className="h-4 w-4 border border-foreground border-t-transparent rounded-full animate-spin" />
+                    <div className="h-4 w-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
                   </div>
                 </div>
               ) : (
-                <>
-                  <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
+                <div className="space-y-8">
+                  <h2 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] text-center leading-relaxed">
                     WOHIN SOLLEN WIR DEINE ANALYSE SCHICKEN?
-                  </h1>
+                  </h2>
                   <div className="space-y-5">
                     <div>
-                      <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">NAME *</label>
-                      <input type="text" value={name} onChange={e => setName(e.target.value)}
-                        className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide" />
+                      <label className="block text-xs text-foreground/60 tracking-[0.1em] mb-2 uppercase">
+                        NAME *
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        className="w-full border border-[hsl(var(--foreground)/0.25)] bg-transparent px-4 py-4 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide"
+                      />
                     </div>
                     <div>
-                      <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">E-MAIL *</label>
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                        className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide" />
+                      <label className="block text-xs text-foreground/60 tracking-[0.1em] mb-2 uppercase">
+                        E-MAIL *
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="w-full border border-[hsl(var(--foreground)/0.25)] bg-transparent px-4 py-4 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide"
+                      />
                     </div>
                   </div>
-                  <button onClick={handleSendEmail}
+                  <ContinueButton
+                    onClick={handleSendEmail}
                     disabled={!name.trim() || !email.trim() || !email.includes('@') || sendingEmail}
-                    className="w-full border-2 border-foreground px-10 py-5 text-sm tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed">
+                  >
                     {sendingEmail ? '...' : 'ANALYSE PER E-MAIL ERHALTEN'}
-                  </button>
-                  <p className="text-[10px] text-muted-foreground/40 tracking-[0.08em] text-center">KOSTENLOS. KEINE VERPFLICHTUNG.</p>
-                </>
+                  </ContinueButton>
+                  <p className="text-[10px] text-foreground/30 tracking-[0.08em] text-center">
+                    KOSTENLOS. KEINE VERPFLICHTUNG.
+                  </p>
+                </div>
               )}
-            </div>
+            </StepShell>
           )}
+
         </div>
       </div>
 
