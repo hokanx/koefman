@@ -170,8 +170,8 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
           {section.fullScreen && (
             <>
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
-              <div className={`absolute bottom-12 left-1/2 -translate-x-1/2 animate-bounce transition-opacity duration-500 ${scrollHintVisible ? 'opacity-35' : 'opacity-0'}`}>
-                <ChevronDown className="h-4 w-4 text-foreground" />
+              <div className={`absolute bottom-14 left-1/2 -translate-x-1/2 animate-bounce transition-opacity duration-500 ${scrollHintVisible ? 'opacity-50' : 'opacity-0'}`}>
+                <ChevronDown className="h-5 w-5 text-foreground" />
               </div>
             </>
           )}
