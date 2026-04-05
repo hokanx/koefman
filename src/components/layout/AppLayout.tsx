@@ -26,7 +26,7 @@ const AppLayout = () => {
   const { theme, toggleTheme } = useTheme();
   const { isImpersonating, impersonatedUser, stopImpersonation } = useImpersonation();
   const { isAdmin } = useAdmin();
-  const { isAdminWorkspaceMode, activeOrganization } = useWorkspace();
+  
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
