@@ -3,28 +3,60 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import BrandMark from '@/components/shared/BrandMark';
 
-const TIMESLOTS = [
-  { label: '09:00 UHR', value: '09:00' },
-  { label: '14:00 UHR', value: '14:00' },
-  { label: '19:00 UHR', value: '19:00' },
-];
+function getSlots() {
+  const now = new Date();
+  const h = now.getHours();
+  const today = now.toLocaleDateString('de-DE', { weekday: 'long' });
+
+  // Tomorrow label
+  const tom = new Date(now);
+  tom.setDate(tom.getDate() + 1);
+  const tomorrow = tom.toLocaleDateString('de-DE', { weekday: 'long' });
+
+  // Capitalize first letter
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const slots: { label: string; value: string }[] = [];
+
+  if (h < 9) {
+    slots.push({ label: `${cap(today)}, 10:00 Uhr`, value: `${now.toISOString().slice(0, 10)} 10:00` });
+    slots.push({ label: `${cap(today)}, 14:00 Uhr`, value: `${now.toISOString().slice(0, 10)} 14:00` });
+    slots.push({ label: `${cap(tomorrow)}, 18:00 Uhr`, value: `${tom.toISOString().slice(0, 10)} 18:00` });
+  } else if (h < 13) {
+    slots.push({ label: `${cap(today)}, 14:00 Uhr`, value: `${now.toISOString().slice(0, 10)} 14:00` });
+    slots.push({ label: `${cap(today)}, 18:00 Uhr`, value: `${now.toISOString().slice(0, 10)} 18:00` });
+    slots.push({ label: `${cap(tomorrow)}, 10:00 Uhr`, value: `${tom.toISOString().slice(0, 10)} 10:00` });
+  } else if (h < 17) {
+    slots.push({ label: `${cap(today)}, 18:00 Uhr`, value: `${now.toISOString().slice(0, 10)} 18:00` });
+    slots.push({ label: `${cap(tomorrow)}, 10:00 Uhr`, value: `${tom.toISOString().slice(0, 10)} 10:00` });
+    slots.push({ label: `${cap(tomorrow)}, 14:00 Uhr`, value: `${tom.toISOString().slice(0, 10)} 14:00` });
+  } else {
+    slots.push({ label: `${cap(tomorrow)}, 10:00 Uhr`, value: `${tom.toISOString().slice(0, 10)} 10:00` });
+    slots.push({ label: `${cap(tomorrow)}, 14:00 Uhr`, value: `${tom.toISOString().slice(0, 10)} 14:00` });
+    slots.push({ label: `${cap(tomorrow)}, 18:00 Uhr`, value: `${tom.toISOString().slice(0, 10)} 18:00` });
+  }
+  return slots;
+}
 
 export default function BookingPage() {
   const [searchParams] = useSearchParams();
   const submissionId = searchParams.get('sid') || '';
 
+  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [booked, setBooked] = useState(false);
+  const [slots] = useState(getSlots);
 
-  const canSubmit = phone.trim().length >= 5 && selectedSlot;
+  // Step: 1 = pick slot, 2 = fill form
+  const step = selectedSlot ? 2 : 1;
+  const canSubmit = name.trim().length >= 2 && phone.trim().length >= 5 && selectedSlot;
 
   const handleBook = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // Store booking
       await (supabase as any).from('lead_bookings').insert({
         submission_id: submissionId || null,
         phone: phone.trim(),
@@ -32,7 +64,6 @@ export default function BookingPage() {
         booking_status: 'booked',
       });
 
-      // Update lead status if submission exists
       if (submissionId) {
         await (supabase as any)
           .from('diagnostic_submissions')
@@ -43,14 +74,14 @@ export default function BookingPage() {
       setBooked(true);
     } catch (err) {
       console.error('Booking error:', err);
-      setBooked(true); // show confirmation anyway
+      setBooked(true);
     } finally {
       setSubmitting(false);
     }
   };
 
   const optionBtn = (selected: boolean) =>
-    `w-full border px-6 py-4 text-sm tracking-[0.1em] font-medium transition-colors duration-200 uppercase ${
+    `w-full border px-6 py-5 text-base tracking-[0.08em] font-semibold transition-all duration-200 ${
       selected
         ? 'border-foreground bg-foreground text-background'
         : 'border-border text-foreground bg-transparent hover:bg-foreground hover:text-background'
@@ -67,71 +98,107 @@ export default function BookingPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-24">
         <div className="w-full max-w-[480px]">
           {booked ? (
-            <div className="text-center space-y-6 animate-fade-in">
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.1em]">
-                TERMIN GEBUCHT.
+            <div className="text-center space-y-8 animate-fade-in">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-[0.08em] uppercase">
+                Termin bestätigt.
               </h1>
-              <p className="text-sm text-muted-foreground tracking-[0.08em] leading-[1.7] max-w-[360px] mx-auto">
-                WIR MELDEN UNS ZUM GEWÜNSCHTEN ZEITPUNKT BEI DIR.
+              <p className="text-base text-foreground/80 tracking-[0.04em] leading-[1.7] max-w-[380px] mx-auto">
+                Wir melden uns zum gewählten Zeitpunkt bei dir.
               </p>
-              <p className="text-xs text-muted-foreground/50 tracking-[0.08em]">
-                DU ERHÄLTST EINE BESTÄTIGUNG PER E-MAIL.
+              <p className="text-xs text-foreground/40 tracking-[0.06em] uppercase">
+                Kostenlos. Keine Verpflichtung.
               </p>
             </div>
           ) : (
             <div className="space-y-10 animate-fade-in">
-              <div className="text-center space-y-4">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-[0.08em] leading-relaxed">
-                  STRATEGIEGESPRÄCH BUCHEN
+              {/* Header */}
+              <div className="text-center space-y-5">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-[0.06em] leading-relaxed uppercase">
+                  Strategiegespräch zur Optimierung deiner Abläufe
                 </h1>
-                <p className="text-sm text-muted-foreground tracking-[0.08em] leading-[1.6]">
-                  Wähle einen Zeitpunkt und wir rufen dich an.
+                <p className="text-sm text-foreground/70 tracking-[0.04em] leading-[1.7] max-w-[400px] mx-auto">
+                  Wir analysieren gemeinsam deine aktuelle Situation und zeigen dir konkrete nächste Schritte.
                 </p>
               </div>
 
-              <div className="space-y-8">
-                <div>
-                  <label className="block text-xs text-muted-foreground tracking-[0.1em] mb-2 uppercase">
-                    TELEFONNUMMER *
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="+49 ..."
-                    className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground focus:border-foreground focus:outline-none tracking-wide"
-                  />
-                </div>
-
-                <div>
-                  <p className="text-[10px] text-muted-foreground tracking-[0.12em] uppercase mb-3">
-                    WANN PASST ES DIR AM BESTEN?
+              {/* Step 1: Slot selection */}
+              {step === 1 && (
+                <div className="space-y-4 animate-fade-in">
+                  <p className="text-[11px] text-foreground/50 tracking-[0.12em] uppercase mb-1">
+                    Wähle einen Zeitpunkt
                   </p>
-                  <div className="space-y-2">
-                    {TIMESLOTS.map(slot => (
+                  <div className="space-y-3">
+                    {slots.map(slot => (
                       <button
                         key={slot.value}
                         onClick={() => setSelectedSlot(slot.value)}
-                        className={optionBtn(selectedSlot === slot.value)}
+                        className={optionBtn(false)}
                       >
                         {slot.label}
                       </button>
                     ))}
                   </div>
                 </div>
-              </div>
+              )}
 
-              <button
-                onClick={handleBook}
-                disabled={!canSubmit || submitting}
-                className="w-full border-2 border-foreground px-10 py-5 text-sm tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed"
-              >
-                {submitting ? '...' : '→ TERMIN BESTÄTIGEN'}
-              </button>
+              {/* Step 2: Name + Phone */}
+              {step === 2 && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-foreground/50 tracking-[0.12em] uppercase">
+                      Dein gewählter Termin
+                    </p>
+                    <button
+                      onClick={() => setSelectedSlot('')}
+                      className="text-[11px] text-foreground/40 tracking-[0.08em] uppercase hover:text-foreground/70 transition-colors"
+                    >
+                      Ändern
+                    </button>
+                  </div>
+                  <div className="border border-foreground bg-foreground text-background px-6 py-4 text-base font-semibold tracking-[0.08em] text-center">
+                    {slots.find(s => s.value === selectedSlot)?.label}
+                  </div>
 
-              <p className="text-[10px] text-muted-foreground/40 tracking-[0.08em] text-center">
-                KOSTENLOS. KEINE VERPFLICHTUNG.
-              </p>
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <label className="block text-[11px] text-foreground/50 tracking-[0.1em] mb-2 uppercase">
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        placeholder="Dein Name"
+                        className="w-full border border-border bg-transparent px-4 py-3.5 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground focus:outline-none tracking-wide"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-foreground/50 tracking-[0.1em] mb-2 uppercase">
+                        Telefonnummer *
+                      </label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                        placeholder="+49 ..."
+                        className="w-full border border-border bg-transparent px-4 py-3.5 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground focus:outline-none tracking-wide"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleBook}
+                    disabled={!canSubmit || submitting}
+                    className="w-full border-2 border-foreground px-10 py-5 text-sm tracking-[0.12em] font-bold text-foreground bg-transparent hover:bg-foreground hover:text-background transition-colors duration-300 uppercase disabled:opacity-20 disabled:cursor-not-allowed mt-4"
+                  >
+                    {submitting ? '...' : '→ TERMIN BESTÄTIGEN'}
+                  </button>
+
+                  <p className="text-[10px] text-foreground/30 tracking-[0.08em] text-center uppercase">
+                    30 Minuten. Kostenlos. Keine Verpflichtung.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
