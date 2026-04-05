@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import NotificationBell from '@/components/shared/NotificationBell';
 import BrandMark from '@/components/shared/BrandMark';
-import WorkspaceSwitcher from '@/components/admin/WorkspaceSwitcher';
+
 import {
   Sheet,
   SheetContent,
