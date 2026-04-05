@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import BrandMark from '@/components/shared/BrandMark';
 
 interface TruthLandingProps {
   entryLine1: string;
@@ -71,33 +72,23 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
       fullScreen: true,
     },
     {
-      id: 'emotional',
+      id: 'recognition',
       lines: [
-        { text: 'ABER DIESES GEFÜHL KENNST DU.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
-        { text: '', spacer: true },
-        { text: 'DA IST ETWAS,', size: 'text-base sm:text-lg', weight: 'font-normal' },
-        { text: 'DAS HINTER DEINEM RÜCKEN PASSIERT.', size: 'text-base sm:text-lg', weight: 'font-normal' },
-        { text: '', spacer: true },
-        { text: 'UND DU SIEHST ES NICHT.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
-      ],
-    },
-    {
-      id: 'switch',
-      lines: [
-        { text: 'GENAU DAS PASSIERT IN DEINEM UNTERNEHMEN.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
+        { text: 'DU SPÜRST ES SCHON LÄNGER.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
         { text: '', spacer: true },
         { text: 'KUNDEN SPRINGEN AB.', size: 'text-base sm:text-lg', weight: 'font-normal' },
-        { text: 'GELD GEHT VERLOREN.', size: 'text-base sm:text-lg', weight: 'font-normal' },
-        { text: 'UND DU BEMERKST ES NICHT.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
+        { text: 'ANFRAGEN VERSANDEN.', size: 'text-base sm:text-lg', weight: 'font-normal' },
+        { text: '', spacer: true },
+        { text: 'UND DU WEISST NICHT, WARUM.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
       ],
     },
     {
-      id: 'authority',
+      id: 'reframe',
       lines: [
         { text: 'DAS PROBLEM IST NICHT DEIN ANGEBOT.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
         { text: 'DAS PROBLEM IST DEIN SYSTEM.', size: 'text-xl sm:text-2xl', weight: 'font-semibold' },
         { text: '', spacer: true },
-        { text: 'OHNE SYSTEM VERLIERST DU JEDEN TAG.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
+        { text: 'OHNE STRUKTUR VERLIERST DU JEDEN TAG.', size: 'text-base sm:text-lg', weight: 'font-normal', muted: true },
       ],
     },
     {
@@ -144,6 +135,13 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
 
   return (
     <div className="bg-background text-foreground min-h-screen snap-y snap-mandatory overflow-y-auto h-screen">
+      {/* NAV */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
+          <BrandMark variant="wordmark" size="md" />
+        </div>
+      </nav>
+
       {sections.map((section, si) => (
         <section
           key={section.id}
@@ -170,15 +168,16 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
           {si < sections.length - 1 && (
             <>
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
-              <div className={`absolute bottom-14 left-1/2 -translate-x-1/2 animate-bounce transition-opacity duration-500 ${scrollHintVisible ? 'opacity-50' : 'opacity-0'}`}>
+              <div className={`absolute bottom-14 left-1/2 -translate-x-1/2 animate-bounce transition-opacity duration-500 ${si === 0 && scrollHintVisible ? 'opacity-50' : si === 0 ? 'opacity-0' : 'opacity-50'}`}>
                 <ChevronDown className="h-5 w-5 text-foreground" />
               </div>
             </>
           )}
         </section>
       ))}
+
       <footer className="py-16 text-center snap-start min-h-[50vh] flex items-center justify-center">
-        <p className="text-xs text-muted-foreground tracking-[0.12em]">KÖFMAN</p>
+        <BrandMark variant="wordmark" size="sm" align="center" />
       </footer>
     </div>
   );
