@@ -305,9 +305,12 @@ const Settings = () => {
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t.settings.businessCategory}</label>
               <select value={form.business_category} onChange={(e) => update('business_category', e.target.value)} className={inputClass}>
-                <option value="general">{t.settings.general}</option>
-                <option value="garage">{t.settings.garage}</option>
-                <option value="cleaning">{t.settings.cleaning}</option>
+                <option value="cleaning">Gebäudereinigung</option>
+                <option value="garage">Kfz / Werkstatt</option>
+                <option value="consulting">Beratung</option>
+                <option value="service">Kundenservice / Termine</option>
+                <option value="web">Website / Domain / Betreuung</option>
+                <option value="general">Sonstiges</option>
               </select>
             </div>
           </div>
