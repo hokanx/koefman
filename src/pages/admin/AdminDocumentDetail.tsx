@@ -49,12 +49,12 @@ const AdminDocumentDetail = () => {
   const { data: items = [] } = useQuery({
     queryKey: ['admin-doc-items', type, id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from(config.itemsTable)
         .select('*')
         .eq(config.fk, id!)
         .order('sort_order');
-      return (data || []) as any[];
+      return data || [];
     },
     enabled: !!config && !!id,
   });
