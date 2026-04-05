@@ -45,6 +45,7 @@ import Onboarding from "@/pages/Onboarding";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminLeads from "@/pages/admin/AdminLeads";
 import AdminDocumentsUnified from "@/pages/admin/AdminDocumentsUnified";
+import AdminDocumentDetail from "@/pages/admin/AdminDocumentDetail";
 
 import LandingPage from "@/pages/LandingPage";
 import Truth from "@/pages/Truth";
