@@ -203,6 +203,7 @@ const Settings = () => {
 
       const payload = { ...form, address };
 
+      // Save business settings
       if (settings) {
         const { error } = await supabase
           .from('business_settings')
@@ -215,9 +216,19 @@ const Settings = () => {
           .insert({ ...payload, user_id: user!.id } as any);
         if (error) throw error;
       }
+
+      // Save tax mode to organization
+      if (activeOrganizationId) {
+        const { error: orgError } = await supabase
+          .from('organizations')
+          .update({ tax_mode: taxMode } as any)
+          .eq('id', activeOrganizationId);
+        if (orgError) throw orgError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['business-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
       toast.success(t.settings.saved);
     },
     onError: () => toast.error(t.common.error),
