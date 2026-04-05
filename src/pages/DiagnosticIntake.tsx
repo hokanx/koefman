@@ -259,16 +259,21 @@ export default function DiagnosticIntake() {
         },
       });
 
-      if (response.error) throw response.error;
-      const data = response.data;
-      if (data?.email_sent) {
-        setEmailSent(true);
-        setTimeout(() => navigate(`/book?sid=${submissionId}`), 2000);
-      } else {
-        toast.error('E-Mail konnte nicht gesendet werden.');
+      // Always proceed regardless of email result
+      if (response.error) {
+        console.error('Email send error:', response.error);
       }
-    } catch {
-      toast.error('E-Mail konnte nicht gesendet werden.');
+      const data = response.data;
+      if (!data?.email_sent) {
+        console.warn('Email was not sent, proceeding anyway');
+      }
+      setEmailSent(true);
+      setTimeout(() => navigate(`/book?sid=${submissionId}`), 2000);
+    } catch (err) {
+      console.error('Email capture error:', err);
+      // Fail-safe: always proceed
+      setEmailSent(true);
+      setTimeout(() => navigate(`/book?sid=${submissionId}`), 2000);
     } finally {
       setSendingEmail(false);
     }
