@@ -144,7 +144,7 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
 
   return (
     <div className="bg-background text-foreground min-h-screen snap-y snap-mandatory overflow-y-auto h-screen">
-      {sections.map((section) => (
+      {sections.map((section, si) => (
         <section
           key={section.id}
           className={`relative flex flex-col items-center justify-center px-6 snap-start ${section.fullScreen ? 'min-h-screen' : 'min-h-screen py-24 sm:py-32'}`}
@@ -167,7 +167,7 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
               </div>
             )}
           </div>
-          {section.fullScreen && (
+          {si < sections.length - 1 && (
             <>
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
               <div className={`absolute bottom-14 left-1/2 -translate-x-1/2 animate-bounce transition-opacity duration-500 ${scrollHintVisible ? 'opacity-50' : 'opacity-0'}`}>

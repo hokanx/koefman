@@ -166,7 +166,7 @@ const LandingPage = () => {
               </FadeSection>
             )}
           </div>
-          {si === 0 && (
+          {si < sections.length - 1 && (
             <>
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
               <div className={`absolute bottom-14 left-1/2 -translate-x-1/2 animate-bounce transition-opacity duration-500 ${scrollHintVisible ? 'opacity-50' : 'opacity-0'}`}>
