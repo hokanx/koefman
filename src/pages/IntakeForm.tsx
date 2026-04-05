@@ -30,7 +30,7 @@ const IntakeForm = () => {
   useEffect(() => {
     if (!token) { setInvalid(true); setLoading(false); return; }
     const resolve = async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('business_settings')
         .select('user_id, business_name, business_category')
         .eq('intake_token', token)

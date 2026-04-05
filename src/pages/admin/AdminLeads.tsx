@@ -118,9 +118,9 @@ const AdminLeads = () => {
 
   const fetchSubmissions = async () => {
     const [subsRes, analysesRes, bookingsRes] = await Promise.all([
-      (supabase as any).from('diagnostic_submissions').select('*').order('created_at', { ascending: false }),
-      (supabase as any).from('lead_analyses').select('*'),
-      (supabase as any).from('lead_bookings').select('*'),
+      supabase.from('diagnostic_submissions').select('*').order('created_at', { ascending: false }),
+      supabase.from('lead_analyses').select('*'),
+      supabase.from('lead_bookings').select('*'),
     ]);
     const subs = subsRes.data || [];
     const analyses = analysesRes.data || [];
@@ -183,7 +183,7 @@ const AdminLeads = () => {
 
   const updateField = async (id: string, fields: Record<string, any>) => {
     setSaving(true);
-    const { error } = await (supabase as any).from('diagnostic_submissions').update(fields).eq('id', id);
+    const { error } = await supabase.from('diagnostic_submissions').update(fields).eq('id', id);
     if (error) { toast.error('Fehler beim Speichern'); setSaving(false); return; }
     await fetchSubmissions();
     setSelected(prev => prev ? { ...prev, ...fields } : null);
@@ -235,7 +235,7 @@ const AdminLeads = () => {
       }
 
       // Update lead status to 'angebot'
-      await (supabase as any).from('diagnostic_submissions').update({ lead_status: 'angebot' }).eq('id', sub.id);
+      await supabase.from('diagnostic_submissions').update({ lead_status: 'angebot' }).eq('id', sub.id);
 
       navigate(`/offers/new?customer=${customerId}`);
     } catch (err) {

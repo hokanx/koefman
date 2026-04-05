@@ -67,7 +67,7 @@ const LeadIntakeModal = ({ open, onOpenChange }: LeadIntakeModalProps) => {
     if (!canNext()) return;
     setSubmitting(true);
     try {
-      const { error } = await (supabase as any).from('landing_leads').insert({
+      const { error } = await supabase.from('landing_leads').insert({
         name, company, industry, situation,
         needs, contact_method: contactMethod,
         email, phone: phone || null,

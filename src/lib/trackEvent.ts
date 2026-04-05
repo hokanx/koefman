@@ -5,7 +5,7 @@ export function trackFunnelEvent(
   opts?: { source?: string; variant?: string; submission_id?: string }
 ) {
   try {
-    (supabase as any).from('funnel_events').insert({
+    supabase.from('funnel_events').insert({
       event,
       source: opts?.source || 'direct',
       variant: opts?.variant || null,
