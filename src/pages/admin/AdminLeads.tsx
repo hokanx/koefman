@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Mail, UserPlus, Search, ChevronRight, RefreshCw, Eye, Phone, FileText, CheckSquare, Clock, Copy, CalendarIcon } from 'lucide-react';
+import { Mail, Search, ChevronRight, RefreshCw, Eye, Phone, FileText, CheckSquare, Clock, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
