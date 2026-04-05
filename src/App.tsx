@@ -112,7 +112,7 @@ const AppWithImpersonation = () => {
               <Route path="/truth-b" element={<TruthB />} />
               <Route path="/truth-:campaignId" element={<Truth />} />
               <Route path="/diagnose" element={<DiagnosticIntake />} />
-              <Route path="/system" element={<SystemPage />} />
+              
               <Route path="/start" element={<Navigate to="/book" replace />} />
               <Route path="/book" element={<BookingPage />} />
               <Route path="*" element={<NotFound />} />
