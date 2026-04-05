@@ -516,7 +516,7 @@ Deno.serve(async (req) => {
       }
 
       let publicToken = doc.public_token;
-      if (!publicToken && !requestData.publicLink) {
+      if (!publicToken) {
         publicToken = crypto.randomUUID();
         await supabaseAdmin
           .from('org_documents')
@@ -524,7 +524,7 @@ Deno.serve(async (req) => {
           .eq('id', requestData.documentId);
       }
 
-      const signingUrl = requestData.publicLink || (publicToken ? `${appUrl}/document/view/${publicToken}` : undefined);
+      const signingUrl = requestData.publicLink || `${appUrl}/document/view/${publicToken}`;
       const subject = requestData.subject || `${DOC_TYPE_LABELS[doc.document_type] || 'Dokument'}: ${doc.title || '(Ohne Titel)'}`;
       const messageBody = requestData.body || getDefaultMessage(branding.senderName, DOC_TYPE_LABELS[doc.document_type] || 'Dokument', doc.recipient_name || '');
       const ctaLabel = DOC_TYPE_CTA[doc.document_type] || 'Dokument ansehen';
@@ -535,7 +535,7 @@ Deno.serve(async (req) => {
         document_title: doc.title || '(Ohne Titel)',
         document_type_label: DOC_TYPE_LABELS[doc.document_type] || doc.document_type,
         amount_total: formatAmount(doc.amount_total),
-        signing_url: signingUrl || '',
+        signing_url: signingUrl,
         footer_text: branding.footerText,
         logo_url: branding.logoUrl,
         cta_label: ctaLabel.toUpperCase(),
