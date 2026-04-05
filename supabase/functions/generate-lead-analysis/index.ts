@@ -23,9 +23,11 @@ function buildEmailHtml(
     .filter((p: string) => p)
     .map(
       (p: string, i: number) =>
-        `<tr><td style="padding:8px 12px 8px 0;color:#9A9A9A;vertical-align:top;font-size:14px;width:28px;font-family:Arial,Helvetica,sans-serif;">${i + 1}.</td><td style="padding:8px 0;color:#FFFFFF;font-size:15px;line-height:1.65;font-family:Arial,Helvetica,sans-serif;">${p}</td></tr>`
+        `<tr><td style="padding:10px 16px 10px 0;color:#666666;vertical-align:top;font-size:22px;width:36px;font-family:Arial,Helvetica,sans-serif;font-weight:700;line-height:1.3;">${i + 1}.</td><td style="padding:10px 0;color:#FFFFFF;font-size:16px;line-height:1.7;font-family:Arial,Helvetica,sans-serif;">${p}</td></tr>`
     )
     .join("");
+
+  const divider = `<tr><td style="padding:0 40px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #222222;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>`;
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="de" xml:lang="de">
@@ -34,7 +36,7 @@ function buildEmailHtml(
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="light dark" />
 <meta name="supported-color-schemes" content="light dark" />
-<title>Deine K&#246;fman Kurzanalyse</title>
+<title>Deine K&#246;fman Analyse</title>
 <style type="text/css">
 :root { color-scheme: light dark; supported-color-schemes: light dark; }
 @media (prefers-color-scheme: dark) {
@@ -46,94 +48,108 @@ function buildEmailHtml(
 <body style="margin:0;padding:0;background-color:#000000;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;font-family:Arial,Helvetica,sans-serif;" class="email-bg">
 
 <div style="display:none;font-size:1px;color:#000000;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-Deine Kurzanalyse basierend auf deinen Angaben ist bereit.
+Deine vollst&#228;ndige Analyse ist bereit &#8211; hier sind deine Ergebnisse.
 </div>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#000000;" class="email-bg">
 <tr><td align="center" style="padding:32px 16px;">
 
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;background-color:#000000;border:1px solid #1A1A1A;" class="email-container">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="580" style="max-width:580px;width:100%;background-color:#000000;" class="email-container">
 
 <!-- Logo -->
-<tr><td style="padding:48px 32px 36px 32px;text-align:center;background-color:#000000;">
-  <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="K&#214;FMAN" width="112" height="112" style="display:block;margin:0 auto 16px auto;width:112px;height:112px;border:0;outline:none;" />
-  <span style="color:#FFFFFF;font-size:18px;letter-spacing:0.22em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">K&#214;FMAN</span>
+<tr><td style="padding:52px 40px 40px 40px;text-align:center;background-color:#000000;">
+  <img src="https://ppijwrrzjcbtokoxpctf.supabase.co/storage/v1/object/public/brand-assets/logo-icon-white.png" alt="K&#214;FMAN" width="120" height="120" style="display:block;margin:0 auto 20px auto;width:120px;height:120px;border:0;outline:none;" />
+  <span style="color:#FFFFFF;font-size:20px;letter-spacing:0.25em;font-weight:700;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">K&#214;FMAN</span>
 </td></tr>
 
-<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+${divider}
 
-<!-- Greeting -->
-<tr><td style="padding:28px 32px 8px 32px;background-color:#000000;">
-  <p style="color:#FFFFFF;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;margin:0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">
-    ${name ? `HALLO ${name.toUpperCase()},` : "HALLO,"}
+<!-- Opening -->
+<tr><td style="padding:36px 40px 12px 40px;background-color:#000000;">
+  <p style="color:#FFFFFF;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;margin:0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">
+    ${name ? `${name.toUpperCase()},` : "HALLO,"}
+  </p>
+</td></tr>
+<tr><td style="padding:8px 40px 36px 40px;background-color:#000000;">
+  <p style="color:#CCCCCC;font-size:16px;line-height:1.7;margin:0;font-family:Arial,Helvetica,sans-serif;">
+    Hier ist deine vollst&#228;ndige Analyse basierend auf deinen Angaben.
   </p>
 </td></tr>
 
-<tr><td style="padding:12px 32px 28px 32px;background-color:#000000;">
-  <p style="color:#B3B3B3;font-size:14px;line-height:1.7;margin:0;font-family:Arial,Helvetica,sans-serif;">
-    Hier ist deine Kurzanalyse basierend auf deinen Angaben.
-  </p>
+${divider}
+
+<!-- Biggest Weakness -->
+<tr><td style="padding:36px 40px 32px 40px;background-color:#000000;">
+  <p style="color:#888888;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;">GR&#214;SSTE SCHWACHSTELLE</p>
+  <p style="color:#FFFFFF;font-size:18px;line-height:1.6;margin:0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">${analysis.main_issue}</p>
 </td></tr>
 
-<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+${divider}
 
-<!-- Main Issue -->
-<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">GR&#214;SSTE SCHWACHSTELLE</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.main_issue}</p>
+<!-- What This Means -->
+<tr><td style="padding:36px 40px 32px 40px;background-color:#000000;">
+  <p style="color:#888888;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;">WAS DAS F&#220;R DICH BEDEUTET</p>
+  <p style="color:#FFFFFF;font-size:16px;line-height:1.7;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.practical_meaning}</p>
 </td></tr>
 
-<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+${divider}
 
-<!-- Practical Meaning -->
-<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">WAS DAS PRAKTISCH BEDEUTET</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.practical_meaning}</p>
-</td></tr>
-
-<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
-
-<!-- Priorities -->
-<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">DEINE N&#196;CHSTEN 3 HEBEL</p>
+<!-- 3 Priorities -->
+<tr><td style="padding:36px 40px 32px 40px;background-color:#000000;">
+  <p style="color:#888888;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 20px 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;">DEINE N&#196;CHSTEN 3 HEBEL</p>
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">${prioritiesHtml}</table>
 </td></tr>
 
-<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+${divider}
 
-<!-- Next Step -->
-<tr><td style="padding:28px 32px 24px 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-weight:600;">N&#196;CHSTER SINNVOLLER SCHRITT</p>
-  <p style="color:#FFFFFF;font-size:15px;line-height:1.65;margin:0;font-family:Arial,Helvetica,sans-serif;">${analysis.next_step}</p>
+<!-- Decision Block -->
+<tr><td style="padding:40px 40px 36px 40px;background-color:#000000;">
+  <p style="color:#FFFFFF;font-size:18px;font-weight:700;letter-spacing:0.05em;margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">DU HAST ZWEI OPTIONEN:</p>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td style="padding:0 0 16px 0;color:#999999;font-size:15px;line-height:1.7;font-family:Arial,Helvetica,sans-serif;">
+        <span style="color:#666666;font-weight:700;">1.</span>&nbsp;&nbsp;Du versuchst, es alleine umzusetzen &#8211; mit dem Risiko, dass die gleichen Fehler weiterlaufen.
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:0;color:#FFFFFF;font-size:15px;line-height:1.7;font-family:Arial,Helvetica,sans-serif;">
+        <span style="color:#FFFFFF;font-weight:700;">2.</span>&nbsp;&nbsp;Du l&#228;sst dir von uns in 30 Minuten zeigen, wie du es strukturiert l&#246;st &#8211; kostenlos.
+      </td>
+    </tr>
+  </table>
 </td></tr>
 
-<tr><td style="padding:0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
-
+${divider}
 
 <!-- CTA -->
-<tr><td style="padding:32px 32px 0 32px;background-color:#000000;" align="center">
-  <a href="${ctaUrl}" target="_blank" style="color:#FFFFFF !important;-webkit-text-fill-color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:28px;font-weight:700;letter-spacing:0.04em;text-decoration:underline;text-transform:uppercase;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">&#8594; STRATEGIEGESPR&#196;CH BUCHEN</a>
+<tr><td style="padding:40px 40px 0 40px;background-color:#000000;" align="center">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td align="center" style="background-color:#FFFFFF;padding:0;">
+        <a href="${ctaUrl}" target="_blank" style="display:block;padding:20px 32px;color:#000000 !important;-webkit-text-fill-color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:22px;font-weight:700;letter-spacing:0.12em;text-decoration:none;text-transform:uppercase;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">&#8594; STRATEGIE-SESSION BUCHEN</a>
+      </td>
+    </tr>
+  </table>
 </td></tr>
 
-<tr><td style="padding:16px 32px 0 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:11px;line-height:1.5;margin:0 0 6px 0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
-    Falls der Link nicht direkt funktioniert, kopiere ihn in deinen Browser:
+<tr><td style="padding:20px 40px 0 40px;background-color:#000000;">
+  <p style="color:#666666;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+    30 Minuten. Kostenlos. Keine Verpflichtung.
   </p>
-  <p style="color:#A0A0A0;font-size:11px;line-height:1.5;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;word-break:break-all;">
+</td></tr>
+
+<tr><td style="padding:12px 40px 0 40px;background-color:#000000;">
+  <p style="color:#555555;font-size:10px;line-height:1.5;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;word-break:break-all;">
     ${ctaUrl}
   </p>
 </td></tr>
 
-<tr><td style="padding:20px 32px 0 32px;background-color:#000000;">
-  <p style="color:#A0A0A0;font-size:11px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
-    Wir zeigen dir konkret, wo du Geld verlierst &#8211; und wie du es behebst.
-  </p>
-</td></tr>
+${divider}
 
-<tr><td style="padding:32px 32px 0 32px;background-color:#000000;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:1px solid #2A2A2A;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
-
-<tr><td style="padding:24px 32px 40px 32px;background-color:#000000;">
-  <p style="color:#9A9A9A;font-size:10px;letter-spacing:0.18em;text-align:center;margin:0;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;font-weight:600;">K&#214;FMAN</p>
+<!-- Footer -->
+<tr><td style="padding:28px 40px 48px 40px;background-color:#000000;">
+  <p style="color:#666666;font-size:10px;letter-spacing:0.2em;text-align:center;margin:0;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;font-weight:600;">K&#214;FMAN</p>
 </td></tr>
 
 </table>
