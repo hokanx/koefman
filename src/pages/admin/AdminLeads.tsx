@@ -6,9 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Mail, UserPlus, Search, ChevronRight, RefreshCw, Eye, Phone, CalendarIcon, FileText, CheckSquare, Clock } from 'lucide-react';
+import { Mail, UserPlus, Search, ChevronRight, RefreshCw, Eye, Phone, FileText, CheckSquare, Clock, Copy, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -49,13 +47,6 @@ const PIPELINE_STATUSES: { key: string; label: string; color: string }[] = [
 ];
 const PIPELINE_MAP = Object.fromEntries(PIPELINE_STATUSES.map(s => [s.key, s]));
 
-const CALL_RESULTS = [
-  { key: 'interesse', label: 'Interesse' },
-  { key: 'kein_interesse', label: 'Kein Interesse' },
-  { key: 'unklar', label: 'Unklar' },
-];
-
-
 interface LeadBooking {
   id: string;
   submission_id: string;
@@ -80,7 +71,6 @@ interface LeadAnalysis {
   email_sent_at: string | null;
   error_message: string | null;
   created_at: string;
-  recommended_package?: string;
 }
 
 interface DiagnosticSubmission {
@@ -111,6 +101,7 @@ interface DiagnosticSubmission {
   call_result?: string | null;
   internal_notes?: string | null;
   lead_analyses?: LeadAnalysis[];
+  booking?: LeadBooking | null;
 }
 
 const AdminLeads = () => {
@@ -125,13 +116,21 @@ const AdminLeads = () => {
   const navigate = useNavigate();
 
   const fetchSubmissions = async () => {
-    const { data: subs } = await (supabase as any).from('diagnostic_submissions').select('*').order('created_at', { ascending: false });
-    const { data: analyses } = await (supabase as any).from('lead_analyses').select('*');
-    const submissionsWithAnalyses = (subs || []).map((sub: DiagnosticSubmission) => ({
+    const [subsRes, analysesRes, bookingsRes] = await Promise.all([
+      (supabase as any).from('diagnostic_submissions').select('*').order('created_at', { ascending: false }),
+      (supabase as any).from('lead_analyses').select('*'),
+      (supabase as any).from('lead_bookings').select('*'),
+    ]);
+    const subs = subsRes.data || [];
+    const analyses = analysesRes.data || [];
+    const bookings = bookingsRes.data || [];
+
+    const submissionsWithData = subs.map((sub: DiagnosticSubmission) => ({
       ...sub,
-      lead_analyses: (analyses || []).filter((a: LeadAnalysis) => a.submission_id === sub.id),
+      lead_analyses: analyses.filter((a: LeadAnalysis) => a.submission_id === sub.id),
+      booking: bookings.find((b: LeadBooking) => b.submission_id === sub.id) || null,
     }));
-    setSubmissions(submissionsWithAnalyses);
+    setSubmissions(submissionsWithData);
   };
 
   useEffect(() => {
@@ -144,10 +143,6 @@ const AdminLeads = () => {
     if (statusFilter !== 'alle' && statusFilter !== 'follow_up_today') {
       if (PIPELINE_MAP[statusFilter]) {
         if ((s.lead_status || 'neu') !== statusFilter) return false;
-      } else {
-        const analysis = s.lead_analyses?.[0];
-        if (statusFilter === 'completed' && analysis?.analysis_status !== 'completed') return false;
-        if (statusFilter === 'failed' && analysis?.analysis_status !== 'failed') return false;
       }
     }
     if (statusFilter === 'follow_up_today') {
@@ -165,7 +160,6 @@ const AdminLeads = () => {
     const aOrder = INTENT_ORDER[a.intent_score || 'low'] ?? 2;
     const bOrder = INTENT_ORDER[b.intent_score || 'low'] ?? 2;
     if (aOrder !== bOrder) return aOrder - bOrder;
-    // Follow-ups due first
     const aFollowUp = a.next_follow_up_at ? new Date(a.next_follow_up_at).getTime() : Infinity;
     const bFollowUp = b.next_follow_up_at ? new Date(b.next_follow_up_at).getTime() : Infinity;
     const now = Date.now();
@@ -191,16 +185,9 @@ const AdminLeads = () => {
     const { error } = await (supabase as any).from('diagnostic_submissions').update(fields).eq('id', id);
     if (error) { toast.error('Fehler beim Speichern'); setSaving(false); return; }
     await fetchSubmissions();
-    // Update selected
     setSelected(prev => prev ? { ...prev, ...fields } : null);
     setSaving(false);
     toast.success('Gespeichert');
-  };
-
-  const quickAction = async (sub: DiagnosticSubmission, newStatus: string) => {
-    const fields: Record<string, any> = { lead_status: newStatus };
-    if (newStatus === 'kontaktiert') fields.last_contacted_at = new Date().toISOString();
-    await updateField(sub.id, fields);
   };
 
   const openEmail = (sub: DiagnosticSubmission) => {
@@ -209,15 +196,27 @@ const AdminLeads = () => {
     window.open(`mailto:${sub.email}?subject=${subject}&body=${body}`, '_self');
   };
 
-  const convertToCustomer = async (sub: DiagnosticSubmission) => {
+  const copyPhone = (phone: string) => {
+    navigator.clipboard.writeText(phone);
+    toast.success('Telefonnummer kopiert');
+  };
+
+  const convertAndNavigate = async (sub: DiagnosticSubmission, target: 'offer' | 'contract') => {
+    // Create customer first
     const { data: customer, error } = await supabase.from('customers').insert({
       user_id: (await supabase.auth.getUser()).data.user?.id!,
       name: sub.company || sub.name,
       contact_person: sub.name,
       email: sub.email,
     }).select().single();
-    if (error || !customer) { alert('Fehler beim Erstellen'); return; }
-    navigate(`/customers/${customer.id}`);
+    if (error || !customer) { toast.error('Fehler beim Erstellen'); return; }
+
+    if (target === 'offer') {
+      navigate(`/offers/new?customer=${customer.id}`);
+    } else {
+      // For contracts, create an offer first then navigate to contract flow
+      navigate(`/offers/new?customer=${customer.id}`);
+    }
   };
 
   const resendAnalysisEmail = async (sub: DiagnosticSubmission) => {
@@ -230,8 +229,6 @@ const AdminLeads = () => {
       if (response.data?.email_sent) {
         toast.success('Analyse-E-Mail erneut gesendet');
         await fetchSubmissions();
-        const updated = submissions.find(s => s.id === sub.id);
-        if (updated) setSelected({ ...updated });
       } else {
         toast.error('E-Mail konnte nicht gesendet werden');
       }
@@ -257,13 +254,6 @@ const AdminLeads = () => {
   const getStatusBadge = (status: string) => {
     const s = PIPELINE_MAP[status] || PIPELINE_MAP['neu'];
     return <span className={`inline-block text-[9px] font-bold tracking-[0.08em] px-2 py-0.5 rounded border ${s.color}`}>{s.label}</span>;
-  };
-
-  const getSuggestedAction = (sub: DiagnosticSubmission) => {
-    if (sub.call_result === 'interesse') return { label: 'Angebot erstellen', action: () => quickAction(sub, 'angebot') };
-    if (sub.call_result === 'kein_interesse') return { label: 'Abschließen', action: () => quickAction(sub, 'abgeschlossen') };
-    if (sub.call_result === 'unklar') return { label: 'Follow-up setzen', action: () => {} };
-    return null;
   };
 
   return (
@@ -322,23 +312,22 @@ const AdminLeads = () => {
                           </span>
                         )}
                         {getStatusBadge(sub.lead_status || 'neu')}
+                        {sub.booking && (
+                          <span className="text-[9px] font-bold tracking-[0.08em] px-2 py-0.5 rounded border bg-purple-900/50 text-purple-400 border-purple-800">
+                            TERMIN
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">{sub.email}</p>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[11px] text-muted-foreground/60">
                           {INDUSTRY_LABELS[sub.business_type] || sub.business_type}
-                          {sub.variant && <> · V{sub.variant.toUpperCase()}</>}
                           {' · '}
                           {format(new Date(sub.created_at), 'dd.MM.yy', { locale: de })}
                         </span>
                         {isOverdue && (
                           <span className="text-[10px] text-red-400 flex items-center gap-1">
                             <Clock className="w-3 h-3" /> Follow-up fällig
-                          </span>
-                        )}
-                        {sub.next_follow_up_at && !isOverdue && (
-                          <span className="text-[10px] text-muted-foreground/60">
-                            Follow-up: {format(new Date(sub.next_follow_up_at), 'dd.MM.', { locale: de })}
                           </span>
                         )}
                       </div>
@@ -361,66 +350,153 @@ const AdminLeads = () => {
           {selected && (() => {
             const analysis = selected.lead_analyses?.[0];
             const hasCompletedAnalysis = analysis?.analysis_status === 'completed';
-            const suggested = getSuggestedAction(selected);
+            const booking = selected.booking;
+
             return (
               <div>
-                {/* Header */}
+                {/* 1. Lead Overview */}
                 <div className="p-6 pb-4">
                   <DialogHeader>
                     <DialogTitle className="text-base font-semibold tracking-[0.08em] uppercase">{selected.name}</DialogTitle>
                   </DialogHeader>
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    {selected.intent_score && INTENT_BADGES[selected.intent_score] && (
-                      <span className={`text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded border ${INTENT_BADGES[selected.intent_score].className}`}>
-                        {INTENT_BADGES[selected.intent_score].label}
-                      </span>
+                  <div className="mt-3 space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">E-Mail</span>
+                      <span>{selected.email}</span>
+                    </div>
+                    {selected.company && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Firma</span>
+                        <span>{selected.company}</span>
+                      </div>
                     )}
-                    {getStatusBadge(selected.lead_status || 'neu')}
-                    <span className="text-[11px] text-muted-foreground">
-                      {format(new Date(selected.created_at), 'dd.MM.yyyy · HH:mm', { locale: de })}
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Branche</span>
+                      <span>{INDUSTRY_LABELS[selected.business_type] || selected.business_type}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Eingang</span>
+                      <span>{format(new Date(selected.created_at), 'dd.MM.yyyy · HH:mm', { locale: de })}</span>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      {selected.intent_score && INTENT_BADGES[selected.intent_score] && (
+                        <span className={`text-[9px] font-bold tracking-[0.1em] px-2 py-0.5 rounded border ${INTENT_BADGES[selected.intent_score].className}`}>
+                          {INTENT_BADGES[selected.intent_score].label}
+                        </span>
+                      )}
+                      {getStatusBadge(selected.lead_status || 'neu')}
+                    </div>
                   </div>
                 </div>
 
-                {/* Quick Actions */}
+                {/* 2. Booking Information */}
                 <div className="border-t border-border px-6 py-4">
-                  <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">SCHNELLAKTIONEN</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(selected.lead_status || 'neu') === 'neu' && (
-                      <Button variant="outline" size="sm" className="text-xs" onClick={() => { quickAction(selected, 'kontaktiert'); openEmail(selected); }}>
-                        <Mail className="w-3.5 h-3.5 mr-1.5" /> Kontaktieren
-                      </Button>
-                    )}
-                    {['neu', 'kontaktiert'].includes(selected.lead_status || 'neu') && (
-                      <Button variant="outline" size="sm" className="text-xs" onClick={() => quickAction(selected, 'gespraech_geplant')}>
-                        <Phone className="w-3.5 h-3.5 mr-1.5" /> Gespräch planen
-                      </Button>
-                    )}
-                    {(selected.lead_status || 'neu') !== 'angebot' && (selected.lead_status || 'neu') !== 'abgeschlossen' && (
-                      <Button variant="outline" size="sm" className="text-xs" onClick={() => quickAction(selected, 'angebot')}>
-                        <FileText className="w-3.5 h-3.5 mr-1.5" /> Angebot
-                      </Button>
-                    )}
-                    {(selected.lead_status || 'neu') !== 'abgeschlossen' && (
-                      <Button variant="outline" size="sm" className="text-xs" onClick={() => quickAction(selected, 'abgeschlossen')}>
-                        <CheckSquare className="w-3.5 h-3.5 mr-1.5" /> Abschließen
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm" className="text-xs" onClick={() => convertToCustomer(selected)}>
-                      <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Kunde erstellen
-                    </Button>
-                  </div>
-                  {suggested && (
-                    <div className="mt-3 p-2 rounded-lg bg-accent/50 border border-border">
-                      <p className="text-[10px] text-muted-foreground mb-1">Empfohlene Aktion:</p>
-                      <Button variant="outline" size="sm" className="text-xs" onClick={suggested.action}>
-                        {suggested.label}
-                      </Button>
+                  <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">TERMIN</p>
+                  {booking ? (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Zeitfenster</span>
+                        <span className="font-medium">{booking.selected_slot}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Telefon</span>
+                        <div className="flex items-center gap-2">
+                          <span>{booking.phone}</span>
+                          <button onClick={() => copyPhone(booking.phone)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Status</span>
+                        <span className="text-[9px] font-bold tracking-[0.08em] px-2 py-0.5 rounded border bg-green-900/50 text-green-400 border-green-800">
+                          {booking.booking_status === 'booked' ? 'GEBUCHT' : booking.booking_status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Gebucht am</span>
+                        <span className="text-xs text-muted-foreground">{format(new Date(booking.created_at), 'dd.MM.yyyy · HH:mm', { locale: de })}</span>
+                      </div>
                     </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Kein Termin gebucht</p>
                   )}
                 </div>
 
-                {/* Pipeline Status */}
+                {/* 3. Analysis Summary */}
+                {hasCompletedAnalysis && analysis && (
+                  <div className="border-t border-border px-6 py-4">
+                    <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">ANALYSE</p>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground tracking-[0.08em] uppercase mb-1">Größte Schwachstelle</p>
+                        <p className="text-sm leading-relaxed">{analysis.main_issue}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground tracking-[0.08em] uppercase mb-2">3 Prioritäten</p>
+                        <div className="space-y-1.5">
+                          {[analysis.priority_1, analysis.priority_2, analysis.priority_3].filter(Boolean).map((p, i) => (
+                            <div key={i} className="flex gap-3 items-baseline">
+                              <span className="text-muted-foreground text-xs shrink-0 w-4 text-right">{i + 1}.</span>
+                              <p className="text-sm leading-relaxed">{p}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {(selected.problems && selected.problems.length > 0) && (
+                        <div>
+                          <p className="text-[10px] text-muted-foreground tracking-[0.08em] uppercase mb-1">Genannte Probleme</p>
+                          <p className="text-sm">{selected.problems.map(p => NEED_LABELS[p] || p).join(', ')}</p>
+                        </div>
+                      )}
+                      {selected.free_text && (
+                        <div>
+                          <p className="text-[10px] text-muted-foreground tracking-[0.08em] uppercase mb-1">Eigene Beschreibung</p>
+                          <p className="text-sm leading-relaxed">{selected.free_text}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Actions */}
+                <div className="border-t border-border px-6 py-4">
+                  <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">AKTIONEN</p>
+                  
+                  {/* Primary actions */}
+                  <div className="flex flex-col gap-2 mb-4">
+                    <Button className="w-full justify-start text-xs" onClick={() => convertAndNavigate(selected, 'offer')}>
+                      <FileText className="w-4 h-4 mr-2" /> Angebot erstellen
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-xs" onClick={() => convertAndNavigate(selected, 'contract')}>
+                      <FileText className="w-4 h-4 mr-2" /> Vertrag erstellen
+                    </Button>
+                  </div>
+
+                  {/* Secondary actions */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" className="text-xs" onClick={() => openEmail(selected)}>
+                      <Mail className="w-3.5 h-3.5 mr-1.5" /> E-Mail schreiben
+                    </Button>
+                    {booking?.phone && (
+                      <Button variant="outline" size="sm" className="text-xs" onClick={() => copyPhone(booking.phone)}>
+                        <Copy className="w-3.5 h-3.5 mr-1.5" /> Telefonnummer kopieren
+                      </Button>
+                    )}
+                    {(selected.lead_status || 'neu') !== 'kontaktiert' && (selected.lead_status || 'neu') !== 'abgeschlossen' && (
+                      <Button variant="outline" size="sm" className="text-xs" onClick={() => updateField(selected.id, { lead_status: 'kontaktiert', last_contacted_at: new Date().toISOString() })}>
+                        <Phone className="w-3.5 h-3.5 mr-1.5" /> Als kontaktiert markieren
+                      </Button>
+                    )}
+                    {(selected.lead_status || 'neu') !== 'abgeschlossen' && (
+                      <Button variant="outline" size="sm" className="text-xs" onClick={() => updateField(selected.id, { lead_status: 'abgeschlossen' })}>
+                        <CheckSquare className="w-3.5 h-3.5 mr-1.5" /> Als abgeschlossen markieren
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. Status pipeline */}
                 <div className="border-t border-border px-6 py-4">
                   <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">STATUS</p>
                   <div className="flex gap-1.5 flex-wrap">
@@ -436,127 +512,7 @@ const AdminLeads = () => {
                   </div>
                 </div>
 
-                {/* Follow-Up Section */}
-                <div className="border-t border-border px-6 py-4">
-                  <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">FOLLOW-UP</p>
-                  <div className="space-y-3">
-                    {selected.last_contacted_at && (
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">Letzter Kontakt: </span>
-                        <span>{format(new Date(selected.last_contacted_at), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
-                      </div>
-                    )}
-                    <div>
-                      <label className="text-[11px] text-muted-foreground block mb-1">Nächster Follow-up</label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className={cn("text-xs justify-start w-full", !selected.next_follow_up_at && "text-muted-foreground")}>
-                            <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
-                            {selected.next_follow_up_at ? format(new Date(selected.next_follow_up_at), 'dd.MM.yyyy', { locale: de }) : 'Datum wählen'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={selected.next_follow_up_at ? new Date(selected.next_follow_up_at) : undefined}
-                            onSelect={(date) => {
-                              if (date) updateField(selected.id, { next_follow_up_at: date.toISOString() });
-                            }}
-                            className="p-3 pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-muted-foreground block mb-1">Follow-up Notizen</label>
-                      <Textarea
-                        value={selected.follow_up_notes || ''}
-                        onChange={e => setSelected(prev => prev ? { ...prev, follow_up_notes: e.target.value } : null)}
-                        onBlur={e => updateField(selected.id, { follow_up_notes: e.target.value })}
-                        placeholder="z.B. Anruf am Montag..."
-                        className="text-xs min-h-[60px]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Call Tracking */}
-                <div className="border-t border-border px-6 py-4">
-                  <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">GESPRÄCH</p>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <label className="text-[11px] text-muted-foreground">Gespräch geführt?</label>
-                      <button
-                        onClick={() => updateField(selected.id, { call_completed: !selected.call_completed, call_date: !selected.call_completed ? new Date().toISOString() : null })}
-                        className={cn("text-xs px-3 py-1 rounded border transition-colors", selected.call_completed ? "bg-green-900/50 text-green-400 border-green-800" : "border-border text-muted-foreground hover:bg-accent")}
-                      >
-                        {selected.call_completed ? 'Ja ✓' : 'Nein'}
-                      </button>
-                    </div>
-                    {selected.call_completed && selected.call_date && (
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">Gesprächsdatum: </span>
-                        <span>{format(new Date(selected.call_date), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
-                      </div>
-                    )}
-                    {selected.call_completed && (
-                      <div>
-                        <label className="text-[11px] text-muted-foreground block mb-1.5">Ergebnis</label>
-                        <div className="flex gap-1.5">
-                          {CALL_RESULTS.map(r => (
-                            <button key={r.key} onClick={() => updateField(selected.id, { call_result: r.key })}
-                              className={cn(
-                                "text-[10px] font-medium px-2.5 py-1 rounded border transition-colors",
-                                selected.call_result === r.key
-                                  ? r.key === 'interesse' ? 'bg-green-900/50 text-green-400 border-green-800'
-                                    : r.key === 'kein_interesse' ? 'bg-red-900/50 text-red-400 border-red-800'
-                                    : 'bg-yellow-900/50 text-yellow-400 border-yellow-800'
-                                  : "border-border text-muted-foreground hover:bg-accent"
-                              )}>
-                              {r.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Lead Data */}
-                <div className="border-t border-border px-6 py-5">
-                  <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">LEAD-DATEN</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                    <div><span className="text-[11px] text-muted-foreground block">Name</span>{selected.name}</div>
-                    <div><span className="text-[11px] text-muted-foreground block">E-Mail</span>{selected.email}</div>
-                    <div><span className="text-[11px] text-muted-foreground block">Firma</span>{selected.company || '–'}</div>
-                    <div><span className="text-[11px] text-muted-foreground block">Unternehmenstyp</span>{INDUSTRY_LABELS[selected.business_type] || selected.business_type}</div>
-                    <div><span className="text-[11px] text-muted-foreground block">Größe</span>{selected.company_size || '–'}</div>
-                    <div><span className="text-[11px] text-muted-foreground block">Anfrageverhalten</span>{LEAD_FLOW_LABELS[selected.lead_flow] || selected.lead_flow || '–'}</div>
-                    <div><span className="text-[11px] text-muted-foreground block">Umsatzklarheit</span>{REVENUE_LABELS[selected.revenue_clarity] || selected.revenue_clarity || '–'}</div>
-                    <div className="col-span-2"><span className="text-[11px] text-muted-foreground block">Hauptprobleme</span>
-                      {(selected.problems && selected.problems.length > 0)
-                        ? selected.problems.map(p => NEED_LABELS[p] || p).join(', ')
-                        : (NEED_LABELS[selected.main_problem] || selected.main_problem || '–')}
-                    </div>
-                    {selected.free_text && (
-                      <div className="col-span-2"><span className="text-[11px] text-muted-foreground block">Eigene Beschreibung</span>{selected.free_text}</div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Qualification */}
-                {(selected.importance || selected.commitment || selected.urgency) && (
-                  <div className="border-t border-border px-6 py-5">
-                    <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">QUALIFIKATION</p>
-                    <div className="grid grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                      <div><span className="text-[11px] text-muted-foreground block">Wichtigkeit</span>{selected.importance || '–'}</div>
-                      <div><span className="text-[11px] text-muted-foreground block">Commitment</span>{selected.commitment || '–'}</div>
-                      <div><span className="text-[11px] text-muted-foreground block">Dringlichkeit</span>{selected.urgency || '–'}</div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Internal Notes */}
+                {/* 6. Internal Notes */}
                 <div className="border-t border-border px-6 py-4">
                   <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">INTERNE NOTIZEN</p>
                   <Textarea
@@ -568,81 +524,26 @@ const AdminLeads = () => {
                   />
                 </div>
 
-                {/* KI-Analyse */}
-                <div className="border-t border-border px-6 py-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase">KI-ANALYSE</p>
-                    {analysis && (
-                      analysis.analysis_status === 'completed'
-                        ? <span className="text-[10px] text-muted-foreground">✓ Erstellt</span>
-                        : <span className="text-[10px] text-muted-foreground">✕ Fehler</span>
-                    )}
-                  </div>
-                  {analysis && analysis.analysis_status === 'completed' ? (
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-[10px] text-muted-foreground tracking-[0.08em] uppercase mb-1">Größte Schwachstelle</p>
-                        <p className="text-sm leading-relaxed">{analysis.main_issue}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground tracking-[0.08em] uppercase mb-1">Praktische Bedeutung</p>
-                        <p className="text-sm leading-relaxed">{analysis.practical_meaning}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground tracking-[0.08em] uppercase mb-2">3 Prioritäten</p>
-                        <div className="space-y-2">
-                          {[analysis.priority_1, analysis.priority_2, analysis.priority_3].filter(Boolean).map((p, i) => (
-                            <div key={i} className="flex gap-3 items-baseline">
-                              <span className="text-muted-foreground text-xs shrink-0 w-4 text-right">{i + 1}.</span>
-                              <p className="text-sm leading-relaxed">{p}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground tracking-[0.08em] uppercase mb-1">Nächster Schritt</p>
-                        <p className="text-sm leading-relaxed">{analysis.next_step}</p>
-                      </div>
+                {/* Email actions (collapsed) */}
+                {hasCompletedAnalysis && (
+                  <div className="border-t border-border px-6 py-4">
+                    <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">ANALYSE-E-MAIL</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" className="text-xs" disabled={resending} onClick={() => resendAnalysisEmail(selected)}>
+                        <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${resending ? 'animate-spin' : ''}`} />
+                        {resending ? 'Wird gesendet…' : 'Erneut senden'}
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-xs" onClick={() => showEmailPreview(selected)}>
+                        <Eye className="w-3.5 h-3.5 mr-1.5" /> Vorschau
+                      </Button>
                     </div>
-                  ) : analysis?.error_message ? (
-                    <p className="text-xs text-muted-foreground">{analysis.error_message}</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Keine Analyse vorhanden.</p>
-                  )}
-                </div>
-
-                {/* Attribution */}
-                <div className="border-t border-border px-6 py-5">
-                  <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">ATTRIBUTION</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-muted-foreground">
-                    <div>QR-Variante: <span className="text-foreground">{selected.variant || 'direct'}</span></div>
-                    <div>QR-Session: <span className="text-foreground font-mono text-[10px]">{selected.qr_session_id ? selected.qr_session_id.slice(0, 8) + '…' : '–'}</span></div>
-                    <div>Submission-ID: <span className="text-foreground font-mono text-[10px]">{selected.id.slice(0, 8)}…</span></div>
-                  </div>
-                </div>
-
-                {/* Email Actions */}
-                <div className="border-t border-border px-6 py-5">
-                  <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">E-MAIL</p>
-                  <div className="flex flex-wrap gap-2">
-                    {hasCompletedAnalysis && (
-                      <>
-                        <Button variant="outline" size="sm" className="text-xs" disabled={resending} onClick={() => resendAnalysisEmail(selected)}>
-                          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${resending ? 'animate-spin' : ''}`} />
-                          {resending ? 'Wird gesendet…' : 'Analyse erneut senden'}
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-xs" onClick={() => showEmailPreview(selected)}>
-                          <Eye className="w-3.5 h-3.5 mr-1.5" /> E-Mail Vorschau
-                        </Button>
-                      </>
+                    {analysis?.email_sent && analysis.email_sent_at && (
+                      <p className="text-[10px] text-muted-foreground mt-2">
+                        Gesendet: {format(new Date(analysis.email_sent_at), 'dd.MM.yyyy · HH:mm', { locale: de })}
+                      </p>
                     )}
                   </div>
-                  {analysis?.email_sent && analysis.email_sent_at && (
-                    <p className="text-[10px] text-muted-foreground mt-3">
-                      Letzte E-Mail: {format(new Date(analysis.email_sent_at), 'dd.MM.yyyy · HH:mm', { locale: de })}
-                    </p>
-                  )}
-                </div>
+                )}
               </div>
             );
           })()}
