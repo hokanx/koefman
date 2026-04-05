@@ -40,7 +40,8 @@ function getSlots() {
 
 export default function BookingPage() {
   const [searchParams] = useSearchParams();
-  const submissionId = searchParams.get('sid') || '';
+  const rawSid = searchParams.get('sid');
+  const submissionId = rawSid && rawSid !== 'null' && rawSid !== 'undefined' ? rawSid : '';
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
