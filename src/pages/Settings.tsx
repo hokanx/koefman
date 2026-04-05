@@ -316,7 +316,7 @@ const Settings = () => {
                   <input
                     type="radio"
                     name="tax_mode"
-                    checked={(activeOrganization as any)?.tax_mode !== 'kleinunternehmer'}
+                    checked={(activeOrganization as any)?.tax_mode !== 'small_business'}
                     onChange={async () => {
                       if (!activeOrganizationId) {
                         toast.error('Geschäft wird eingerichtet, bitte versuchen Sie es gleich erneut.');
@@ -324,10 +324,6 @@ const Settings = () => {
                       }
                       const { error } = await supabase.from('organizations').update({ tax_mode: 'standard' } as any).eq('id', activeOrganizationId);
                       if (error) { toast.error('Fehler beim Speichern'); return; }
-                      // Sync to business_settings for public views
-                      if (settings) {
-                        await supabase.from('business_settings').update({ small_business_regulation: false } as any).eq('id', settings.id);
-                      }
                       toast.success('Steuerart gespeichert');
                       queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
                       queryClient.invalidateQueries({ queryKey: ['business-settings'] });
