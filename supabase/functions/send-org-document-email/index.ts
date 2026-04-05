@@ -317,7 +317,7 @@ async function resolveLegacyDocument(
     }
 
     let publicToken = offer.public_token;
-    if (!publicToken && !requestData.publicLink) {
+    if (!publicToken) {
       publicToken = crypto.randomUUID();
       const { error: updateError } = await supabaseAdmin
         .from('offers')
@@ -330,6 +330,8 @@ async function resolveLegacyDocument(
       }
     }
 
+    const signingUrl = requestData.publicLink || `${appUrl}/offer/view/${publicToken}`;
+
     return {
       documentId: offer.id,
       documentType: 'offer',
@@ -338,7 +340,7 @@ async function resolveLegacyDocument(
       recipientName: offer.customer?.name || '',
       amountTotal: offer.grand_total,
       serviceTypeLabel: offer.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
-      signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/offer/view/${publicToken}` : undefined),
+      signingUrl,
     };
   }
 
