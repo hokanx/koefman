@@ -95,7 +95,7 @@ const SystemPage = () => {
     trackFunnelEvent('system_page_view', { source });
   }, [source]);
 
-  const goCta = () => navigate('/start?source=system');
+  const goCta = () => navigate('/book');
 
   return (
     <div className="min-h-screen bg-background text-foreground snap-y snap-mandatory overflow-y-auto h-screen">

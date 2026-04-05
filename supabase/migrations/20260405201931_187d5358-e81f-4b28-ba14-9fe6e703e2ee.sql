@@ -1,0 +1,1 @@
+ALTER TABLE public.lead_bookings ALTER COLUMN submission_id DROP NOT NULL;

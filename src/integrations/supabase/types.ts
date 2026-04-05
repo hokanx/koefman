@@ -1132,7 +1132,7 @@ export type Database = {
           id: string
           phone: string
           selected_slot: string
-          submission_id: string
+          submission_id: string | null
         }
         Insert: {
           booking_status?: string
@@ -1140,7 +1140,7 @@ export type Database = {
           id?: string
           phone: string
           selected_slot: string
-          submission_id: string
+          submission_id?: string | null
         }
         Update: {
           booking_status?: string
@@ -1148,7 +1148,7 @@ export type Database = {
           id?: string
           phone?: string
           selected_slot?: string
-          submission_id?: string
+          submission_id?: string | null
         }
         Relationships: []
       }
