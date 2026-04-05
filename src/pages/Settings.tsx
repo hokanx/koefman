@@ -361,7 +361,7 @@ const Settings = () => {
               </div>
             </div>
 
-            {(activeOrganization as any)?.tax_mode !== 'kleinunternehmer' && (
+            {(activeOrganization as any)?.tax_mode !== 'small_business' && (
               <div>
                 <label className="mb-1 block text-sm text-muted-foreground">{t.settings.defaultTaxRate} (%)</label>
                 <input type="number" value={form.default_tax_rate} onChange={(e) => update('default_tax_rate', parseFloat(e.target.value) || 0)} className={inputClass} />
