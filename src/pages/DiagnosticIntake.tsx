@@ -565,9 +565,10 @@ export default function DiagnosticIntake() {
             <StepShell step={12}>
               {emailSent ? (
                 <div className="text-center space-y-6">
-                  <h2 className="text-2xl font-semibold tracking-[0.1em]">ANALYSE GESENDET.</h2>
+                  <h2 className="text-2xl font-semibold tracking-[0.1em]">ANALYSE WIRD VORBEREITET.</h2>
                   <p className="text-sm text-foreground/60 tracking-[0.08em]">
-                    DU WIRST ZUR TERMINBUCHUNG WEITERGELEITET.
+                    BITTE PRÜFE DEIN POSTFACH IN KÜRZE.
+                  </p>
                   </p>
                   <div className="flex justify-center">
                     <div className="h-4 w-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
