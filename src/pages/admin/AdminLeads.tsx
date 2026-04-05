@@ -202,21 +202,47 @@ const AdminLeads = () => {
     toast.success('Telefonnummer kopiert');
   };
 
-  const convertAndNavigate = async (sub: DiagnosticSubmission, target: 'offer' | 'contract') => {
-    // Create customer first
-    const { data: customer, error } = await supabase.from('customers').insert({
-      user_id: (await supabase.auth.getUser()).data.user?.id!,
-      name: sub.company || sub.name,
-      contact_person: sub.name,
-      email: sub.email,
-    }).select().single();
-    if (error || !customer) { toast.error('Fehler beim Erstellen'); return; }
+  const createOfferFromLead = async (sub: DiagnosticSubmission) => {
+    if (converting) return;
+    setConverting(true);
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) { toast.error('Nicht eingeloggt'); return; }
 
-    if (target === 'offer') {
-      navigate(`/offers/new?customer=${customer.id}`);
-    } else {
-      // For contracts, create an offer first then navigate to contract flow
-      navigate(`/offers/new?customer=${customer.id}`);
+      let customerId: string | undefined;
+
+      // Check for existing customer by email first
+      if (sub.email) {
+        const { data: existing } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('email', sub.email)
+          .maybeSingle();
+        if (existing) customerId = existing.id;
+      }
+
+      // Create new customer only if none found
+      if (!customerId) {
+        const { data: customer, error } = await supabase.from('customers').insert({
+          user_id: userId,
+          name: sub.company || sub.name,
+          contact_person: sub.name,
+          email: sub.email,
+        }).select().single();
+        if (error || !customer) { toast.error('Fehler beim Erstellen'); return; }
+        customerId = customer.id;
+      }
+
+      // Update lead status to 'angebot'
+      await (supabase as any).from('diagnostic_submissions').update({ lead_status: 'angebot' }).eq('id', sub.id);
+
+      navigate(`/offers/new?customer=${customerId}`);
+    } catch (err) {
+      console.error('Conversion error:', err);
+      toast.error('Fehler bei der Konvertierung');
+    } finally {
+      setConverting(false);
     }
   };
 
