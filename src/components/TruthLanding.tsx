@@ -147,7 +147,7 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
       {sections.map((section) => (
         <section
           key={section.id}
-          className={`flex flex-col items-center justify-center px-6 snap-start ${section.fullScreen ? 'min-h-screen' : 'min-h-screen py-24 sm:py-32'}`}
+          className={`relative flex flex-col items-center justify-center px-6 snap-start ${section.fullScreen ? 'min-h-screen' : 'min-h-screen py-24 sm:py-32'}`}
         >
           <div className="w-full max-w-[480px] space-y-4 text-center">
             {section.lines.map((line, li) => (
