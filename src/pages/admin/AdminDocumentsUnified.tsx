@@ -76,7 +76,7 @@ const AdminDocumentsUnified = () => {
   });
 
   const typeLabel: Record<string, string> = { offer: 'Angebot', invoice: 'Rechnung', contract: 'Vertrag' };
-  const typeRoute: Record<string, string> = { offer: '/offers', invoice: '/invoices', contract: '/contracts' };
+  
 
   const filtered = docs.filter(d => {
     if (tab !== 'all' && d.type !== tab.replace(/s$/, '')) return false;
