@@ -383,7 +383,7 @@ async function resolveLegacyDocument(
 
   const { data: invoice, error } = await supabaseAdmin
     .from('invoices')
-    .select('id, user_id, invoice_number, grand_total, due_date, source_recurring_id, customer:customers(name, email)')
+    .select('id, user_id, invoice_number, public_token, grand_total, due_date, source_recurring_id, customer:customers(name, email)')
     .eq('id', legacyDocumentId)
     .eq('user_id', userId)
     .single();
@@ -392,9 +392,9 @@ async function resolveLegacyDocument(
     throw new Error('Invoice not found');
   }
 
-  // Generate public token for invoice view
-  let publicToken = (invoice as any).public_token;
-  if (!publicToken && !requestData.publicLink) {
+  // Guarantee public token exists
+  let publicToken = invoice.public_token;
+  if (!publicToken) {
     publicToken = crypto.randomUUID();
     const { error: updateError } = await supabaseAdmin
       .from('invoices')
@@ -406,6 +406,8 @@ async function resolveLegacyDocument(
     }
   }
 
+  const signingUrl = requestData.publicLink || `${appUrl}/invoice/view/${publicToken}`;
+
   return {
     documentId: invoice.id,
     documentType: legacyDocumentType,
@@ -414,7 +416,7 @@ async function resolveLegacyDocument(
     recipientName: invoice.customer?.name || '',
     amountTotal: invoice.grand_total,
     serviceTypeLabel: invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
-    signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/invoice/view/${publicToken}` : undefined),
+    signingUrl,
   };
 }
 
