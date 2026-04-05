@@ -113,6 +113,7 @@ const AdminLeads = () => {
   const [resending, setResending] = useState(false);
   const [emailPreview, setEmailPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [converting, setConverting] = useState(false);
   const navigate = useNavigate();
 
   const fetchSubmissions = async () => {
