@@ -132,7 +132,7 @@ const LandingPage = () => {
       {sections.map((section, si) => (
         <section
           key={section.id}
-          className={`flex flex-col items-center justify-center px-6 snap-start ${si === 0 ? 'min-h-screen pt-14' : 'min-h-screen py-24 sm:py-32'}`}
+          className={`relative flex flex-col items-center justify-center px-6 snap-start ${si === 0 ? 'min-h-screen pt-14' : 'min-h-screen py-24 sm:py-32'}`}
         >
           <div className="w-full max-w-[520px] space-y-5 text-center">
             {section.lines.map((line, li) => (
