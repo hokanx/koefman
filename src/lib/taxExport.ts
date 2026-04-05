@@ -124,7 +124,7 @@ export async function generateFullArchiveZip(options: ExportOptions): Promise<Bl
   const progress = (p: number, l: string) => onProgress?.(Math.round(p), l);
   progress(0, 'Daten laden…');
 
-  const isSmallBiz = !!businessSettings?.small_business_regulation;
+  const isSmallBiz = options.isKleinunternehmer ?? !!businessSettings?.small_business_regulation;
   const businessInfo = buildBusinessInfo(businessSettings);
 
   const [{ data: invoices = [] }, { data: offers = [] }, { data: docs = [] }] = await Promise.all([
