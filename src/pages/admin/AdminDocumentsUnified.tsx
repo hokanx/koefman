@@ -76,7 +76,7 @@ const AdminDocumentsUnified = () => {
   });
 
   const typeLabel: Record<string, string> = { offer: 'Angebot', invoice: 'Rechnung', contract: 'Vertrag' };
-  const typeRoute: Record<string, string> = { offer: '/offers', invoice: '/invoices', contract: '/contracts' };
+  
 
   const filtered = docs.filter(d => {
     if (tab !== 'all' && d.type !== tab.replace(/s$/, '')) return false;
@@ -153,7 +153,7 @@ const AdminDocumentsUnified = () => {
                     <Copy className="h-4 w-4" />
                   </button>
                 )}
-                <a href={`${typeRoute[doc.type]}/${doc.id}`} className="p-2 rounded-lg hover:bg-accent text-muted-foreground" title="Öffnen">
+                <a href={`/admin/documents/${doc.type}/${doc.id}`} className="p-2 rounded-lg hover:bg-accent text-muted-foreground" title="Öffnen">
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
