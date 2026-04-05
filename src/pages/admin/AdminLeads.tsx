@@ -235,7 +235,7 @@ const AdminLeads = () => {
       }
 
       // Update lead status to 'angebot'
-      await (supabase as any).from('diagnostic_submissions').update({ lead_status: 'angebot' }).eq('id', sub.id);
+      await supabase.from('diagnostic_submissions').update({ lead_status: 'angebot' }).eq('id', sub.id);
 
       navigate(`/offers/new?customer=${customerId}`);
     } catch (err) {
