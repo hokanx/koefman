@@ -170,7 +170,7 @@ export default function DiagnosticIntake() {
   const navigate = useNavigate();
   const variant = searchParams.get('v') || 'direct';
 
-  const [step, setStep] = useState(STEPS.INTRO);
+  const [step, setStep] = useState<number>(STEPS.INTRO);
 
   // Data
   const [industry, setIndustry] = useState('');
