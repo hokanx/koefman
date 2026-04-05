@@ -223,7 +223,7 @@ const Onboarding = () => {
             name: business.business_name || 'Mein Geschäft',
             slug: orgSlug,
             owner_user_id: user.id,
-            tax_mode: isKlein ? 'kleinunternehmer' : 'standard',
+            tax_mode: isKlein ? 'small_business' : 'standard',
           })
           .select('id')
           .single();
