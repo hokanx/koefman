@@ -3,31 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import BrandMark from '@/components/shared/BrandMark';
-
-const FadeSection = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.25 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} ${className}`}
-    >
-      {children}
-    </div>
-  );
-};
+import FadeSection from '@/components/ui/FadeSection';
 
 const LandingPage = () => {
   const navigate = useNavigate();
