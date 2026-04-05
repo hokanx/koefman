@@ -259,16 +259,21 @@ export default function DiagnosticIntake() {
         },
       });
 
-      if (response.error) throw response.error;
-      const data = response.data;
-      if (data?.email_sent) {
-        setEmailSent(true);
-        setTimeout(() => navigate(`/book?sid=${submissionId}`), 2000);
-      } else {
-        toast.error('E-Mail konnte nicht gesendet werden.');
+      // Always proceed regardless of email result
+      if (response.error) {
+        console.error('Email send error:', response.error);
       }
-    } catch {
-      toast.error('E-Mail konnte nicht gesendet werden.');
+      const data = response.data;
+      if (!data?.email_sent) {
+        console.warn('Email was not sent, proceeding anyway');
+      }
+      setEmailSent(true);
+      setTimeout(() => navigate(`/book?sid=${submissionId}`), 2000);
+    } catch (err) {
+      console.error('Email capture error:', err);
+      // Fail-safe: always proceed
+      setEmailSent(true);
+      setTimeout(() => navigate(`/book?sid=${submissionId}`), 2000);
     } finally {
       setSendingEmail(false);
     }
@@ -560,9 +565,9 @@ export default function DiagnosticIntake() {
             <StepShell step={12}>
               {emailSent ? (
                 <div className="text-center space-y-6">
-                  <h2 className="text-2xl font-semibold tracking-[0.1em]">ANALYSE GESENDET.</h2>
+                  <h2 className="text-2xl font-semibold tracking-[0.1em]">ANALYSE WIRD VORBEREITET.</h2>
                   <p className="text-sm text-foreground/60 tracking-[0.08em]">
-                    DU WIRST ZUR TERMINBUCHUNG WEITERGELEITET.
+                    BITTE PRÜFE DEIN POSTFACH IN KÜRZE.
                   </p>
                   <div className="flex justify-center">
                     <div className="h-4 w-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />

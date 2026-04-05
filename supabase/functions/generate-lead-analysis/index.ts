@@ -169,43 +169,21 @@ async function sendAnalysisEmail(
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY || !email) return false;
 
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
-
   const emailHtml = buildEmailHtml(name, analysis, submissionId, variant);
 
-  // Try gateway first, fall back to direct
-  let emailRes: Response;
-  if (LOVABLE_API_KEY) {
-    emailRes = await fetch(`${RESEND_GATEWAY}/emails`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: [email],
-        subject: "Deine Köfman Kurzanalyse",
-        html: emailHtml,
-      }),
-    });
-  } else {
-    emailRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: email,
-        subject: "Deine Köfman Kurzanalyse",
-        html: emailHtml,
-      }),
-    });
-  }
+  const emailRes = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: EMAIL_FROM,
+      to: [email],
+      subject: "Deine Köfman Kurzanalyse",
+      html: emailHtml,
+    }),
+  });
 
   if (!emailRes.ok) {
     console.error("Email send failed:", emailRes.status, await emailRes.text());
