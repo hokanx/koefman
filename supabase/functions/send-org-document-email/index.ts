@@ -317,7 +317,7 @@ async function resolveLegacyDocument(
     }
 
     let publicToken = offer.public_token;
-    if (!publicToken && !requestData.publicLink) {
+    if (!publicToken) {
       publicToken = crypto.randomUUID();
       const { error: updateError } = await supabaseAdmin
         .from('offers')
@@ -330,6 +330,8 @@ async function resolveLegacyDocument(
       }
     }
 
+    const signingUrl = requestData.publicLink || `${appUrl}/offer/view/${publicToken}`;
+
     return {
       documentId: offer.id,
       documentType: 'offer',
@@ -338,7 +340,7 @@ async function resolveLegacyDocument(
       recipientName: offer.customer?.name || '',
       amountTotal: offer.grand_total,
       serviceTypeLabel: offer.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
-      signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/offer/view/${publicToken}` : undefined),
+      signingUrl,
     };
   }
 
@@ -355,7 +357,7 @@ async function resolveLegacyDocument(
     }
 
     let publicToken = contract.public_token;
-    if (!publicToken && !requestData.publicLink) {
+    if (!publicToken) {
       publicToken = crypto.randomUUID();
       const { error: updateError } = await supabaseAdmin
         .from('contracts')
@@ -368,6 +370,8 @@ async function resolveLegacyDocument(
       }
     }
 
+    const signingUrl = requestData.publicLink || `${appUrl}/contract/view/${publicToken}`;
+
     const freqMap: Record<string, string> = { weekly: 'Wöchentlich', every_2_weeks: 'Alle 2 Wochen', monthly: 'Monatlich', quarterly: 'Vierteljährlich' };
     return {
       documentId: contract.id,
@@ -377,13 +381,13 @@ async function resolveLegacyDocument(
       recipientName: contract.customer?.name || '',
       amountTotal: contract.grand_total,
       serviceTypeLabel: `Wiederkehrend (${freqMap[contract.frequency] || contract.frequency})`,
-      signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/contract/view/${publicToken}` : undefined),
+      signingUrl,
     };
   }
 
   const { data: invoice, error } = await supabaseAdmin
     .from('invoices')
-    .select('id, user_id, invoice_number, grand_total, due_date, source_recurring_id, customer:customers(name, email)')
+    .select('id, user_id, invoice_number, public_token, grand_total, due_date, source_recurring_id, customer:customers(name, email)')
     .eq('id', legacyDocumentId)
     .eq('user_id', userId)
     .single();
@@ -392,9 +396,9 @@ async function resolveLegacyDocument(
     throw new Error('Invoice not found');
   }
 
-  // Generate public token for invoice view
-  let publicToken = (invoice as any).public_token;
-  if (!publicToken && !requestData.publicLink) {
+  // Guarantee public token exists
+  let publicToken = invoice.public_token;
+  if (!publicToken) {
     publicToken = crypto.randomUUID();
     const { error: updateError } = await supabaseAdmin
       .from('invoices')
@@ -406,6 +410,8 @@ async function resolveLegacyDocument(
     }
   }
 
+  const signingUrl = requestData.publicLink || `${appUrl}/invoice/view/${publicToken}`;
+
   return {
     documentId: invoice.id,
     documentType: legacyDocumentType,
@@ -414,7 +420,7 @@ async function resolveLegacyDocument(
     recipientName: invoice.customer?.name || '',
     amountTotal: invoice.grand_total,
     serviceTypeLabel: invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
-    signingUrl: requestData.publicLink || (publicToken ? `${appUrl}/invoice/view/${publicToken}` : undefined),
+    signingUrl,
   };
 }
 
@@ -510,7 +516,7 @@ Deno.serve(async (req) => {
       }
 
       let publicToken = doc.public_token;
-      if (!publicToken && !requestData.publicLink) {
+      if (!publicToken) {
         publicToken = crypto.randomUUID();
         await supabaseAdmin
           .from('org_documents')
@@ -518,7 +524,7 @@ Deno.serve(async (req) => {
           .eq('id', requestData.documentId);
       }
 
-      const signingUrl = requestData.publicLink || (publicToken ? `${appUrl}/document/view/${publicToken}` : undefined);
+      const signingUrl = requestData.publicLink || `${appUrl}/document/view/${publicToken}`;
       const subject = requestData.subject || `${DOC_TYPE_LABELS[doc.document_type] || 'Dokument'}: ${doc.title || '(Ohne Titel)'}`;
       const messageBody = requestData.body || getDefaultMessage(branding.senderName, DOC_TYPE_LABELS[doc.document_type] || 'Dokument', doc.recipient_name || '');
       const ctaLabel = DOC_TYPE_CTA[doc.document_type] || 'Dokument ansehen';
@@ -529,7 +535,7 @@ Deno.serve(async (req) => {
         document_title: doc.title || '(Ohne Titel)',
         document_type_label: DOC_TYPE_LABELS[doc.document_type] || doc.document_type,
         amount_total: formatAmount(doc.amount_total),
-        signing_url: signingUrl || '',
+        signing_url: signingUrl,
         footer_text: branding.footerText,
         logo_url: branding.logoUrl,
         cta_label: ctaLabel.toUpperCase(),
