@@ -59,7 +59,7 @@ const Settings = () => {
     // Billing & Tax
     tax_number: '',
     vat_id: '',
-    small_business_regulation: false,
+    // small_business_regulation is now derived from organizations.tax_mode
     default_tax_rate: 19,
     account_holder: '',
     bank_name: '',
