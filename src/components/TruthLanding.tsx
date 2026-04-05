@@ -116,7 +116,7 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
   useEffect(() => {
     const trackVisit = async () => {
       try {
-        const { data } = await (supabase as any).from('qr_sessions').insert({ campaign_id: variant, converted: false }).select('id').single();
+        const { data } = await supabase.from('qr_sessions').insert({ campaign_id: variant, converted: false }).select('id').single();
         if (data) sessionIdRef.current = data.id;
       } catch {}
     };
