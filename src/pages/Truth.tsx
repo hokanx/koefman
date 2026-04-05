@@ -5,9 +5,9 @@ export default function Truth() {
   const { campaignId } = useParams();
   return (
     <TruthLanding
-      entryLine1="DU WOLLTEST DEN BEWEIS SEHEN."
-      entryLine2="HIER IST ER."
-      entryLine3="ES GEHT NICHT UM EINE BEZIEHUNG."
+      entryLine1="DU WOLLTEST ES WISSEN."
+      entryLine2="HIER IST DIE ANTWORT."
+      entryLine3="ES GEHT UM DEIN SYSTEM."
       campaignId={campaignId || 'direct'}
     />
   );
