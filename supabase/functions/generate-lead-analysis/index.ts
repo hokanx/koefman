@@ -16,7 +16,8 @@ function buildEmailHtml(
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
   submissionId?: string,
-  variant?: string
+  variant?: string,
+  hasBooking = false
 ) {
   const ctaUrl = `${BOOKING_URL}?sid=${submissionId || ""}&source=email${variant ? `&variant=${variant}` : ""}`;
 
@@ -105,10 +106,25 @@ ${divider}
 
 ${divider}
 
-<!-- Decision Block -->
+<!-- Decision / CTA -->
+${hasBooking ? `
+<tr><td style="padding:40px 40px 0 40px;background-color:#000000;" align="center">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td align="center" style="background-color:#111111;border:1px solid #333333;padding:20px 32px;">
+        <p style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin:0;">TERMIN BEREITS GEBUCHT</p>
+      </td>
+    </tr>
+  </table>
+</td></tr>
+<tr><td style="padding:20px 40px 0 40px;background-color:#000000;">
+  <p style="color:#CCCCCC;font-size:14px;line-height:1.6;margin:0;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+    Wir haben deine Buchung erhalten und melden uns zum gew&#228;hlten Termin.
+  </p>
+</td></tr>
+` : `
 <tr><td style="padding:40px 40px 36px 40px;background-color:#000000;">
   <p style="color:#FFFFFF;font-size:18px;font-weight:700;letter-spacing:0.05em;margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;">DU HAST ZWEI OPTIONEN:</p>
-
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
       <td style="padding:0 0 16px 0;color:#999999;font-size:15px;line-height:1.7;font-family:Arial,Helvetica,sans-serif;">
@@ -125,7 +141,6 @@ ${divider}
 
 ${divider}
 
-<!-- CTA -->
 <tr><td style="padding:40px 40px 0 40px;background-color:#000000;" align="center">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
@@ -147,6 +162,7 @@ ${divider}
     ${ctaUrl}
   </p>
 </td></tr>
+`}
 
 ${divider}
 
@@ -167,12 +183,13 @@ async function sendAnalysisEmail(
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
   submissionId?: string,
-  variant?: string
+  variant?: string,
+  hasBooking = false
 ): Promise<boolean> {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY || !email) return false;
 
-  const emailHtml = buildEmailHtml(name, analysis, submissionId, variant);
+  const emailHtml = buildEmailHtml(name, analysis, submissionId, variant, hasBooking);
 
   const emailRes = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -247,9 +264,17 @@ serve(async (req) => {
           .eq("id", submission_id)
           .single();
 
+        // Check if lead already booked
+        const { data: existingBooking } = await supabase
+          .from("lead_bookings")
+          .select("id")
+          .eq("submission_id", submission_id)
+          .limit(1)
+          .maybeSingle();
+
         emailSent = await sendAnalysisEmail(
           email, name, analysis,
-          submission_id, sub?.variant
+          submission_id, sub?.variant, !!existingBooking
         );
         if (emailSent) {
           await supabase
@@ -310,9 +335,17 @@ serve(async (req) => {
         next_step: existingAnalysis.next_step,
       };
 
+      // Check if lead already booked
+      const { data: resendBooking } = await supabase
+        .from("lead_bookings")
+        .select("id")
+        .eq("submission_id", body.resend_submission_id)
+        .limit(1)
+        .maybeSingle();
+
       const sent = await sendAnalysisEmail(
         sub.email, sub.name, analysis,
-        sub.id, sub.variant
+        sub.id, sub.variant, !!resendBooking
       );
       if (sent) {
         await supabase
