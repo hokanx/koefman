@@ -16,7 +16,8 @@ function buildEmailHtml(
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
   submissionId?: string,
-  variant?: string
+  variant?: string,
+  hasBooking = false
 ) {
   const ctaUrl = `${BOOKING_URL}?sid=${submissionId || ""}&source=email${variant ? `&variant=${variant}` : ""}`;
 
