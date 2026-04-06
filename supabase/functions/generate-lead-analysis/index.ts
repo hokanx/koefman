@@ -183,12 +183,13 @@ async function sendAnalysisEmail(
   name: string,
   analysis: { main_issue: string; practical_meaning: string; priorities: string[]; next_step: string },
   submissionId?: string,
-  variant?: string
+  variant?: string,
+  hasBooking = false
 ): Promise<boolean> {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY || !email) return false;
 
-  const emailHtml = buildEmailHtml(name, analysis, submissionId, variant);
+  const emailHtml = buildEmailHtml(name, analysis, submissionId, variant, hasBooking);
 
   const emailRes = await fetch("https://api.resend.com/emails", {
     method: "POST",
