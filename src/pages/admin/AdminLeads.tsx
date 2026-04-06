@@ -426,32 +426,38 @@ const AdminLeads = () => {
                 </div>
 
                 {/* 2. Booking Information */}
-                <div className="border-t border-border px-6 py-4">
+                <div className={cn("border-t px-6 py-4", booking ? "border-emerald-800/40 bg-emerald-950/20" : "border-border")}>
                   <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">TERMIN</p>
                   {booking ? (
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Zeitfenster</span>
-                        <span className="font-medium">{booking.selected_slot}</span>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded border border-emerald-800/50 bg-emerald-900/30">
+                        <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold text-emerald-300 tracking-[0.06em] uppercase">Termin wahrnehmen · Lead kontaktieren</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Telefon</span>
-                        <div className="flex items-center gap-2">
-                          <span>{booking.phone}</span>
-                          <button onClick={() => copyPhone(booking.phone)} className="text-muted-foreground hover:text-foreground transition-colors">
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Zeitfenster</span>
+                          <span className="font-semibold text-foreground">{booking.selected_slot}</span>
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Status</span>
-                        <span className="text-[9px] font-bold tracking-[0.08em] px-2 py-0.5 rounded border bg-green-900/50 text-green-400 border-green-800">
-                          {booking.booking_status === 'booked' ? 'GEBUCHT' : booking.booking_status.toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Gebucht am</span>
-                        <span className="text-xs text-muted-foreground">{format(new Date(booking.created_at), 'dd.MM.yyyy · HH:mm', { locale: de })}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Telefon</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{booking.phone}</span>
+                            <button onClick={() => copyPhone(booking.phone)} className="text-muted-foreground hover:text-foreground transition-colors">
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Status</span>
+                          <span className="text-[9px] font-bold tracking-[0.08em] px-2.5 py-0.5 rounded border bg-emerald-900/50 text-emerald-300 border-emerald-600">
+                            {booking.booking_status === 'booked' ? 'GEBUCHT' : booking.booking_status.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Gebucht am</span>
+                          <span className="text-xs text-muted-foreground">{format(new Date(booking.created_at), 'dd.MM.yyyy · HH:mm', { locale: de })}</span>
+                        </div>
                       </div>
                     </div>
                   ) : (
