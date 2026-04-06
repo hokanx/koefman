@@ -335,9 +335,17 @@ serve(async (req) => {
         next_step: existingAnalysis.next_step,
       };
 
+      // Check if lead already booked
+      const { data: resendBooking } = await supabase
+        .from("lead_bookings")
+        .select("id")
+        .eq("submission_id", body.resend_submission_id)
+        .limit(1)
+        .maybeSingle();
+
       const sent = await sendAnalysisEmail(
         sub.email, sub.name, analysis,
-        sub.id, sub.variant
+        sub.id, sub.variant, !!resendBooking
       );
       if (sent) {
         await supabase
