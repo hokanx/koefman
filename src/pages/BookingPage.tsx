@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import BrandMark from '@/components/shared/BrandMark';
@@ -7,15 +7,10 @@ function getSlots() {
   const now = new Date();
   const h = now.getHours();
   const today = now.toLocaleDateString('de-DE', { weekday: 'long' });
-
-  // Tomorrow label
   const tom = new Date(now);
   tom.setDate(tom.getDate() + 1);
   const tomorrow = tom.toLocaleDateString('de-DE', { weekday: 'long' });
-
-  // Capitalize first letter
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
   const slots: { label: string; value: string }[] = [];
 
   if (h < 9) {
@@ -49,8 +44,24 @@ export default function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [booked, setBooked] = useState(false);
   const [slots] = useState(getSlots);
+  const [prefilled, setPrefilled] = useState(false);
 
-  // Step: 1 = pick slot, 2 = fill form
+  // Prefill name from diagnostic submission
+  useEffect(() => {
+    if (!submissionId) return;
+    supabase
+      .from('diagnostic_submissions')
+      .select('name')
+      .eq('id', submissionId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.name) {
+          setName(data.name);
+          setPrefilled(true);
+        }
+      });
+  }, [submissionId]);
+
   const step = selectedSlot ? 2 : 1;
   const canSubmit = name.trim().length >= 2 && phone.trim().length >= 5 && selectedSlot;
 
@@ -161,18 +172,26 @@ export default function BookingPage() {
                   </div>
 
                   <div className="space-y-4 pt-2">
-                    <div>
-                      <label className="block text-[11px] text-foreground/50 tracking-[0.1em] mb-2 uppercase">
-                        Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="Dein Name"
-                        className="w-full border border-border bg-transparent px-4 py-3.5 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground focus:outline-none tracking-wide"
-                      />
-                    </div>
+                    {/* Name — show as read-only greeting if prefilled, editable otherwise */}
+                    {prefilled ? (
+                      <div className="border border-border/50 px-4 py-3.5">
+                        <p className="text-[11px] text-foreground/50 tracking-[0.1em] uppercase mb-1">Name</p>
+                        <p className="text-sm text-foreground tracking-wide">{name}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-[11px] text-foreground/50 tracking-[0.1em] mb-2 uppercase">
+                          Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={e => setName(e.target.value)}
+                          placeholder="Dein Name"
+                          className="w-full border border-border bg-transparent px-4 py-3.5 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground focus:outline-none tracking-wide"
+                        />
+                      </div>
+                    )}
                     <div>
                       <label className="block text-[11px] text-foreground/50 tracking-[0.1em] mb-2 uppercase">
                         Telefonnummer *
@@ -182,6 +201,7 @@ export default function BookingPage() {
                         value={phone}
                         onChange={e => setPhone(e.target.value)}
                         placeholder="+49 ..."
+                        autoFocus={prefilled}
                         className="w-full border border-border bg-transparent px-4 py-3.5 text-sm text-foreground placeholder:text-foreground/30 focus:border-foreground focus:outline-none tracking-wide"
                       />
                     </div>
