@@ -340,8 +340,8 @@ const AdminLeads = () => {
                         )}
                         {getStatusBadge(sub.lead_status || 'neu')}
                         {sub.booking && (
-                          <span className="text-[9px] font-bold tracking-[0.08em] px-2 py-0.5 rounded border bg-purple-900/50 text-purple-400 border-purple-800">
-                            TERMIN
+                          <span className="text-[9px] font-bold tracking-[0.08em] px-2.5 py-0.5 rounded border bg-emerald-900/60 text-emerald-300 border-emerald-600 animate-pulse-subtle flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> TERMIN GEBUCHT
                           </span>
                         )}
                       </div>
