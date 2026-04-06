@@ -135,7 +135,31 @@ export default function BookingPage() {
 
       <div className="flex-1 flex items-center justify-center px-6 py-24">
         <div className="w-full max-w-[480px]">
-          {booked ? (
+          {checkingBooking ? (
+            <div className="text-center animate-fade-in">
+              <p className="text-sm text-foreground/50 tracking-[0.08em] uppercase">Wird geladen...</p>
+            </div>
+          ) : existingBooking ? (
+            <div className="text-center space-y-8 animate-fade-in">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-[0.08em] uppercase">
+                Termin bereits gebucht.
+              </h1>
+              <div className="border border-foreground bg-foreground text-background px-6 py-5 text-base font-semibold tracking-[0.08em] text-center">
+                {existingBooking.selected_slot}
+              </div>
+              {existingBooking.phone && (
+                <p className="text-sm text-foreground/60 tracking-[0.04em]">
+                  Telefon: {existingBooking.phone}
+                </p>
+              )}
+              <p className="text-base text-foreground/80 tracking-[0.04em] leading-[1.7] max-w-[380px] mx-auto">
+                Wir haben deine Buchung erhalten und melden uns zum gewählten Termin.
+              </p>
+              <p className="text-xs text-foreground/40 tracking-[0.06em] uppercase">
+                Kostenlos. Keine Verpflichtung.
+              </p>
+            </div>
+          ) : booked ? (
             <div className="text-center space-y-8 animate-fade-in">
               <h1 className="text-2xl sm:text-3xl font-bold tracking-[0.08em] uppercase">
                 Termin bestätigt.
