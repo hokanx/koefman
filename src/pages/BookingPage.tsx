@@ -45,6 +45,13 @@ export default function BookingPage() {
   const [booked, setBooked] = useState(false);
   const [slots] = useState(getSlots);
   const [prefilled, setPrefilled] = useState(false);
+  const [existingBooking, setExistingBooking] = useState<{
+    selected_slot: string;
+    phone: string;
+    booking_status: string;
+    created_at: string;
+  } | null>(null);
+  const [checkingBooking, setCheckingBooking] = useState(!!submissionId);
 
   // Prefill name from diagnostic submission
   useEffect(() => {
