@@ -45,21 +45,47 @@ export default function BookingPage() {
   const [booked, setBooked] = useState(false);
   const [slots] = useState(getSlots);
   const [prefilled, setPrefilled] = useState(false);
+  const [existingBooking, setExistingBooking] = useState<{
+    selected_slot: string;
+    phone: string;
+    booking_status: string;
+    created_at: string;
+  } | null>(null);
+  const [checkingBooking, setCheckingBooking] = useState(!!submissionId);
 
-  // Prefill name from diagnostic submission
+  // Check existing booking + prefill name
   useEffect(() => {
     if (!submissionId) return;
-    supabase
-      .from('diagnostic_submissions')
-      .select('name')
-      .eq('id', submissionId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.name) {
-          setName(data.name);
-          setPrefilled(true);
-        }
-      });
+
+    const fetchData = async () => {
+      // Check for existing booking
+      const { data: booking } = await supabase
+        .from('lead_bookings')
+        .select('selected_slot, phone, booking_status, created_at')
+        .eq('submission_id', submissionId)
+        .maybeSingle();
+
+      if (booking) {
+        setExistingBooking(booking);
+        setCheckingBooking(false);
+        return;
+      }
+
+      // Prefill name from submission
+      const { data } = await supabase
+        .from('diagnostic_submissions')
+        .select('name')
+        .eq('id', submissionId)
+        .maybeSingle();
+
+      if (data?.name) {
+        setName(data.name);
+        setPrefilled(true);
+      }
+      setCheckingBooking(false);
+    };
+
+    fetchData();
   }, [submissionId]);
 
   const step = selectedSlot ? 2 : 1;
@@ -109,7 +135,31 @@ export default function BookingPage() {
 
       <div className="flex-1 flex items-center justify-center px-6 py-24">
         <div className="w-full max-w-[480px]">
-          {booked ? (
+          {checkingBooking ? (
+            <div className="text-center animate-fade-in">
+              <p className="text-sm text-foreground/50 tracking-[0.08em] uppercase">Wird geladen...</p>
+            </div>
+          ) : existingBooking ? (
+            <div className="text-center space-y-8 animate-fade-in">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-[0.08em] uppercase">
+                Termin bereits gebucht.
+              </h1>
+              <div className="border border-foreground bg-foreground text-background px-6 py-5 text-base font-semibold tracking-[0.08em] text-center">
+                {existingBooking.selected_slot}
+              </div>
+              {existingBooking.phone && (
+                <p className="text-sm text-foreground/60 tracking-[0.04em]">
+                  Telefon: {existingBooking.phone}
+                </p>
+              )}
+              <p className="text-base text-foreground/80 tracking-[0.04em] leading-[1.7] max-w-[380px] mx-auto">
+                Wir haben deine Buchung erhalten und melden uns zum gewählten Termin.
+              </p>
+              <p className="text-xs text-foreground/40 tracking-[0.06em] uppercase">
+                Kostenlos. Keine Verpflichtung.
+              </p>
+            </div>
+          ) : booked ? (
             <div className="text-center space-y-8 animate-fade-in">
               <h1 className="text-2xl sm:text-3xl font-bold tracking-[0.08em] uppercase">
                 Termin bestätigt.
