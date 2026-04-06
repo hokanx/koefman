@@ -53,20 +53,39 @@ export default function BookingPage() {
   } | null>(null);
   const [checkingBooking, setCheckingBooking] = useState(!!submissionId);
 
-  // Prefill name from diagnostic submission
+  // Check existing booking + prefill name
   useEffect(() => {
     if (!submissionId) return;
-    supabase
-      .from('diagnostic_submissions')
-      .select('name')
-      .eq('id', submissionId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.name) {
-          setName(data.name);
-          setPrefilled(true);
-        }
-      });
+
+    const fetchData = async () => {
+      // Check for existing booking
+      const { data: booking } = await supabase
+        .from('lead_bookings')
+        .select('selected_slot, phone, booking_status, created_at')
+        .eq('submission_id', submissionId)
+        .maybeSingle();
+
+      if (booking) {
+        setExistingBooking(booking);
+        setCheckingBooking(false);
+        return;
+      }
+
+      // Prefill name from submission
+      const { data } = await supabase
+        .from('diagnostic_submissions')
+        .select('name')
+        .eq('id', submissionId)
+        .maybeSingle();
+
+      if (data?.name) {
+        setName(data.name);
+        setPrefilled(true);
+      }
+      setCheckingBooking(false);
+    };
+
+    fetchData();
   }, [submissionId]);
 
   const step = selectedSlot ? 2 : 1;
