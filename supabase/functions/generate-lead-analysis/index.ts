@@ -264,9 +264,17 @@ serve(async (req) => {
           .eq("id", submission_id)
           .single();
 
+        // Check if lead already booked
+        const { data: existingBooking } = await supabase
+          .from("lead_bookings")
+          .select("id")
+          .eq("submission_id", submission_id)
+          .limit(1)
+          .maybeSingle();
+
         emailSent = await sendAnalysisEmail(
           email, name, analysis,
-          submission_id, sub?.variant
+          submission_id, sub?.variant, !!existingBooking
         );
         if (emailSent) {
           await supabase
