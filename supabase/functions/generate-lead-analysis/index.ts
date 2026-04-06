@@ -43,6 +43,8 @@ function buildEmailHtml(
 @media (prefers-color-scheme: dark) {
   .email-bg { background-color: #000000 !important; }
   .email-container { background-color: #000000 !important; }
+  .cta-bg { background-color: #FFFFFF !important; border-color: #FFFFFF !important; }
+  .cta-text { color: #000000 !important; -webkit-text-fill-color: #000000 !important; }
 }
 </style>
 </head>
