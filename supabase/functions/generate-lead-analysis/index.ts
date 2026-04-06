@@ -43,6 +43,8 @@ function buildEmailHtml(
 @media (prefers-color-scheme: dark) {
   .email-bg { background-color: #000000 !important; }
   .email-container { background-color: #000000 !important; }
+  .cta-bg { background-color: #FFFFFF !important; border-color: #FFFFFF !important; }
+  .cta-text { color: #000000 !important; -webkit-text-fill-color: #000000 !important; }
 }
 </style>
 </head>
@@ -127,8 +129,8 @@ ${divider}
 <tr><td style="padding:40px 40px 0 40px;background-color:#000000;" align="center">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
-      <td align="center" style="background-color:#FFFFFF;padding:0;">
-        <a href="${ctaUrl}" target="_blank" style="display:block;padding:20px 32px;color:#000000 !important;-webkit-text-fill-color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:22px;font-weight:700;letter-spacing:0.12em;text-decoration:none;text-transform:uppercase;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">&#8594; STRATEGIE-SESSION BUCHEN</a>
+      <td align="center" class="cta-bg" style="background-color:#FFFFFF;border:2px solid #FFFFFF;padding:0;">
+        <a href="${ctaUrl}" target="_blank" class="cta-text" style="display:block;padding:20px 32px;color:#000000 !important;-webkit-text-fill-color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:22px;font-weight:700;letter-spacing:0.12em;text-decoration:none;text-transform:uppercase;-webkit-text-size-adjust:none;mso-line-height-rule:exactly;">&#8594; STRATEGIE-SESSION BUCHEN</a>
       </td>
     </tr>
   </table>
