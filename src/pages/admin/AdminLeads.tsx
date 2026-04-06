@@ -158,15 +158,24 @@ const AdminLeads = () => {
     }
     return true;
   }).sort((a, b) => {
-    const aOrder = INTENT_ORDER[a.intent_score || 'low'] ?? 2;
-    const bOrder = INTENT_ORDER[b.intent_score || 'low'] ?? 2;
-    if (aOrder !== bOrder) return aOrder - bOrder;
+    // Overdue follow-ups first
+    const now = Date.now();
     const aFollowUp = a.next_follow_up_at ? new Date(a.next_follow_up_at).getTime() : Infinity;
     const bFollowUp = b.next_follow_up_at ? new Date(b.next_follow_up_at).getTime() : Infinity;
-    const now = Date.now();
     const aDue = aFollowUp <= now ? 0 : 1;
     const bDue = bFollowUp <= now ? 0 : 1;
     if (aDue !== bDue) return aDue - bDue;
+
+    // Booked leads above unbooked
+    const aBooked = a.booking ? 0 : 1;
+    const bBooked = b.booking ? 0 : 1;
+    if (aBooked !== bBooked) return aBooked - bBooked;
+
+    // Then by intent score
+    const aOrder = INTENT_ORDER[a.intent_score || 'low'] ?? 2;
+    const bOrder = INTENT_ORDER[b.intent_score || 'low'] ?? 2;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
