@@ -192,7 +192,7 @@ const AdminLeads = () => {
 
   const updateField = async (id: string, fields: Record<string, any>) => {
     setSaving(true);
-    const { error } = await supabase.from('diagnostic_submissions').update(fields).eq('id', id);
+    const { error } = await supabase.from('diagnostic_submissions').update(fields as any).eq('id', id);
     if (error) { toast.error('Fehler beim Speichern'); setSaving(false); return; }
     await fetchSubmissions();
     setSelected(prev => prev ? { ...prev, ...fields } : null);
