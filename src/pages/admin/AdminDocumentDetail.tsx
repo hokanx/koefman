@@ -5,21 +5,7 @@ import { ArrowLeft, Copy, ExternalLink } from 'lucide-react';
 import { formatEUR } from '@/lib/utils';
 import { formatDateDE } from '@/lib/generatePdf';
 import { toast } from 'sonner';
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  sent: 'bg-blue-900/50 text-blue-400 border-blue-800',
-  accepted: 'bg-green-900/50 text-green-400 border-green-800',
-  rejected: 'bg-red-900/50 text-red-400 border-red-800',
-  open: 'bg-blue-900/50 text-blue-400 border-blue-800',
-  paid: 'bg-green-900/50 text-green-400 border-green-800',
-  overdue: 'bg-red-900/50 text-red-400 border-red-800',
-  cancelled: 'bg-muted text-muted-foreground',
-  entwurf: 'bg-muted text-muted-foreground',
-  gesendet: 'bg-blue-900/50 text-blue-400 border-blue-800',
-  aktiv: 'bg-green-900/50 text-green-400 border-green-800',
-  unterzeichnet: 'bg-green-900/50 text-green-400 border-green-800',
-};
+import { getStatusLabel, getStatusColor } from '@/lib/adminDocumentStatus';
 
 const TYPE_CONFIG = {
   offer: { table: 'offers' as const, itemsTable: 'offer_items' as const, fk: 'offer_id', numberField: 'offer_number', label: 'Angebot', publicPrefix: 'offer' },
@@ -115,8 +101,8 @@ const AdminDocumentDetail = () => {
           {/* Meta */}
           <div className="rounded-xl border border-border bg-card p-5 space-y-4">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className={`text-[10px] font-bold tracking-[0.08em] px-2.5 py-1 rounded border ${STATUS_COLORS[doc.status] || 'bg-muted text-muted-foreground'}`}>
-                {doc.status}
+              <span className={`text-[10px] font-bold tracking-[0.08em] px-2.5 py-1 rounded border ${getStatusColor(doc.status)}`}>
+                {getStatusLabel(doc.status)}
               </span>
               <span className="text-sm text-muted-foreground">{formatDateDE(doc.date || doc.start_date)}</span>
               <span className="text-sm font-semibold">{formatEUR(doc.grand_total)}</span>
