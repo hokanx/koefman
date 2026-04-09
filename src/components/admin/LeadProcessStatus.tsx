@@ -168,7 +168,6 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
       <div className="space-y-1">
         {steps.map((step, i) => {
           const style = STATE_STYLES[step.state];
-          const Icon = style.icon;
           const isLast = i === steps.length - 1;
 
           return (
