@@ -41,34 +41,49 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
   const loadPipeline = async () => {
     setLoading(true);
 
-    // Find customer by email
+    // Find ONE customer by email (most recent)
     const { data: customers } = await supabase
       .from('customers')
       .select('id')
-      .eq('email', leadEmail);
+      .eq('email', leadEmail)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-    const customerIds = (customers || []).map(c => c.id);
+    const customerId = customers?.[0]?.id ?? null;
 
     let offers: any[] = [];
     let invoices: any[] = [];
     let contracts: any[] = [];
 
-    if (customerIds.length > 0) {
+    if (customerId) {
       const [offersRes, invoicesRes, contractsRes] = await Promise.all([
-        supabase.from('offers').select('id, offer_number, status, grand_total, customer_id').in('customer_id', customerIds),
-        supabase.from('invoices').select('id, invoice_number, status, grand_total, customer_id, source_offer_id').in('customer_id', customerIds),
-        supabase.from('contracts').select('id, contract_number, status, grand_total, customer_id, source_offer_id').in('customer_id', customerIds),
+        supabase.from('offers').select('id, offer_number, status, grand_total, customer_id, created_at').eq('customer_id', customerId).order('created_at', { ascending: false }),
+        supabase.from('invoices').select('id, invoice_number, status, grand_total, customer_id, source_offer_id, created_at').eq('customer_id', customerId).order('created_at', { ascending: false }),
+        supabase.from('contracts').select('id, contract_number, status, grand_total, customer_id, source_offer_id, created_at').eq('customer_id', customerId).order('created_at', { ascending: false }),
       ]);
       offers = offersRes.data || [];
       invoices = invoicesRes.data || [];
       contracts = contractsRes.data || [];
     }
 
-    const hasOffer = offers.length > 0;
-    const acceptedOffer = offers.find(o => o.status === 'accepted');
-    const hasContract = contracts.length > 0;
-    const hasInvoice = invoices.length > 0;
-    const paidInvoice = invoices.find(i => i.status === 'paid');
+    const latestOffer = offers[0] ?? null;
+    const hasOffer = !!latestOffer;
+    const acceptedOffer = offers.find(o => o.status === 'accepted') ?? null;
+
+    // Contract is only meaningful if linked to an accepted offer
+    const linkedContract = acceptedOffer
+      ? contracts.find(c => c.source_offer_id === acceptedOffer.id) ?? null
+      : null;
+    const hasContract = !!linkedContract;
+
+    // Invoice is only meaningful if linked to an accepted offer or contract
+    const linkedInvoice = acceptedOffer
+      ? invoices.find(i => i.source_offer_id === acceptedOffer.id) ?? null
+      : linkedContract
+        ? invoices.find(i => i.customer_id === customerId) ?? null
+        : null;
+    const hasInvoice = !!linkedInvoice;
+    const isPaid = linkedInvoice?.status === 'paid';
 
     const pipeline: PipelineStep[] = [
       {
@@ -86,11 +101,11 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
         label: 'Angebot erstellt',
         state: hasOffer
           ? 'completed'
-          : customerIds.length > 0
+          : customerId
             ? 'not_started'
             : 'not_linked',
-        detail: hasOffer ? `${offers[0].offer_number}` : undefined,
-        linkTo: hasOffer ? `/admin/documents/offers/${offers[0].id}` : undefined,
+        detail: hasOffer ? latestOffer.offer_number : undefined,
+        linkTo: hasOffer ? `/admin/documents/offer/${latestOffer.id}` : undefined,
       },
       {
         key: 'offer_accepted',
@@ -101,7 +116,7 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
             ? 'open'
             : 'not_started',
         detail: acceptedOffer ? acceptedOffer.offer_number : undefined,
-        linkTo: acceptedOffer ? `/admin/documents/offers/${acceptedOffer.id}` : undefined,
+        linkTo: acceptedOffer ? `/admin/documents/offer/${acceptedOffer.id}` : undefined,
       },
       {
         key: 'contract',
@@ -110,41 +125,43 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
           ? 'completed'
           : acceptedOffer
             ? 'not_started'
-            : 'not_started',
-        detail: hasContract ? contracts[0].contract_number : undefined,
-        linkTo: hasContract ? `/admin/documents/contracts/${contracts[0].id}` : undefined,
+            : 'not_linked',
+        detail: hasContract ? linkedContract.contract_number : undefined,
+        linkTo: hasContract ? `/admin/documents/contract/${linkedContract.id}` : undefined,
       },
       {
         key: 'invoice',
         label: 'Rechnung erstellt',
         state: hasInvoice
           ? 'completed'
-          : 'not_started',
-        detail: hasInvoice ? invoices[0].invoice_number : undefined,
-        linkTo: hasInvoice ? `/admin/documents/invoices/${invoices[0].id}` : undefined,
+          : (acceptedOffer || hasContract)
+            ? 'not_started'
+            : 'not_linked',
+        detail: hasInvoice ? linkedInvoice.invoice_number : undefined,
+        linkTo: hasInvoice ? `/admin/documents/invoice/${linkedInvoice.id}` : undefined,
       },
       {
         key: 'paid',
         label: 'Rechnung bezahlt',
-        state: paidInvoice
+        state: isPaid
           ? 'completed'
           : hasInvoice
             ? 'open'
             : 'not_started',
-        detail: paidInvoice ? `${paidInvoice.invoice_number}` : undefined,
-        linkTo: paidInvoice ? `/admin/documents/invoices/${paidInvoice.id}` : undefined,
+        detail: isPaid ? linkedInvoice.invoice_number : undefined,
+        linkTo: isPaid ? `/admin/documents/invoice/${linkedInvoice.id}` : undefined,
       },
     ];
 
     setSteps(pipeline);
 
-    // Determine next action
+    // Determine next action based on first incomplete meaningful stage
     if (!hasBooking) setNextAction('Termin vereinbaren');
     else if (!hasOffer) setNextAction('Angebot erstellen');
     else if (!acceptedOffer) setNextAction('Angebot nachfassen');
     else if (!hasContract && !hasInvoice) setNextAction('Vertrag oder Rechnung erstellen');
-    else if (hasInvoice && !paidInvoice) setNextAction('Zahlung prüfen');
-    else if (paidInvoice) setNextAction(null);
+    else if (hasInvoice && !isPaid) setNextAction('Zahlung prüfen');
+    else if (isPaid) setNextAction(null);
     else setNextAction(null);
 
     setLoading(false);
