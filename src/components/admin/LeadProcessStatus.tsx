@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { Check, Circle, Minus, ChevronRight, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useCallback } from 'react';
 
 type StepState = 'completed' | 'open' | 'not_started' | 'not_linked';
 
@@ -14,32 +15,17 @@ interface PipelineStep {
   linkTo?: string;
 }
 
-interface LinkedDoc {
-  id: string;
-  type: 'offer' | 'invoice' | 'contract';
-  number: string;
-  status: string;
-  amount?: number;
-}
-
 interface LeadProcessStatusProps {
   leadEmail: string;
   hasBooking: boolean;
   onClose?: () => void;
 }
 
-const STATE_STYLES: Record<StepState, { icon: typeof Check; className: string }> = {
-  completed: { icon: Check, className: 'bg-emerald-900/50 text-emerald-400 border-emerald-700' },
-  open: { icon: Circle, className: 'bg-yellow-900/50 text-yellow-400 border-yellow-700' },
-  not_started: { icon: Circle, className: 'bg-muted text-muted-foreground border-border' },
-  not_linked: { icon: Minus, className: 'bg-muted text-muted-foreground/50 border-border' },
-};
-
-const STATE_LABELS: Record<StepState, string> = {
-  completed: 'Erledigt',
-  open: 'Offen',
-  not_started: 'Noch nicht erstellt',
-  not_linked: 'Nicht verknüpft',
+const STATE_STYLES: Record<StepState, { className: string }> = {
+  completed: { className: 'bg-emerald-900/50 text-emerald-400 border-emerald-700' },
+  open: { className: 'bg-yellow-900/50 text-yellow-400 border-yellow-700' },
+  not_started: { className: 'bg-muted text-muted-foreground border-border' },
+  not_linked: { className: 'bg-muted text-muted-foreground/50 border-border' },
 };
 
 const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatusProps) => {
