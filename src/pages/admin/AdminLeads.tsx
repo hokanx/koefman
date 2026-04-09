@@ -502,6 +502,13 @@ const AdminLeads = () => {
                   </div>
                 )}
 
+                {/* 3.5. Process Status */}
+                <LeadProcessStatus
+                  leadEmail={selected.email}
+                  hasBooking={!!booking}
+                  onClose={() => setSelected(null)}
+                />
+
                 {/* 4. Actions */}
                 <div className="border-t border-border px-6 py-4">
                   <p className="text-[10px] text-muted-foreground tracking-[0.1em] uppercase mb-3">AKTIONEN</p>
