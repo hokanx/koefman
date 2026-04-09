@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Mail, Search, ChevronRight, RefreshCw, Eye, Phone, FileText, CheckSquare, Clock, Copy } from 'lucide-react';
+import LeadProcessStatus from '@/components/admin/LeadProcessStatus';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
