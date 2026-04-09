@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { Check, Circle, Minus, ChevronRight, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useCallback } from 'react';
 
 type StepState = 'completed' | 'open' | 'not_started' | 'not_linked';
 
