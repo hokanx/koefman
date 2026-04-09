@@ -76,12 +76,10 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
       : null;
     const hasContract = !!linkedContract;
 
-    // Invoice is only meaningful if linked to an accepted offer or contract
+    // Invoice: only link if it explicitly references the accepted offer via source_offer_id
     const linkedInvoice = acceptedOffer
       ? invoices.find(i => i.source_offer_id === acceptedOffer.id) ?? null
-      : linkedContract
-        ? invoices.find(i => i.customer_id === customerId) ?? null
-        : null;
+      : null;
     const hasInvoice = !!linkedInvoice;
     const isPaid = linkedInvoice?.status === 'paid';
 
