@@ -120,6 +120,7 @@ const AppWithImpersonation = () => {
               
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
+              <Route path="/agb" element={<AGB />} />
               <Route path="/start" element={<Navigate to="/book" replace />} />
               <Route path="/book" element={<BookingPage />} />
               <Route path="*" element={<NotFound />} />
