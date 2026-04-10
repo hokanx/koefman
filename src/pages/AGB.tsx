@@ -1,3 +1,5 @@
+import LegalFooter from '@/components/shared/LegalFooter';
+
 const AGB = () => {
   const sections = [
     { title: '1. Geltungsbereich', content: <p>Diese AGB gelten für alle Verträge zwischen Hazem Hokan (KÖFMAN) und seinen Kunden.</p> },

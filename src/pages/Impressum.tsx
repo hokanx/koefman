@@ -1,3 +1,5 @@
+import LegalFooter from '@/components/shared/LegalFooter';
+
 const Impressum = () => {
   return (
     <main className="min-h-screen bg-background text-foreground px-6 py-16 md:py-24">

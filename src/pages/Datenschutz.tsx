@@ -1,3 +1,5 @@
+import LegalFooter from '@/components/shared/LegalFooter';
+
 const Datenschutz = () => {
   const sections = [
     {
