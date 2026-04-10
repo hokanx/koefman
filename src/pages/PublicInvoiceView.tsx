@@ -96,7 +96,7 @@ const PublicInvoiceView = () => {
         {/* Items */}
         {items.length > 0 && (
           <>
-            <ItemsTable items={items as any[]} />
+            <ItemsTable items={items as any[]} isSmallBusiness={!!isSmallBiz} />
             <TotalsBlock
               subtotal={invoice?.subtotal || 0}
               taxTotal={invoice?.tax_total || 0}

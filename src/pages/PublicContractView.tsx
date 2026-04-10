@@ -221,7 +221,7 @@ const PublicContractView = () => {
         {/* Items */}
         {items.length > 0 && (
           <div>
-            <ItemsTable items={items as any[]} label="Leistungsumfang" />
+            <ItemsTable items={items as any[]} label="Leistungsumfang" isSmallBusiness={isSmallBusiness} />
             <TotalsBlock
               subtotal={contract?.subtotal || 0}
               taxTotal={contract?.tax_total || 0}
