@@ -7,32 +7,40 @@ interface DocumentShellProps {
   showNotFound?: boolean;
 }
 
+/**
+ * Wraps public document views in a light-themed container that overrides
+ * the app's dark default (body has bg-background which is black).
+ */
 const DocumentShell = ({ children, isLoading, notFoundMessage, showNotFound }: DocumentShellProps) => {
+  const baseStyle: React.CSSProperties = {
+    backgroundColor: '#f9fafb',
+    color: '#111827',
+    minHeight: '100vh',
+  };
+
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+      <div className="flex items-center justify-center" style={baseStyle}>
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-900 border-t-transparent" />
       </div>
     );
   }
 
   if (showNotFound) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800">{notFoundMessage || 'Dokument nicht gefunden'}</h1>
-          <p className="mt-2 text-gray-500">Dieser Link ist ungültig oder abgelaufen.</p>
-        </div>
+      <div className="flex flex-col items-center justify-center px-4" style={baseStyle}>
+        <h1 className="text-xl font-bold" style={{ color: '#111827', textTransform: 'none' }}>{notFoundMessage || 'Dokument nicht gefunden'}</h1>
+        <p className="mt-2 text-sm" style={{ color: '#6b7280' }}>Dieser Link ist ungültig oder abgelaufen.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
-      <div className="mx-auto max-w-3xl space-y-6">
+    <div style={{ ...baseStyle, paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="mx-auto max-w-[720px] px-4 py-8 md:py-12" style={{ textTransform: 'none' }}>
         {children}
-        <div className="text-center pt-2 pb-4">
-          <p className="text-xs text-gray-400">Bereitgestellt über KÖFMAN</p>
+        <div className="mt-10 text-center">
+          <p className="text-[11px] tracking-wide" style={{ color: '#9ca3af' }}>Bereitgestellt über KÖFMAN</p>
         </div>
       </div>
     </div>

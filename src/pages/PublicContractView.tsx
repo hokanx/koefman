@@ -203,47 +203,29 @@ const PublicContractView = () => {
         postalCode={settings?.postal_code ?? undefined}
         city={settings?.city ?? undefined}
         logoUrl={settings?.logo_url ?? undefined}
+        email={settings?.email ?? undefined}
+        phone={settings?.phone ?? undefined}
+        recipientName={customer?.name}
+        recipientAddress={customer ? [customer.street && customer.house_number ? `${customer.street} ${customer.house_number}` : customer.street, customer.postal_code && customer.city ? `${customer.postal_code} ${customer.city}` : customer.city].filter(Boolean).join('\n') : undefined}
       />
 
       {/* Contract details */}
-      <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+      <div className="rounded-2xl bg-white border border-gray-200 shadow-sm px-7 py-6 space-y-6">
         <DocumentMeta
-          documentNumber={contract?.contract_number || ''}
-          date={contract?.created_at || ''}
           title={contract?.title || 'Vertrag'}
           serviceTypeLabel={`Wiederkehrend (${frequencyLabels[contract?.frequency || ''] || contract?.frequency})`}
-          customerName={customer?.name}
+          fields={[
+            { label: 'Vertragsnummer', value: contract?.contract_number || '' },
+            { label: 'Vertragsbeginn', value: formatDateDE(contract?.start_date) },
+            { label: contract?.end_date ? 'Vertragsende' : 'Laufzeit', value: contract?.end_date ? formatDateDE(contract.end_date) : 'Unbefristet' },
+            { label: 'Abrechnungszyklus', value: frequencyLabels[contract?.frequency || ''] || contract?.frequency || '' },
+          ]}
         />
-
-        {/* Contract info */}
-        <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 text-sm">
-          <div>
-            <p className="text-gray-500">Abrechnungszyklus</p>
-            <p className="font-medium text-gray-900">{frequencyLabels[contract?.frequency || ''] || contract?.frequency}</p>
-          </div>
-          <div>
-            <p className="text-gray-500">Vertragsbeginn</p>
-            <p className="font-medium text-gray-900">{formatDateDE(contract?.start_date)}</p>
-          </div>
-          {contract?.end_date && (
-            <div>
-              <p className="text-gray-500">Vertragsende</p>
-              <p className="font-medium text-gray-900">{formatDateDE(contract.end_date)}</p>
-            </div>
-          )}
-          {!contract?.end_date && (
-            <div>
-              <p className="text-gray-500">Laufzeit</p>
-              <p className="font-medium text-gray-900">Unbefristet</p>
-            </div>
-          )}
-        </div>
 
         {/* Items */}
         {items.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Leistungsumfang</h3>
-            <ItemsTable items={items as any[]} />
+          <div>
+            <ItemsTable items={items as any[]} label="Leistungsumfang" />
             <TotalsBlock
               subtotal={contract?.subtotal || 0}
               taxTotal={contract?.tax_total || 0}

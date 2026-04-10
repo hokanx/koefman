@@ -308,16 +308,24 @@ const PublicOfferView = () => {
         postalCode={settings?.postal_code ?? undefined}
         city={settings?.city ?? undefined}
         logoUrl={settings?.logo_url ?? undefined}
+        email={settings?.email ?? undefined}
+        phone={settings?.phone ?? undefined}
+        taxNumber={settings?.tax_number ?? undefined}
+        vatId={settings?.vat_id ?? undefined}
+        recipientName={customer?.name}
+        recipientAddress={customer ? [customer.street && customer.house_number ? `${customer.street} ${customer.house_number}` : customer.street, customer.postal_code && customer.city ? `${customer.postal_code} ${customer.city}` : customer.city].filter(Boolean).join('\n') : undefined}
       />
 
       {/* Offer details */}
-      <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+      <div className="rounded-2xl bg-white border border-gray-200 shadow-sm px-7 py-6 space-y-6">
         <DocumentMeta
-          documentNumber={offer?.offer_number || ''}
-          date={offer?.date || ''}
           title={(settings as any)?.default_offer_title || 'Angebot'}
           serviceTypeLabel={(offer as any)?.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig'}
-          customerName={customer?.name}
+          fields={[
+            { label: 'Angebotsnummer', value: offer?.offer_number || '' },
+            { label: 'Datum', value: formatDateDE(offer?.date) },
+            ...(validityDate ? [{ label: expired ? 'Abgelaufen am' : 'Gültig bis', value: validityDate, highlight: expired }] : []),
+          ]}
         />
 
         {/* Intro text */}
@@ -348,14 +356,7 @@ const PublicOfferView = () => {
           <p className="mb-4 text-sm text-gray-700">{(offer as any).closing_text}</p>
         )}
 
-        {/* Validity */}
-        {validityDate && (
-          <div className={`mb-4 rounded-lg p-3 text-sm ${expired ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
-            {expired
-              ? `Dieses Angebot ist am ${validityDate} abgelaufen.`
-              : `Gültig bis ${validityDate}`}
-          </div>
-        )}
+        {/* Validity (already shown in meta row) */}
 
         {/* Notes */}
         {offer?.notes && (

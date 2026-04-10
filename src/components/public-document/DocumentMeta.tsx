@@ -1,33 +1,51 @@
-import { formatDateDE } from '@/lib/utils';
+
+
+interface MetaField {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}
 
 interface DocumentMetaProps {
-  documentNumber: string;
-  date: string;
   title: string;
+  fields: MetaField[];
   serviceTypeLabel?: string;
-  customerName?: string;
   children?: React.ReactNode;
 }
 
-const DocumentMeta = ({ documentNumber, date, title, serviceTypeLabel, customerName, children }: DocumentMetaProps) => {
+const DocumentMeta = ({ title, fields, serviceTypeLabel, children }: DocumentMetaProps) => {
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-gray-500">{documentNumber}</span>
-        <span className="text-sm text-gray-500">{formatDateDE(date)}</span>
+    <div className="space-y-4">
+      {/* Title */}
+      <div>
+        <h2 className="text-[22px] font-bold text-gray-900 tracking-tight">{title}</h2>
+        {serviceTypeLabel && (
+          <p className="mt-0.5 text-[11px] font-medium text-gray-400 uppercase tracking-[0.08em]">
+            Leistungsart: {serviceTypeLabel}
+          </p>
+        )}
       </div>
-      <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-      {serviceTypeLabel && (
-        <p className="mt-1 text-xs font-medium text-gray-500 uppercase tracking-wide">
-          Leistungsart: {serviceTypeLabel}
-        </p>
+
+      {/* Meta row */}
+      {fields.length > 0 && (
+        <div className="flex flex-wrap gap-x-8 gap-y-3 border-t border-b border-gray-100 py-3">
+          {fields.map((field, i) => (
+            <div key={i} className="min-w-[120px]">
+              <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-gray-400">
+                {field.label}
+              </p>
+              <p className={`text-[13px] mt-0.5 ${field.highlight ? 'font-semibold text-red-600' : 'font-medium text-gray-900'}`}>
+                {field.value}
+              </p>
+            </div>
+          ))}
+        </div>
       )}
-      {customerName && (
-        <p className="mt-1 text-sm text-gray-600">Für: {customerName}</p>
-      )}
+
       {children}
     </div>
   );
 };
 
 export default DocumentMeta;
+export type { MetaField };
