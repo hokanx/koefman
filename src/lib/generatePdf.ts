@@ -550,16 +550,25 @@ const renderPageFooter = (doc: jsPDF, business: BusinessInfo): void => {
     doc.setLineWidth(0.15);
     doc.line(MARGIN, footerY - 4, RIGHT_EDGE, footerY - 4);
 
-    doc.setFontSize(6.5);
+    doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(160, 160, 160);
-    const parts = [
+    doc.setTextColor(150, 150, 150);
+    const line1Parts = [
       business.business_name,
+      business.owner_name ? `Inh. ${business.owner_name}` : '',
       business.address?.replace(/\n/g, ', '),
+    ].filter(Boolean).join(' | ');
+    const line2Parts = [
+      business.phone,
+      business.email,
+      business.website,
       business.tax_number ? `St.-Nr.: ${business.tax_number}` : '',
       business.vat_id ? `USt-IdNr.: ${business.vat_id}` : '',
     ].filter(Boolean).join(' | ');
-    doc.text(parts, PAGE_WIDTH / 2, footerY, { align: 'center' });
+    doc.text(line1Parts, PAGE_WIDTH / 2, footerY - 0.5, { align: 'center' });
+    if (line2Parts) {
+      doc.text(line2Parts, PAGE_WIDTH / 2, footerY + 2.5, { align: 'center' });
+    }
   }
 };
 
