@@ -7,8 +7,10 @@ interface DocumentHeaderProps {
   logoUrl?: string;
   email?: string;
   phone?: string;
+  website?: string;
   taxNumber?: string;
   vatId?: string;
+  ownerName?: string;
   /** Compact single-line sender above the recipient */
   recipientName?: string;
   recipientAddress?: string;
@@ -23,8 +25,10 @@ const DocumentHeader = ({
   logoUrl,
   email,
   phone,
+  website,
   taxNumber,
   vatId,
+  ownerName,
   recipientName,
   recipientAddress,
 }: DocumentHeaderProps) => {
@@ -35,7 +39,7 @@ const DocumentHeader = ({
 
   const senderLine = [businessName, addressLine].filter(Boolean).join(' · ');
 
-  const contactDetails = [phone, email].filter(Boolean);
+  const contactDetails = [phone, email, website].filter(Boolean);
   const taxDetails = [
     taxNumber ? `St.-Nr.: ${taxNumber}` : '',
     vatId ? `USt-IdNr.: ${vatId}` : '',
