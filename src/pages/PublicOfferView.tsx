@@ -334,7 +334,7 @@ const PublicOfferView = () => {
         )}
 
         {/* Items */}
-        <ItemsTable items={items as any[]} />
+        <ItemsTable items={items as any[]} isSmallBusiness={isSmallBusiness} />
 
         {/* Totals */}
         {items.length > 0 && (

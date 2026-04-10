@@ -7,16 +7,23 @@ interface Item {
   quantity: number;
   unit: string;
   unit_price: number;
+  tax_rate?: number;
   total: number;
 }
 
 interface ItemsTableProps {
   items: Item[];
   label?: string;
+  isSmallBusiness?: boolean;
 }
 
-const ItemsTable = ({ items, label = 'Positionen' }: ItemsTableProps) => {
+const formatQtyUnit = (qty: number, unit: string) =>
+  `${Number(qty).toFixed(2).replace('.', ',')} ${unit}`;
+
+const ItemsTable = ({ items, label = 'Positionen', isSmallBusiness = false }: ItemsTableProps) => {
   if (items.length === 0) return null;
+
+  const showTax = !isSmallBusiness;
 
   return (
     <div>
@@ -29,19 +36,19 @@ const ItemsTable = ({ items, label = 'Positionen' }: ItemsTableProps) => {
         <table className="w-full text-sm table-fixed">
           <colgroup>
             <col style={{ width: '5%' }} />
-            <col style={{ width: '35%' }} />
-            <col style={{ width: '10%' }} />
-            <col style={{ width: '10%' }} />
+            <col style={{ width: showTax ? '37%' : '43%' }} />
+            <col style={{ width: '14%' }} />
             <col style={{ width: '18%' }} />
-            <col style={{ width: '22%' }} />
+            {showTax && <col style={{ width: '8%' }} />}
+            <col style={{ width: '18%' }} />
           </colgroup>
           <thead>
             <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-400">
               <th className="pb-2.5 pr-2 text-left font-medium">Pos.</th>
-              <th className="pb-2.5 pr-6 text-left font-medium">Bezeichnung</th>
-              <th className="pb-2.5 pr-1 text-right font-medium">Menge</th>
-              <th className="pb-2.5 pr-1 text-center font-medium">Einheit</th>
-              <th className="pb-2.5 pr-1 text-right font-medium">Einzelpreis</th>
+              <th className="pb-2.5 pr-4 text-left font-medium">Bezeichnung</th>
+              <th className="pb-2.5 pr-2 text-right font-medium">Menge</th>
+              <th className="pb-2.5 pr-2 text-right font-medium">Einzelpreis</th>
+              {showTax && <th className="pb-2.5 pr-2 text-right font-medium">MwSt.</th>}
               <th className="pb-2.5 text-right font-medium">Gesamt</th>
             </tr>
           </thead>
@@ -49,19 +56,23 @@ const ItemsTable = ({ items, label = 'Positionen' }: ItemsTableProps) => {
             {items.map((item, i) => (
               <tr key={item.id} className="border-b border-gray-50 last:border-0">
                 <td className="py-3 pr-2 text-gray-400 text-[13px] align-top">{i + 1}</td>
-                <td className="py-3 pr-6 align-top">
+                <td className="py-3 pr-4 align-top">
                   <p className="text-[13px] font-semibold text-gray-900 leading-snug">{item.title}</p>
                   {item.description && (
                     <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">{item.description}</p>
                   )}
                 </td>
-                <td className="py-3 pr-1 text-right text-[13px] text-gray-700 align-top tabular-nums">
-                  {Number(item.quantity).toFixed(2).replace('.', ',')}
+                <td className="py-3 pr-2 text-right text-[13px] text-gray-700 align-top tabular-nums whitespace-nowrap">
+                  {formatQtyUnit(item.quantity, item.unit)}
                 </td>
-                <td className="py-3 pr-1 text-center text-[13px] text-gray-500 align-top">{item.unit}</td>
-                <td className="py-3 pr-1 text-right text-[13px] text-gray-700 align-top tabular-nums">
+                <td className="py-3 pr-2 text-right text-[13px] text-gray-700 align-top tabular-nums">
                   {formatEUR(item.unit_price)}
                 </td>
+                {showTax && (
+                  <td className="py-3 pr-2 text-right text-[13px] text-gray-500 align-top tabular-nums">
+                    {item.tax_rate != null ? `${item.tax_rate} %` : '–'}
+                  </td>
+                )}
                 <td className="py-3 text-right text-[13px] font-bold text-gray-900 align-top tabular-nums">
                   {formatEUR(item.total)}
                 </td>
@@ -85,7 +96,7 @@ const ItemsTable = ({ items, label = 'Positionen' }: ItemsTableProps) => {
               <p className="text-[13px] font-semibold text-gray-900 shrink-0">{formatEUR(item.total)}</p>
             </div>
             <p className="text-[11px] text-gray-400 mt-1.5">
-              {Number(item.quantity).toFixed(2).replace('.', ',')} {item.unit} × {formatEUR(item.unit_price)}
+              {formatQtyUnit(item.quantity, item.unit)} × {formatEUR(item.unit_price)}
             </p>
           </div>
         ))}

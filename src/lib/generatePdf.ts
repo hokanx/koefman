@@ -388,16 +388,18 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
   doc.text('POSITIONEN', MARGIN, y);
   y += 3;
 
+  const qtyUnitLabel = `${opts.labels.quantity} / ${opts.labels.unit}`;
+
   const tableHead = opts.hidesTaxColumn
-    ? [['Pos.', opts.labels.itemTitle, opts.labels.quantity, opts.labels.unit, opts.labels.unitPrice, opts.labels.total]]
-    : [['Pos.', opts.labels.itemTitle, opts.labels.quantity, opts.labels.unit, opts.labels.unitPrice, opts.labels.taxRate, opts.labels.total]];
+    ? [['Pos.', opts.labels.itemTitle, qtyUnitLabel, opts.labels.unitPrice, opts.labels.total]]
+    : [['Pos.', opts.labels.itemTitle, qtyUnitLabel, opts.labels.unitPrice, opts.labels.taxRate, opts.labels.total]];
 
   const tableBody = opts.items.map((item, i) => {
+    const qtyUnit = `${item.quantity.toFixed(2).replace('.', ',')} ${item.unit}`;
     const row = [
       String(i + 1),
       item.description ? `${item.title}\n${item.description}` : item.title,
-      item.quantity.toFixed(2).replace('.', ','),
-      item.unit,
+      qtyUnit,
       formatCurrency(item.unit_price),
     ];
     if (!opts.hidesTaxColumn) row.push(`${item.tax_rate} %`);
@@ -405,10 +407,23 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
     return row;
   });
 
-  const pageContentWidth = RIGHT_EDGE - MARGIN; // ~170mm
+  const pageContentWidth = RIGHT_EDGE - MARGIN;
   const colStyles = opts.hidesTaxColumn
-    ? { 0: { cellWidth: 10, halign: 'center' as const }, 1: { cellWidth: pageContentWidth * 0.38, halign: 'left' as const }, 2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.10 }, 3: { halign: 'center' as const, cellWidth: pageContentWidth * 0.10 }, 4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18 }, 5: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18, fontStyle: 'bold' as const } }
-    : { 0: { cellWidth: 10, halign: 'center' as const }, 1: { cellWidth: pageContentWidth * 0.32, halign: 'left' as const }, 2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.09 }, 3: { halign: 'center' as const, cellWidth: pageContentWidth * 0.09 }, 4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.16 }, 5: { halign: 'right' as const, cellWidth: pageContentWidth * 0.10 }, 6: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18, fontStyle: 'bold' as const } };
+    ? {
+        0: { cellWidth: 10, halign: 'center' as const },
+        1: { cellWidth: pageContentWidth * 0.43, halign: 'left' as const },
+        2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.15 },
+        3: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18 },
+        4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18, fontStyle: 'bold' as const },
+      }
+    : {
+        0: { cellWidth: 10, halign: 'center' as const },
+        1: { cellWidth: pageContentWidth * 0.37, halign: 'left' as const },
+        2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.14 },
+        3: { halign: 'right' as const, cellWidth: pageContentWidth * 0.16 },
+        4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.09 },
+        5: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18, fontStyle: 'bold' as const },
+      };
 
   autoTable(doc, {
     startY: y,
@@ -432,15 +447,6 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
     bodyStyles: { lineWidth: 0 },
     alternateRowStyles: { fillColor: [248, 248, 248] },
     columnStyles: colStyles,
-    didParseCell: (data) => {
-      // Make description text lighter and smaller
-      if (data.section === 'body' && data.column.index === 1) {
-        const cellText = String(data.cell.text.join('\n'));
-        if (cellText.includes('\n')) {
-          // Title is bold, description is lighter - handled by jspdf-autotable's text rendering
-        }
-      }
-    },
   });
 
   const tableEndY = (doc as any).lastAutoTable.finalY;
@@ -662,6 +668,7 @@ export const generatePdf = async (data: PdfData, returnBase64 = false): Promise<
     y = renderItemsTable(doc, y, {
       items: data.items,
       labels: data.labels,
+      hidesTaxColumn: !!data.small_business_regulation,
     });
 
     // 7. TOTALS
