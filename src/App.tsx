@@ -55,6 +55,7 @@ import DiagnosticIntake from "@/pages/DiagnosticIntake";
 
 
 import BookingPage from "@/pages/BookingPage";
+import Impressum from "@/pages/Impressum";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
