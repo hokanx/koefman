@@ -2,15 +2,8 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import BrandMark from '@/components/shared/BrandMark';
-
-const formatDateDE = (d: string | null | undefined) => {
-  if (!d) return '–';
-  const date = new Date(d);
-  return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-};
-
-const formatEUR = (v: number | null | undefined) =>
-  v != null ? v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '–';
+import { formatEUR, formatDateDE } from '@/lib/utils';
+import { DocumentShell, DocumentMeta, ItemsTable, TotalsBlock, BankDetails } from '@/components/public-document';
 
 const PublicInvoiceView = () => {
   const { token } = useParams<{ token: string }>();
@@ -91,22 +84,22 @@ const PublicInvoiceView = () => {
 
         <div className="rounded-xl border border-border bg-card p-6 space-y-6">
           {/* Title */}
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Rechnung</p>
-            <h1 className="text-2xl font-bold text-foreground">{invoice.invoice_number}</h1>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Leistungsart: {invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig'}
-            </p>
-          </div>
+          <DocumentMeta
+            documentNumber={invoice.invoice_number}
+            date={invoice.date}
+            title="Rechnung"
+            serviceTypeLabel={invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig'}
+            customerName={customer?.name}
+          >
+            {/* Status */}
+            {isPaid && (
+              <div className="mt-3 rounded-lg bg-primary/10 border border-primary/20 p-3 text-sm text-primary font-medium">
+                ✓ Bezahlt
+              </div>
+            )}
+          </DocumentMeta>
 
-          {/* Status */}
-          {isPaid && (
-            <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-sm text-primary font-medium">
-              ✓ Bezahlt
-            </div>
-          )}
-
-          {/* Meta */}
+          {/* Extra meta */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs font-medium text-muted-foreground">Rechnungsdatum</p>
@@ -170,16 +163,13 @@ const PublicInvoiceView = () => {
           </div>
 
           {/* Payment info */}
-          {settings && (settings as any).iban && (
-            <div className="rounded-lg bg-muted/30 border border-border p-4 space-y-1 text-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">Bankverbindung</p>
-              {(settings as any).account_holder && <p className="text-foreground">{(settings as any).account_holder}</p>}
-              {(settings as any).bank_name && <p className="text-muted-foreground">{(settings as any).bank_name}</p>}
-              <p className="text-foreground font-mono text-xs">{(settings as any).iban}</p>
-              {(settings as any).bic && <p className="text-muted-foreground text-xs">BIC: {(settings as any).bic}</p>}
-              <p className="text-muted-foreground text-xs mt-2">Verwendungszweck: {invoice.invoice_number}</p>
-            </div>
-          )}
+          <BankDetails
+            accountHolder={(settings as any)?.account_holder}
+            bankName={(settings as any)?.bank_name}
+            iban={(settings as any)?.iban}
+            bic={(settings as any)?.bic}
+            referenceNumber={invoice.invoice_number}
+          />
         </div>
 
         <p className="text-center text-xs text-muted-foreground">Bereitgestellt über KÖFMAN</p>
