@@ -57,6 +57,7 @@ import DiagnosticIntake from "@/pages/DiagnosticIntake";
 import BookingPage from "@/pages/BookingPage";
 import Impressum from "@/pages/Impressum";
 import Datenschutz from "@/pages/Datenschutz";
+import AGB from "@/pages/AGB";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
