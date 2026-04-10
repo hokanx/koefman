@@ -17,13 +17,127 @@ interface ItemsTableProps {
   isSmallBusiness?: boolean;
 }
 
-const formatQtyUnit = (qty: number, unit: string) =>
+const fmtQty = (qty: number, unit: string) =>
   `${Number(qty).toFixed(2).replace('.', ',')} ${unit}`;
 
+/* ── Shared cell classes ── */
+const thBase = 'pb-2.5 font-medium';
+const tdNum  = 'py-3 text-right text-[13px] align-top tabular-nums whitespace-nowrap';
+
+/* ================================================================
+   Kleinunternehmer table — 5 columns, no MwSt.
+   Pos 8% · Bezeichnung 52% · Menge 12% · Einzelpreis 14% · Gesamt 14%
+   ================================================================ */
+const SmallBizTable = ({ items }: { items: Item[] }) => (
+  <table className="w-full text-sm table-fixed border-collapse">
+    <colgroup>
+      <col style={{ width: '8%' }} />
+      <col style={{ width: '52%' }} />
+      <col style={{ width: '12%' }} />
+      <col style={{ width: '14%' }} />
+      <col style={{ width: '14%' }} />
+    </colgroup>
+    <thead>
+      <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-400">
+        <th className={`${thBase} pr-2 text-left`}>Pos.</th>
+        <th className={`${thBase} pr-4 text-left`}>Bezeichnung</th>
+        <th className={`${thBase} pr-2 text-right`}>Menge</th>
+        <th className={`${thBase} pr-2 text-right`}>Einzelpreis</th>
+        <th className={`${thBase} text-right`}>Gesamt</th>
+      </tr>
+    </thead>
+    <tbody>
+      {items.map((item, i) => (
+        <tr key={item.id} className="border-b border-gray-50 last:border-0">
+          <td className="py-3 pr-2 text-gray-400 text-[13px] align-top">{i + 1}</td>
+          <td className="py-3 pr-4 align-top">
+            <p className="text-[13px] font-semibold text-gray-900 leading-snug">{item.title}</p>
+            {item.description && (
+              <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">{item.description}</p>
+            )}
+          </td>
+          <td className={`${tdNum} pr-2 text-gray-700`}>{fmtQty(item.quantity, item.unit)}</td>
+          <td className={`${tdNum} pr-2 text-gray-700`}>{formatEUR(item.unit_price)}</td>
+          <td className={`${tdNum} font-bold text-gray-900`}>{formatEUR(item.total)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
+/* ================================================================
+   Standard VAT table — 6 columns
+   Pos 7% · Bezeichnung 45% · Menge 12% · Einzelpreis 13% · MwSt 9% · Gesamt 14%
+   ================================================================ */
+const VatTable = ({ items }: { items: Item[] }) => (
+  <table className="w-full text-sm table-fixed border-collapse">
+    <colgroup>
+      <col style={{ width: '7%' }} />
+      <col style={{ width: '45%' }} />
+      <col style={{ width: '12%' }} />
+      <col style={{ width: '13%' }} />
+      <col style={{ width: '9%' }} />
+      <col style={{ width: '14%' }} />
+    </colgroup>
+    <thead>
+      <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-400">
+        <th className={`${thBase} pr-2 text-left`}>Pos.</th>
+        <th className={`${thBase} pr-4 text-left`}>Bezeichnung</th>
+        <th className={`${thBase} pr-2 text-right`}>Menge</th>
+        <th className={`${thBase} pr-2 text-right`}>Einzelpreis</th>
+        <th className={`${thBase} pr-2 text-right`}>MwSt.</th>
+        <th className={`${thBase} text-right`}>Gesamt</th>
+      </tr>
+    </thead>
+    <tbody>
+      {items.map((item, i) => (
+        <tr key={item.id} className="border-b border-gray-50 last:border-0">
+          <td className="py-3 pr-2 text-gray-400 text-[13px] align-top">{i + 1}</td>
+          <td className="py-3 pr-4 align-top">
+            <p className="text-[13px] font-semibold text-gray-900 leading-snug">{item.title}</p>
+            {item.description && (
+              <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">{item.description}</p>
+            )}
+          </td>
+          <td className={`${tdNum} pr-2 text-gray-700`}>{fmtQty(item.quantity, item.unit)}</td>
+          <td className={`${tdNum} pr-2 text-gray-700`}>{formatEUR(item.unit_price)}</td>
+          <td className={`${tdNum} pr-2 text-gray-500`}>{item.tax_rate != null ? `${item.tax_rate} %` : '–'}</td>
+          <td className={`${tdNum} font-bold text-gray-900`}>{formatEUR(item.total)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
+/* ================================================================
+   Mobile cards (shared for both modes)
+   ================================================================ */
+const MobileCards = ({ items }: { items: Item[] }) => (
+  <div className="sm:hidden space-y-2">
+    {items.map((item, i) => (
+      <div key={item.id} className="rounded-lg border border-gray-100 bg-gray-50/40 px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-semibold text-gray-900">{i + 1}. {item.title}</p>
+            {item.description && (
+              <p className="text-[11px] text-gray-400 mt-1">{item.description}</p>
+            )}
+          </div>
+          <p className="text-[13px] font-semibold text-gray-900 shrink-0">{formatEUR(item.total)}</p>
+        </div>
+        <p className="text-[11px] text-gray-400 mt-1.5">
+          {fmtQty(item.quantity, item.unit)} × {formatEUR(item.unit_price)}
+        </p>
+      </div>
+    ))}
+  </div>
+);
+
+/* ================================================================
+   Main component
+   ================================================================ */
 const ItemsTable = ({ items, label = 'Positionen', isSmallBusiness = false }: ItemsTableProps) => {
   if (items.length === 0) return null;
-
-  const showTax = !isSmallBusiness;
 
   return (
     <div>
@@ -31,86 +145,13 @@ const ItemsTable = ({ items, label = 'Positionen', isSmallBusiness = false }: It
         {label}
       </p>
 
-      {/* Desktop table */}
+      {/* Desktop */}
       <div className="hidden sm:block">
-        <table className="w-full text-sm table-fixed">
-          {showTax ? (
-            <colgroup>
-              <col style={{ width: '5%' }} />
-              <col style={{ width: '37%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '18%' }} />
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '18%' }} />
-            </colgroup>
-          ) : (
-            <colgroup>
-              <col style={{ width: '5%' }} />
-              <col style={{ width: '45%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '18%' }} />
-            </colgroup>
-          )}
-          <thead>
-            <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-400">
-              <th className="pb-2.5 pr-2 text-left font-medium">Pos.</th>
-              <th className="pb-2.5 pr-4 text-left font-medium">Bezeichnung</th>
-              <th className="pb-2.5 pr-2 text-right font-medium">Menge</th>
-              <th className="pb-2.5 pr-2 text-right font-medium">Einzelpreis</th>
-              {showTax && <th className="pb-2.5 pr-2 text-right font-medium">MwSt.</th>}
-              <th className="pb-2.5 text-right font-medium">Gesamt</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, i) => (
-              <tr key={item.id} className="border-b border-gray-50 last:border-0">
-                <td className="py-3 pr-2 text-gray-400 text-[13px] align-top">{i + 1}</td>
-                <td className="py-3 pr-4 align-top">
-                  <p className="text-[13px] font-semibold text-gray-900 leading-snug">{item.title}</p>
-                  {item.description && (
-                    <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">{item.description}</p>
-                  )}
-                </td>
-                <td className="py-3 pr-2 text-right text-[13px] text-gray-700 align-top tabular-nums whitespace-nowrap">
-                  {formatQtyUnit(item.quantity, item.unit)}
-                </td>
-                <td className="py-3 pr-2 text-right text-[13px] text-gray-700 align-top tabular-nums">
-                  {formatEUR(item.unit_price)}
-                </td>
-                {showTax && (
-                  <td className="py-3 pr-2 text-right text-[13px] text-gray-500 align-top tabular-nums">
-                    {item.tax_rate != null ? `${item.tax_rate} %` : '–'}
-                  </td>
-                )}
-                <td className="py-3 text-right text-[13px] font-bold text-gray-900 align-top tabular-nums">
-                  {formatEUR(item.total)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {isSmallBusiness ? <SmallBizTable items={items} /> : <VatTable items={items} />}
       </div>
 
-      {/* Mobile cards */}
-      <div className="sm:hidden space-y-2">
-        {items.map((item, i) => (
-          <div key={item.id} className="rounded-lg border border-gray-100 bg-gray-50/40 px-4 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-semibold text-gray-900">{i + 1}. {item.title}</p>
-                {item.description && (
-                  <p className="text-[11px] text-gray-400 mt-1">{item.description}</p>
-                )}
-              </div>
-              <p className="text-[13px] font-semibold text-gray-900 shrink-0">{formatEUR(item.total)}</p>
-            </div>
-            <p className="text-[11px] text-gray-400 mt-1.5">
-              {formatQtyUnit(item.quantity, item.unit)} × {formatEUR(item.unit_price)}
-            </p>
-          </div>
-        ))}
-      </div>
+      {/* Mobile */}
+      <MobileCards items={items} />
     </div>
   );
 };
