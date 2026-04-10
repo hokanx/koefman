@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { formatAddress } from '@/types';
 import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
-import { formatEUR, formatDateDE } from '@/lib/utils';
+import { formatDateDE } from '@/lib/utils';
+import { DocumentShell, DocumentHeader, DocumentMeta, ItemsTable, TotalsBlock } from '@/components/public-document';
 
 const PublicContractView = () => {
   const { token } = useParams<{ token: string }>();
@@ -155,179 +155,14 @@ const PublicContractView = () => {
   const isSigned = contract?.status === 'unterzeichnet' || contract?.status === 'aktiv' || !!existingAcceptance || signed;
   const isRejected = contract?.status === 'abgelehnt' || rejected;
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (!contract) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800">Vertrag nicht gefunden</h1>
-          <p className="mt-2 text-gray-500">Dieser Link ist ungültig oder abgelaufen.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const customer = (contract as any).customer;
+  const customer = contract ? (contract as any).customer : null;
   const isSmallBusiness = !!(settings as any)?.small_business_regulation;
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
-      <div className="mx-auto max-w-3xl">
-        {/* Header with branding */}
-        <div className="mb-6 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {settings?.business_name || 'Unternehmen'}
-              </h1>
-              {settings && (
-                <p className="mt-1 text-sm text-gray-500">
-                  {[
-                    settings.street && (settings as any).house_number
-                      ? `${settings.street} ${(settings as any).house_number}`
-                      : settings.street,
-                    settings.postal_code && settings.city
-                      ? `${settings.postal_code} ${settings.city}`
-                      : settings.city,
-                  ].filter(Boolean).join(', ')}
-                </p>
-              )}
-            </div>
-            {settings?.logo_url && (
-              <img src={settings.logo_url} alt="Logo" className="h-12 w-auto object-contain" />
-            )}
-          </div>
-        </div>
-
-        {/* Contract details */}
-        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500">{contract.contract_number}</span>
-              <span className="text-sm text-gray-500">
-                {formatDateDE(contract.created_at)}
-              </span>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">{contract.title}</h2>
-            <p className="mt-1 text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Leistungsart: Wiederkehrend ({frequencyLabels[contract.frequency] || contract.frequency})
-            </p>
-            {customer && (
-              <p className="mt-1 text-sm text-gray-600">Für: {customer.name}</p>
-            )}
-          </div>
-
-          {/* Contract info */}
-          <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 text-sm">
-            <div>
-              <p className="text-gray-500">Abrechnungszyklus</p>
-              <p className="font-medium text-gray-900">{frequencyLabels[contract.frequency] || contract.frequency}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Vertragsbeginn</p>
-              <p className="font-medium text-gray-900">{formatDateDE(contract.start_date)}</p>
-            </div>
-            {contract.end_date && (
-              <div>
-                <p className="text-gray-500">Vertragsende</p>
-                <p className="font-medium text-gray-900">{formatDateDE(contract.end_date)}</p>
-              </div>
-            )}
-            {!contract.end_date && (
-              <div>
-                <p className="text-gray-500">Laufzeit</p>
-                <p className="font-medium text-gray-900">Unbefristet</p>
-              </div>
-            )}
-          </div>
-
-          {/* Items */}
-          {items.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Leistungsumfang</h3>
-              {/* Desktop table */}
-              <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b-2 border-gray-200 text-left text-gray-500">
-                      <th className="pb-2 pr-2 font-medium">Pos.</th>
-                      <th className="pb-2 pr-2 font-medium">Bezeichnung</th>
-                      <th className="pb-2 pr-2 text-right font-medium">Menge</th>
-                      <th className="pb-2 pr-2 font-medium">Einheit</th>
-                      <th className="pb-2 pr-2 text-right font-medium">Einzelpreis</th>
-                      <th className="pb-2 text-right font-medium">Gesamt</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item: any, i: number) => (
-                      <tr key={item.id} className="border-b border-gray-100">
-                        <td className="py-2 pr-2 text-gray-500">{i + 1}</td>
-                        <td className="py-2 pr-2">
-                          <p className="font-medium text-gray-900">{item.title}</p>
-                          {item.description && <p className="text-gray-500 text-xs">{item.description}</p>}
-                        </td>
-                        <td className="py-2 pr-2 text-right text-gray-700">{Number(item.quantity).toFixed(2).replace('.', ',')}</td>
-                        <td className="py-2 pr-2 text-gray-700">{item.unit}</td>
-                        <td className="py-2 pr-2 text-right text-gray-700">{formatEUR(item.unit_price)}</td>
-                        <td className="py-2 text-right font-medium text-gray-900">{formatEUR(item.total)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* Mobile card layout */}
-              <div className="sm:hidden space-y-3">
-                {items.map((item: any, i: number) => (
-                  <div key={item.id} className="rounded-lg border border-gray-100 bg-gray-50/50 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900">{i + 1}. {item.title}</p>
-                        {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
-                      </div>
-                      <p className="font-semibold text-gray-900 shrink-0">{formatEUR(item.total)}</p>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">{Number(item.quantity).toFixed(2).replace('.', ',')} {item.unit} × {formatEUR(item.unit_price)}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Totals */}
-              <div className="mt-4 space-y-1 border-t-2 border-gray-200 pt-3">
-                {!isSmallBusiness && (
-                  <>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Zwischensumme</span>
-                      <span>{formatEUR(contract.subtotal)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>MwSt.</span>
-                      <span>{formatEUR(contract.tax_total)}</span>
-                    </div>
-                  </>
-                )}
-                <div className={`flex justify-between text-base font-bold text-gray-900 ${!isSmallBusiness ? 'pt-1 border-t border-gray-200' : ''}`}>
-                  <span>Gesamtbetrag pro Zyklus</span>
-                  <span>{formatEUR(contract.grand_total)}</span>
-                </div>
-                {isSmallBusiness && (
-                  <p className="text-xs text-gray-500 italic">
-                    Gemäß §19 UStG wird keine Umsatzsteuer berechnet.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Signature / Status section */}
-        {isSigned ? (
+  // Signed screen
+  if (isSigned && contract) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="mx-auto max-w-3xl">
           <div className="mt-6 rounded-xl bg-green-50 border border-green-200 p-6 text-center">
             <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-3" />
             <h3 className="text-lg font-bold text-green-800">Vertrag unterzeichnet</h3>
@@ -339,123 +174,195 @@ const PublicContractView = () => {
                 : 'Dieser Vertrag wurde bereits unterzeichnet.'}
             </p>
           </div>
-        ) : isRejected ? (
+        </div>
+      </div>
+    );
+  }
+
+  // Rejected screen
+  if (isRejected && contract) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="mx-auto max-w-3xl">
           <div className="mt-6 rounded-xl bg-red-50 border border-red-200 p-6 text-center">
             <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
             <h3 className="text-lg font-bold text-red-800">Vertrag abgelehnt</h3>
             <p className="mt-1 text-sm text-red-600">Dieser Vertrag wurde abgelehnt.</p>
           </div>
-        ) : (
-          <div className="mt-6 space-y-4">
-            {/* Sign form */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-bold text-gray-900">Vertrag unterzeichnen</h3>
-              </div>
-              <p className="mb-4 text-sm text-gray-600">
-                Mit Ihrer Unterschrift bestätigen Sie die oben genannten Vertragsbedingungen.
-              </p>
-              <form onSubmit={handleSign} className="space-y-4" noValidate>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-gray-800">
-                    Ihr vollständiger Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={acceptName}
-                    onChange={(e) => {
-                      setAcceptName(e.target.value);
-                      if (showValidation && e.target.value.trim()) {
-                        setErrorMessage(hasValidSignature && signatureImage ? null : errorMessage);
-                      }
-                    }}
-                    placeholder="Vor- und Nachname"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-gray-800">
-                    Unterschrift
-                  </label>
-                  <SignaturePad
-                    onSignatureChange={(dataUrl) => {
-                      setSignatureImage(dataUrl);
-                      if (dataUrl) { setErrorMessage(null); setShowValidation(false); }
-                    }}
-                    onSignatureStateChange={(hasSignature) => {
-                      setHasValidSignature(hasSignature);
-                      if (hasSignature) { setErrorMessage(null); setShowValidation(false); }
-                    }}
-                    clearLabel="Zurücksetzen"
-                    instructionLabel="Bitte unterschreiben Sie hier"
-                  />
-                </div>
-                {showValidation && !acceptName.trim() && (
-                  <p className="text-sm font-medium text-red-600">Bitte geben Sie Ihren Namen ein.</p>
-                )}
-                {showValidation && !hasValidSignature && (
-                  <p className="text-sm font-medium text-red-600">Bitte unterschreiben Sie den Vertrag.</p>
-                )}
-                {errorMessage && (
-                  <p className="text-sm font-medium text-red-600">{errorMessage}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={signMutation.isPending}
-                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {signMutation.isPending ? 'Wird verarbeitet...' : 'Vertrag verbindlich unterzeichnen'}
-                </button>
-                <p className="text-center text-sm text-gray-500">
-                  Ihre digitale Unterschrift ist rechtlich bindend.
-                </p>
-              </form>
-            </div>
+        </div>
+      </div>
+    );
+  }
 
-            {/* Reject section */}
-            <div className="rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
-              {!showRejectConfirm ? (
-                <button
-                  onClick={() => setShowRejectConfirm(true)}
-                  className="w-full rounded-lg border border-red-300 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
-                >
-                  Vertrag ablehnen
-                </button>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <XCircle className="h-5 w-5 text-red-500" />
-                    <h3 className="text-lg font-bold text-gray-900">Vertrag ablehnen</h3>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Sind Sie sicher, dass Sie diesen Vertrag ablehnen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
-                  </p>
-                  {rejectMutation.isError && (
-                    <p className="text-sm text-red-600">Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.</p>
-                  )}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setShowRejectConfirm(false)}
-                      className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                      Abbrechen
-                    </button>
-                    <button
-                      onClick={() => rejectMutation.mutate()}
-                      disabled={rejectMutation.isPending}
-                      className="flex-1 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                    >
-                      {rejectMutation.isPending ? 'Wird verarbeitet...' : 'Endgültig ablehnen'}
-                    </button>
-                  </div>
-                </div>
-              )}
+  return (
+    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !contract} notFoundMessage="Vertrag nicht gefunden">
+      <DocumentHeader
+        businessName={settings?.business_name}
+        street={settings?.street ?? undefined}
+        houseNumber={(settings as any)?.house_number ?? undefined}
+        postalCode={settings?.postal_code ?? undefined}
+        city={settings?.city ?? undefined}
+        logoUrl={settings?.logo_url ?? undefined}
+      />
+
+      {/* Contract details */}
+      <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <DocumentMeta
+          documentNumber={contract?.contract_number || ''}
+          date={contract?.created_at || ''}
+          title={contract?.title || 'Vertrag'}
+          serviceTypeLabel={`Wiederkehrend (${frequencyLabels[contract?.frequency || ''] || contract?.frequency})`}
+          customerName={customer?.name}
+        />
+
+        {/* Contract info */}
+        <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 text-sm">
+          <div>
+            <p className="text-gray-500">Abrechnungszyklus</p>
+            <p className="font-medium text-gray-900">{frequencyLabels[contract?.frequency || ''] || contract?.frequency}</p>
+          </div>
+          <div>
+            <p className="text-gray-500">Vertragsbeginn</p>
+            <p className="font-medium text-gray-900">{formatDateDE(contract?.start_date)}</p>
+          </div>
+          {contract?.end_date && (
+            <div>
+              <p className="text-gray-500">Vertragsende</p>
+              <p className="font-medium text-gray-900">{formatDateDE(contract.end_date)}</p>
             </div>
+          )}
+          {!contract?.end_date && (
+            <div>
+              <p className="text-gray-500">Laufzeit</p>
+              <p className="font-medium text-gray-900">Unbefristet</p>
+            </div>
+          )}
+        </div>
+
+        {/* Items */}
+        {items.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Leistungsumfang</h3>
+            <ItemsTable items={items as any[]} />
+            <TotalsBlock
+              subtotal={contract?.subtotal || 0}
+              taxTotal={contract?.tax_total || 0}
+              grandTotal={contract?.grand_total || 0}
+              isSmallBusiness={isSmallBusiness}
+              grandTotalLabel="Gesamtbetrag pro Zyklus"
+            />
           </div>
         )}
       </div>
-    </div>
+
+      {/* Sign form */}
+      <div className="space-y-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-blue-600" />
+            <h3 className="text-lg font-bold text-gray-900">Vertrag unterzeichnen</h3>
+          </div>
+          <p className="mb-4 text-sm text-gray-600">
+            Mit Ihrer Unterschrift bestätigen Sie die oben genannten Vertragsbedingungen.
+          </p>
+          <form onSubmit={handleSign} className="space-y-4" noValidate>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-gray-800">
+                Ihr vollständiger Name *
+              </label>
+              <input
+                type="text"
+                value={acceptName}
+                onChange={(e) => {
+                  setAcceptName(e.target.value);
+                  if (showValidation && e.target.value.trim()) {
+                    setErrorMessage(hasValidSignature && signatureImage ? null : errorMessage);
+                  }
+                }}
+                placeholder="Vor- und Nachname"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-gray-800">
+                Unterschrift
+              </label>
+              <SignaturePad
+                onSignatureChange={(dataUrl) => {
+                  setSignatureImage(dataUrl);
+                  if (dataUrl) { setErrorMessage(null); setShowValidation(false); }
+                }}
+                onSignatureStateChange={(hasSignature) => {
+                  setHasValidSignature(hasSignature);
+                  if (hasSignature) { setErrorMessage(null); setShowValidation(false); }
+                }}
+                clearLabel="Zurücksetzen"
+                instructionLabel="Bitte unterschreiben Sie hier"
+              />
+            </div>
+            {showValidation && !acceptName.trim() && (
+              <p className="text-sm font-medium text-red-600">Bitte geben Sie Ihren Namen ein.</p>
+            )}
+            {showValidation && !hasValidSignature && (
+              <p className="text-sm font-medium text-red-600">Bitte unterschreiben Sie den Vertrag.</p>
+            )}
+            {errorMessage && (
+              <p className="text-sm font-medium text-red-600">{errorMessage}</p>
+            )}
+            <button
+              type="submit"
+              disabled={signMutation.isPending}
+              className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {signMutation.isPending ? 'Wird verarbeitet...' : 'Vertrag verbindlich unterzeichnen'}
+            </button>
+            <p className="text-center text-sm text-gray-500">
+              Ihre digitale Unterschrift ist rechtlich bindend.
+            </p>
+          </form>
+        </div>
+
+        {/* Reject section */}
+        <div className="rounded-xl bg-white border border-gray-200 p-6 shadow-sm">
+          {!showRejectConfirm ? (
+            <button
+              onClick={() => setShowRejectConfirm(true)}
+              className="w-full rounded-lg border border-red-300 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
+            >
+              Vertrag ablehnen
+            </button>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <XCircle className="h-5 w-5 text-red-500" />
+                <h3 className="text-lg font-bold text-gray-900">Vertrag ablehnen</h3>
+              </div>
+              <p className="text-sm text-gray-600">
+                Sind Sie sicher, dass Sie diesen Vertrag ablehnen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
+              {rejectMutation.isError && (
+                <p className="text-sm text-red-600">Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.</p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRejectConfirm(false)}
+                  className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => rejectMutation.mutate()}
+                  disabled={rejectMutation.isPending}
+                  className="flex-1 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {rejectMutation.isPending ? 'Wird verarbeitet...' : 'Endgültig ablehnen'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </DocumentShell>
   );
 };
 
