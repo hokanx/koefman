@@ -1,4 +1,4 @@
-import { formatEUR } from '@/lib/utils';
+
 
 interface BankDetailsProps {
   accountHolder?: string | null;
