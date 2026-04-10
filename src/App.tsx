@@ -55,6 +55,7 @@ import DiagnosticIntake from "@/pages/DiagnosticIntake";
 
 
 import BookingPage from "@/pages/BookingPage";
+import Impressum from "@/pages/Impressum";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -115,6 +116,7 @@ const AppWithImpersonation = () => {
               <Route path="/truth-:campaignId" element={<Truth />} />
               <Route path="/diagnose" element={<DiagnosticIntake />} />
               
+              <Route path="/impressum" element={<Impressum />} />
               <Route path="/start" element={<Navigate to="/book" replace />} />
               <Route path="/book" element={<BookingPage />} />
               <Route path="*" element={<NotFound />} />
