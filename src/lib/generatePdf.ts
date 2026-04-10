@@ -388,42 +388,50 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
   doc.text('POSITIONEN', MARGIN, y);
   y += 3;
 
-  const tableHead = opts.hidesTaxColumn
-    ? [['Pos.', opts.labels.itemTitle, opts.labels.quantity, opts.labels.unitPrice, opts.labels.total]]
-    : [['Pos.', opts.labels.itemTitle, opts.labels.quantity, opts.labels.unitPrice, opts.labels.taxRate, opts.labels.total]];
+  const pageContentWidth = RIGHT_EDGE - MARGIN;
 
-  const tableBody = opts.items.map((item, i) => {
-    const qtyCell = opts.hidesTaxColumn
-      ? `${item.quantity.toFixed(2).replace('.', ',')} ${item.unit}`
-      : `${item.quantity.toFixed(2).replace('.', ',')} ${item.unit}`;
-    const row = [
+  // Build head/body/colStyles based on mode — completely separate branches, no conditionals inside rows
+  let tableHead: string[][];
+  let tableBody: string[][];
+  let colStyles: Record<number, any>;
+
+  if (opts.hidesTaxColumn) {
+    // Kleinunternehmer: Pos · Bezeichnung · Menge · Einzelpreis · Gesamt
+    tableHead = [['Pos.', opts.labels.itemTitle, opts.labels.quantity, opts.labels.unitPrice, opts.labels.total]];
+    tableBody = opts.items.map((item, i) => [
       String(i + 1),
       item.description ? `${item.title}\n${item.description}` : item.title,
-      qtyCell,
+      `${item.quantity.toFixed(2).replace('.', ',')} ${item.unit}`,
       formatCurrency(item.unit_price),
-    ];
-    if (!opts.hidesTaxColumn) row.push(`${item.tax_rate} %`);
-    row.push(formatCurrency(item.total));
-    return row;
-  });
-
-  const pageContentWidth = RIGHT_EDGE - MARGIN;
-  const colStyles = opts.hidesTaxColumn
-    ? {
-        0: { cellWidth: 10, halign: 'center' as const },
-        1: { cellWidth: pageContentWidth * 0.45, halign: 'left' as const },
-        2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.16 },
-        3: { halign: 'right' as const, cellWidth: pageContentWidth * 0.16 },
-        4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.17, fontStyle: 'bold' as const },
-      }
-    : {
-        0: { cellWidth: 10, halign: 'center' as const },
-        1: { cellWidth: pageContentWidth * 0.37, halign: 'left' as const },
-        2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.14 },
-        3: { halign: 'right' as const, cellWidth: pageContentWidth * 0.16 },
-        4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.09 },
-        5: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18, fontStyle: 'bold' as const },
-      };
+      formatCurrency(item.total),
+    ]);
+    colStyles = {
+      0: { cellWidth: pageContentWidth * 0.08, halign: 'center' as const },
+      1: { cellWidth: pageContentWidth * 0.52, halign: 'left' as const },
+      2: { cellWidth: pageContentWidth * 0.12, halign: 'right' as const },
+      3: { cellWidth: pageContentWidth * 0.14, halign: 'right' as const },
+      4: { cellWidth: pageContentWidth * 0.14, halign: 'right' as const, fontStyle: 'bold' as const },
+    };
+  } else {
+    // Standard VAT: Pos · Bezeichnung · Menge · Einzelpreis · MwSt. · Gesamt
+    tableHead = [['Pos.', opts.labels.itemTitle, opts.labels.quantity, opts.labels.unitPrice, opts.labels.taxRate, opts.labels.total]];
+    tableBody = opts.items.map((item, i) => [
+      String(i + 1),
+      item.description ? `${item.title}\n${item.description}` : item.title,
+      `${item.quantity.toFixed(2).replace('.', ',')} ${item.unit}`,
+      formatCurrency(item.unit_price),
+      `${item.tax_rate} %`,
+      formatCurrency(item.total),
+    ]);
+    colStyles = {
+      0: { cellWidth: pageContentWidth * 0.07, halign: 'center' as const },
+      1: { cellWidth: pageContentWidth * 0.45, halign: 'left' as const },
+      2: { cellWidth: pageContentWidth * 0.12, halign: 'right' as const },
+      3: { cellWidth: pageContentWidth * 0.13, halign: 'right' as const },
+      4: { cellWidth: pageContentWidth * 0.09, halign: 'right' as const },
+      5: { cellWidth: pageContentWidth * 0.14, halign: 'right' as const, fontStyle: 'bold' as const },
+    };
+  }
 
   autoTable(doc, {
     startY: y,
