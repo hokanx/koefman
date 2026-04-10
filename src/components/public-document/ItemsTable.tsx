@@ -26,35 +26,43 @@ const ItemsTable = ({ items, label = 'Positionen' }: ItemsTableProps) => {
 
       {/* Desktop table */}
       <div className="hidden sm:block">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
+          <colgroup>
+            <col className="w-[40px]" />
+            <col />
+            <col className="w-[70px]" />
+            <col className="w-[60px]" />
+            <col className="w-[100px]" />
+            <col className="w-[100px]" />
+          </colgroup>
           <thead>
             <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-400">
-              <th className="pb-2.5 pr-3 text-left font-medium w-10">Pos.</th>
+              <th className="pb-2.5 pr-2 text-left font-medium">Pos.</th>
               <th className="pb-2.5 pr-3 text-left font-medium">Bezeichnung</th>
-              <th className="pb-2.5 pr-3 text-right font-medium w-16">Menge</th>
-              <th className="pb-2.5 pr-3 text-left font-medium w-16">Einheit</th>
-              <th className="pb-2.5 pr-3 text-right font-medium w-24">Einzelpreis</th>
-              <th className="pb-2.5 text-right font-medium w-24">Gesamt</th>
+              <th className="pb-2.5 pr-2 text-right font-medium">Menge</th>
+              <th className="pb-2.5 pr-2 text-left font-medium">Einheit</th>
+              <th className="pb-2.5 pr-2 text-right font-medium">Einzelpreis</th>
+              <th className="pb-2.5 text-right font-medium">Gesamt</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, i) => (
               <tr key={item.id} className="border-b border-gray-50 last:border-0">
-                <td className="py-3 pr-3 text-gray-400 text-[13px] align-top">{i + 1}</td>
+                <td className="py-3 pr-2 text-gray-400 text-[13px] align-top">{i + 1}</td>
                 <td className="py-3 pr-3 align-top">
-                  <p className="text-[13px] font-medium text-gray-900 leading-snug">{item.title}</p>
+                  <p className="text-[13px] font-semibold text-gray-900 leading-snug">{item.title}</p>
                   {item.description && (
-                    <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{item.description}</p>
+                    <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">{item.description}</p>
                   )}
                 </td>
-                <td className="py-3 pr-3 text-right text-[13px] text-gray-700 align-top">
+                <td className="py-3 pr-2 text-right text-[13px] text-gray-700 align-top tabular-nums">
                   {Number(item.quantity).toFixed(2).replace('.', ',')}
                 </td>
-                <td className="py-3 pr-3 text-[13px] text-gray-500 align-top">{item.unit}</td>
-                <td className="py-3 pr-3 text-right text-[13px] text-gray-700 align-top">
+                <td className="py-3 pr-2 text-[13px] text-gray-500 align-top">{item.unit}</td>
+                <td className="py-3 pr-2 text-right text-[13px] text-gray-700 align-top tabular-nums">
                   {formatEUR(item.unit_price)}
                 </td>
-                <td className="py-3 text-right text-[13px] font-semibold text-gray-900 align-top">
+                <td className="py-3 text-right text-[13px] font-semibold text-gray-900 align-top tabular-nums">
                   {formatEUR(item.total)}
                 </td>
               </tr>
@@ -69,9 +77,9 @@ const ItemsTable = ({ items, label = 'Positionen' }: ItemsTableProps) => {
           <div key={item.id} className="rounded-lg border border-gray-100 bg-gray-50/40 px-4 py-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-medium text-gray-900">{i + 1}. {item.title}</p>
+                <p className="text-[13px] font-semibold text-gray-900">{i + 1}. {item.title}</p>
                 {item.description && (
-                  <p className="text-[11px] text-gray-400 mt-0.5">{item.description}</p>
+                  <p className="text-[11px] text-gray-400 mt-1">{item.description}</p>
                 )}
               </div>
               <p className="text-[13px] font-semibold text-gray-900 shrink-0">{formatEUR(item.total)}</p>

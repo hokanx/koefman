@@ -52,6 +52,7 @@ export type Database = {
           updated_at: string
           user_id: string
           vat_id: string | null
+          website: string | null
         }
         Insert: {
           account_holder?: string | null
@@ -90,6 +91,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           vat_id?: string | null
+          website?: string | null
         }
         Update: {
           account_holder?: string | null
@@ -128,6 +130,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vat_id?: string | null
+          website?: string | null
         }
         Relationships: []
       }

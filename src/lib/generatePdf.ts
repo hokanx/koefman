@@ -10,6 +10,7 @@ interface BusinessInfo {
   address?: string;
   email?: string;
   phone?: string;
+  website?: string;
   tax_number?: string;
   vat_id?: string;
   logo_url?: string;
@@ -265,6 +266,7 @@ const renderHeader = async (doc: jsPDF, opts: HeaderOptions): Promise<number> =>
   }
   if (business.phone) { doc.text(business.phone, RIGHT_EDGE, rightY, { align: 'right' }); rightY += 3.5; }
   if (business.email) { doc.text(business.email, RIGHT_EDGE, rightY, { align: 'right' }); rightY += 3.5; }
+  if (business.website) { doc.text(business.website, RIGHT_EDGE, rightY, { align: 'right' }); rightY += 3.5; }
 
   const taxDetails = [
     business.tax_number ? `St.-Nr.: ${business.tax_number}` : '',
@@ -404,8 +406,8 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
   });
 
   const colStyles = opts.hidesTaxColumn
-    ? { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { cellWidth: 16 }, 4: { halign: 'right' as const, cellWidth: 26 }, 5: { halign: 'right' as const, cellWidth: 26 } }
-    : { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 16 }, 3: { cellWidth: 16 }, 4: { halign: 'right' as const, cellWidth: 25 }, 5: { halign: 'right' as const, cellWidth: 16 }, 6: { halign: 'right' as const, cellWidth: 25 } };
+    ? { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 20 }, 3: { cellWidth: 18 }, 4: { halign: 'right' as const, cellWidth: 28 }, 5: { halign: 'right' as const, cellWidth: 28 } }
+    : { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { cellWidth: 18 }, 4: { halign: 'right' as const, cellWidth: 26 }, 5: { halign: 'right' as const, cellWidth: 18 }, 6: { halign: 'right' as const, cellWidth: 26 } };
 
   autoTable(doc, {
     startY: y,
@@ -415,7 +417,7 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
     theme: 'plain',
     styles: {
       fontSize: 8.5,
-      cellPadding: { top: 3, right: 2, bottom: 3, left: 2 },
+      cellPadding: { top: 3.5, right: 2, bottom: 3.5, left: 2 },
       textColor: [30, 30, 30],
       lineColor: [230, 230, 230],
       lineWidth: 0,
@@ -427,8 +429,17 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
       fontSize: 7.5,
     },
     bodyStyles: { lineWidth: 0 },
-    alternateRowStyles: { fillColor: [250, 250, 250] },
+    alternateRowStyles: { fillColor: [248, 248, 248] },
     columnStyles: colStyles,
+    didParseCell: (data) => {
+      // Make description text lighter and smaller
+      if (data.section === 'body' && data.column.index === 1) {
+        const cellText = String(data.cell.text.join('\n'));
+        if (cellText.includes('\n')) {
+          // Title is bold, description is lighter - handled by jspdf-autotable's text rendering
+        }
+      }
+    },
   });
 
   const tableEndY = (doc as any).lastAutoTable.finalY;
@@ -548,16 +559,25 @@ const renderPageFooter = (doc: jsPDF, business: BusinessInfo): void => {
     doc.setLineWidth(0.15);
     doc.line(MARGIN, footerY - 4, RIGHT_EDGE, footerY - 4);
 
-    doc.setFontSize(6.5);
+    doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(160, 160, 160);
-    const parts = [
+    doc.setTextColor(150, 150, 150);
+    const line1Parts = [
       business.business_name,
+      business.owner_name ? `Inh. ${business.owner_name}` : '',
       business.address?.replace(/\n/g, ', '),
+    ].filter(Boolean).join(' | ');
+    const line2Parts = [
+      business.phone,
+      business.email,
+      business.website,
       business.tax_number ? `St.-Nr.: ${business.tax_number}` : '',
       business.vat_id ? `USt-IdNr.: ${business.vat_id}` : '',
     ].filter(Boolean).join(' | ');
-    doc.text(parts, PAGE_WIDTH / 2, footerY, { align: 'center' });
+    doc.text(line1Parts, PAGE_WIDTH / 2, footerY - 0.5, { align: 'center' });
+    if (line2Parts) {
+      doc.text(line2Parts, PAGE_WIDTH / 2, footerY + 2.5, { align: 'center' });
+    }
   }
 };
 

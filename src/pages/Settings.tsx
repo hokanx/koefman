@@ -58,6 +58,7 @@ const Settings = () => {
     country: 'Deutschland',
     email: '',
     phone: '',
+    website: '',
     business_category: 'general',
     // Billing & Tax
     tax_number: '',
@@ -113,6 +114,7 @@ const Settings = () => {
         country: settings.country || 'Deutschland',
         email: settings.email || '',
         phone: settings.phone || '',
+        website: (settings as any).website || '',
         business_category: settings.business_category || 'general',
         tax_number: settings.tax_number || '',
         vat_id: settings.vat_id || '',
@@ -301,6 +303,10 @@ const Settings = () => {
                 <label className="mb-1 block text-sm text-muted-foreground">{t.settings.phone}</label>
                 <input type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} className={inputClass} />
               </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">Website</label>
+              <input type="url" value={form.website} onChange={(e) => update('website', e.target.value)} placeholder="https://www.beispiel.de" className={inputClass} />
             </div>
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t.settings.businessCategory}</label>

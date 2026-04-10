@@ -191,7 +191,7 @@ const PublicContractView = () => {
   }
 
   return (
-    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !contract} notFoundMessage="Vertrag nicht gefunden">
+    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !contract} notFoundMessage="Vertrag nicht gefunden" footerInfo={settings ? { businessName: settings.business_name, ownerName: settings.owner_name ?? undefined, address: [settings.street, (settings as any).house_number].filter(Boolean).join(' ') + (settings.postal_code || settings.city ? ', ' + [settings.postal_code, settings.city].filter(Boolean).join(' ') : ''), phone: settings.phone ?? undefined, email: settings.email ?? undefined, website: (settings as any).website ?? undefined, taxNumber: settings.tax_number ?? undefined } : undefined}>
       <DocumentHeader
         businessName={settings?.business_name}
         street={settings?.street ?? undefined}
@@ -201,6 +201,7 @@ const PublicContractView = () => {
         logoUrl={settings?.logo_url ?? undefined}
         email={settings?.email ?? undefined}
         phone={settings?.phone ?? undefined}
+        website={(settings as any)?.website ?? undefined}
         recipientName={customer?.name}
         recipientAddress={customer ? [customer.street && customer.house_number ? `${customer.street} ${customer.house_number}` : customer.street, customer.postal_code && customer.city ? `${customer.postal_code} ${customer.city}` : customer.city].filter(Boolean).join('\n') : undefined}
       />
