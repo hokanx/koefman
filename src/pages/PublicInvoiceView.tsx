@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { formatEUR, formatDateDE } from '@/lib/utils';
+import { formatDateDE } from '@/lib/utils';
 import { DocumentShell, DocumentHeader, DocumentMeta, ItemsTable, TotalsBlock, BankDetails } from '@/components/public-document';
 
 const PublicInvoiceView = () => {
