@@ -406,8 +406,8 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
   });
 
   const colStyles = opts.hidesTaxColumn
-    ? { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 20 }, 3: { cellWidth: 18 }, 4: { halign: 'right' as const, cellWidth: 28 }, 5: { halign: 'right' as const, cellWidth: 28 } }
-    : { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { cellWidth: 18 }, 4: { halign: 'right' as const, cellWidth: 26 }, 5: { halign: 'right' as const, cellWidth: 18 }, 6: { halign: 'right' as const, cellWidth: 26 } };
+    ? { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { halign: 'center' as const, cellWidth: 16 }, 4: { halign: 'right' as const, cellWidth: 28 }, 5: { halign: 'right' as const, cellWidth: 28, fontStyle: 'bold' as const } }
+    : { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { halign: 'center' as const, cellWidth: 16 }, 4: { halign: 'right' as const, cellWidth: 26 }, 5: { halign: 'right' as const, cellWidth: 16 }, 6: { halign: 'right' as const, cellWidth: 26, fontStyle: 'bold' as const } };
 
   autoTable(doc, {
     startY: y,
