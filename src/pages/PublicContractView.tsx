@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
-import { formatEUR, formatDateDE } from '@/lib/utils';
+import { formatDateDE } from '@/lib/utils';
 import { DocumentShell, DocumentHeader, DocumentMeta, ItemsTable, TotalsBlock } from '@/components/public-document';
 
 const PublicContractView = () => {
