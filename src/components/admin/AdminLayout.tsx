@@ -1,11 +1,11 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Inbox, FileText, ArrowLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { LayoutDashboard, Inbox, FileText, Users, ArrowLeft } from 'lucide-react';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Übersicht', end: true },
   { to: '/admin/leads', icon: Inbox, label: 'Leads' },
   { to: '/admin/documents', icon: FileText, label: 'Dokumente' },
+  { to: '/admin/accounts', icon: Users, label: 'Konten' },
 ];
 
 const AdminLayout = () => {
