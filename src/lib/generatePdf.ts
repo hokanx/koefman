@@ -388,18 +388,18 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
   doc.text('POSITIONEN', MARGIN, y);
   y += 3;
 
-  const qtyUnitLabel = `${opts.labels.quantity} / ${opts.labels.unit}`;
-
   const tableHead = opts.hidesTaxColumn
-    ? [['Pos.', opts.labels.itemTitle, qtyUnitLabel, opts.labels.unitPrice, opts.labels.total]]
-    : [['Pos.', opts.labels.itemTitle, qtyUnitLabel, opts.labels.unitPrice, opts.labels.taxRate, opts.labels.total]];
+    ? [['Pos.', opts.labels.itemTitle, opts.labels.quantity, opts.labels.unitPrice, opts.labels.total]]
+    : [['Pos.', opts.labels.itemTitle, opts.labels.quantity, opts.labels.unitPrice, opts.labels.taxRate, opts.labels.total]];
 
   const tableBody = opts.items.map((item, i) => {
-    const qtyUnit = `${item.quantity.toFixed(2).replace('.', ',')} ${item.unit}`;
+    const qtyCell = opts.hidesTaxColumn
+      ? `${item.quantity.toFixed(2).replace('.', ',')} ${item.unit}`
+      : `${item.quantity.toFixed(2).replace('.', ',')} ${item.unit}`;
     const row = [
       String(i + 1),
       item.description ? `${item.title}\n${item.description}` : item.title,
-      qtyUnit,
+      qtyCell,
       formatCurrency(item.unit_price),
     ];
     if (!opts.hidesTaxColumn) row.push(`${item.tax_rate} %`);
@@ -411,10 +411,10 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
   const colStyles = opts.hidesTaxColumn
     ? {
         0: { cellWidth: 10, halign: 'center' as const },
-        1: { cellWidth: pageContentWidth * 0.43, halign: 'left' as const },
-        2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.15 },
-        3: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18 },
-        4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18, fontStyle: 'bold' as const },
+        1: { cellWidth: pageContentWidth * 0.45, halign: 'left' as const },
+        2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.16 },
+        3: { halign: 'right' as const, cellWidth: pageContentWidth * 0.16 },
+        4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.17, fontStyle: 'bold' as const },
       }
     : {
         0: { cellWidth: 10, halign: 'center' as const },
