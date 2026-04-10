@@ -152,6 +152,7 @@ const Contracts = () => {
           tax_number: settings?.tax_number || undefined,
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
+          website: (settings as any)?.website || undefined,
           owner_name: (settings as any)?.owner_name || undefined,
         },
         customer: {
