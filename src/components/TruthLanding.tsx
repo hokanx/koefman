@@ -178,8 +178,9 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
         </section>
       ))}
 
-      <footer className="py-16 text-center snap-start min-h-[50vh] flex items-center justify-center">
+      <footer className="py-16 text-center snap-start min-h-[50vh] flex flex-col items-center justify-center gap-6">
         <BrandMark variant="wordmark" size="sm" align="center" />
+        <LegalFooter />
       </footer>
     </div>
   );

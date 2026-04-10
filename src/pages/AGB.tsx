@@ -77,6 +77,7 @@ const AGB = () => {
           </div>
         ))}
       </article>
+      <LegalFooter />
     </main>
   );
 };

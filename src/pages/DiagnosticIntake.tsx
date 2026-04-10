@@ -619,8 +619,9 @@ export default function DiagnosticIntake() {
         </div>
       </div>
 
-      <footer className="py-10 text-center">
+      <footer className="py-10 text-center space-y-4">
         <BrandMark variant="wordmark" size="sm" align="center" />
+        <LegalFooter />
       </footer>
     </div>
   );

@@ -71,6 +71,7 @@ const Impressum = () => {
           </p>
         </section>
       </article>
+      <LegalFooter />
     </main>
   );
 };

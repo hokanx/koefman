@@ -144,6 +144,7 @@ const Datenschutz = () => {
           </div>
         ))}
       </article>
+      <LegalFooter />
     </main>
   );
 };
