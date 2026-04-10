@@ -297,7 +297,7 @@ const PublicOfferView = () => {
   const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
   return (
-    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !offer} notFoundMessage="Angebot nicht gefunden">
+    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !offer} notFoundMessage="Angebot nicht gefunden" footerInfo={settings ? { businessName: settings.business_name, ownerName: settings.owner_name ?? undefined, address: [settings.street, settings.house_number].filter(Boolean).join(' ') + (settings.postal_code || settings.city ? ', ' + [settings.postal_code, settings.city].filter(Boolean).join(' ') : ''), phone: settings.phone ?? undefined, email: settings.email ?? undefined, website: (settings as any).website ?? undefined, taxNumber: settings.tax_number ?? undefined } : undefined}>
       <DocumentHeader
         businessName={settings?.business_name}
         street={settings?.street ?? undefined}
@@ -309,6 +309,7 @@ const PublicOfferView = () => {
         phone={settings?.phone ?? undefined}
         taxNumber={settings?.tax_number ?? undefined}
         vatId={settings?.vat_id ?? undefined}
+        website={(settings as any)?.website ?? undefined}
         recipientName={customer?.name}
         recipientAddress={customer ? [customer.street && customer.house_number ? `${customer.street} ${customer.house_number}` : customer.street, customer.postal_code && customer.city ? `${customer.postal_code} ${customer.city}` : customer.city].filter(Boolean).join('\n') : undefined}
       />

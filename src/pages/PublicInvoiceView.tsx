@@ -39,7 +39,7 @@ const PublicInvoiceView = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from('business_settings')
-        .select('business_name, owner_name, email, phone, street, house_number, postal_code, city, tax_number, vat_id, iban, bic, bank_name, account_holder, payment_terms, small_business_regulation, logo_url')
+        .select('business_name, owner_name, email, phone, website, street, house_number, postal_code, city, tax_number, vat_id, iban, bic, bank_name, account_holder, payment_terms, small_business_regulation, logo_url')
         .eq('user_id', invoice!.user_id)
         .maybeSingle();
       return data;
@@ -53,7 +53,7 @@ const PublicInvoiceView = () => {
   const isOverdue = !isPaid && invoice?.due_date && new Date(invoice.due_date) < new Date();
 
   return (
-    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && (!!error || !invoice)} notFoundMessage="Rechnung nicht gefunden">
+    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && (!!error || !invoice)} notFoundMessage="Rechnung nicht gefunden" footerInfo={settings ? { businessName: settings.business_name, ownerName: settings.owner_name ?? undefined, address: [settings.street, (settings as any).house_number].filter(Boolean).join(' ') + (settings.postal_code || settings.city ? ', ' + [settings.postal_code, settings.city].filter(Boolean).join(' ') : ''), phone: settings.phone ?? undefined, email: settings.email ?? undefined, website: (settings as any).website ?? undefined, taxNumber: settings.tax_number ?? undefined } : undefined}>
       <DocumentHeader
         businessName={settings?.business_name}
         street={settings?.street ?? undefined}
@@ -65,6 +65,7 @@ const PublicInvoiceView = () => {
         phone={settings?.phone ?? undefined}
         taxNumber={settings?.tax_number ?? undefined}
         vatId={settings?.vat_id ?? undefined}
+        website={(settings as any)?.website ?? undefined}
         recipientName={customer?.name}
         recipientAddress={customer ? [customer.street && customer.house_number ? `${customer.street} ${customer.house_number}` : customer.street, customer.postal_code && customer.city ? `${customer.postal_code} ${customer.city}` : customer.city].filter(Boolean).join('\n') : undefined}
       />
