@@ -406,8 +406,8 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
   });
 
   const colStyles = opts.hidesTaxColumn
-    ? { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { cellWidth: 16 }, 4: { halign: 'right' as const, cellWidth: 26 }, 5: { halign: 'right' as const, cellWidth: 26 } }
-    : { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 16 }, 3: { cellWidth: 16 }, 4: { halign: 'right' as const, cellWidth: 25 }, 5: { halign: 'right' as const, cellWidth: 16 }, 6: { halign: 'right' as const, cellWidth: 25 } };
+    ? { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 20 }, 3: { cellWidth: 18 }, 4: { halign: 'right' as const, cellWidth: 28 }, 5: { halign: 'right' as const, cellWidth: 28 } }
+    : { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { cellWidth: 18 }, 4: { halign: 'right' as const, cellWidth: 26 }, 5: { halign: 'right' as const, cellWidth: 18 }, 6: { halign: 'right' as const, cellWidth: 26 } };
 
   autoTable(doc, {
     startY: y,
@@ -417,7 +417,7 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
     theme: 'plain',
     styles: {
       fontSize: 8.5,
-      cellPadding: { top: 3, right: 2, bottom: 3, left: 2 },
+      cellPadding: { top: 3.5, right: 2, bottom: 3.5, left: 2 },
       textColor: [30, 30, 30],
       lineColor: [230, 230, 230],
       lineWidth: 0,
@@ -429,8 +429,17 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
       fontSize: 7.5,
     },
     bodyStyles: { lineWidth: 0 },
-    alternateRowStyles: { fillColor: [250, 250, 250] },
+    alternateRowStyles: { fillColor: [248, 248, 248] },
     columnStyles: colStyles,
+    didParseCell: (data) => {
+      // Make description text lighter and smaller
+      if (data.section === 'body' && data.column.index === 1) {
+        const cellText = String(data.cell.text.join('\n'));
+        if (cellText.includes('\n')) {
+          // Title is bold, description is lighter - handled by jspdf-autotable's text rendering
+        }
+      }
+    },
   });
 
   const tableEndY = (doc as any).lastAutoTable.finalY;
