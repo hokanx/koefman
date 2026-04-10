@@ -10,6 +10,7 @@ interface BusinessInfo {
   address?: string;
   email?: string;
   phone?: string;
+  website?: string;
   tax_number?: string;
   vat_id?: string;
   logo_url?: string;
@@ -265,6 +266,7 @@ const renderHeader = async (doc: jsPDF, opts: HeaderOptions): Promise<number> =>
   }
   if (business.phone) { doc.text(business.phone, RIGHT_EDGE, rightY, { align: 'right' }); rightY += 3.5; }
   if (business.email) { doc.text(business.email, RIGHT_EDGE, rightY, { align: 'right' }); rightY += 3.5; }
+  if (business.website) { doc.text(business.website, RIGHT_EDGE, rightY, { align: 'right' }); rightY += 3.5; }
 
   const taxDetails = [
     business.tax_number ? `St.-Nr.: ${business.tax_number}` : '',
