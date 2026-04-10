@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import BrandMark from '@/components/shared/BrandMark';
+import LegalFooter from '@/components/shared/LegalFooter';
 
 function getSlots() {
   const now = new Date();
@@ -275,8 +276,9 @@ export default function BookingPage() {
         </div>
       </div>
 
-      <footer className="py-10 text-center">
+      <footer className="py-10 text-center space-y-4">
         <BrandMark variant="wordmark" size="sm" align="center" />
+        <LegalFooter />
       </footer>
     </div>
   );

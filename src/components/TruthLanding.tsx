@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import BrandMark from '@/components/shared/BrandMark';
+import LegalFooter from '@/components/shared/LegalFooter';
 
 interface TruthLandingProps {
   entryLine1: string;
@@ -178,8 +179,9 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
         </section>
       ))}
 
-      <footer className="py-16 text-center snap-start min-h-[50vh] flex items-center justify-center">
+      <footer className="py-16 text-center snap-start min-h-[50vh] flex flex-col items-center justify-center gap-6">
         <BrandMark variant="wordmark" size="sm" align="center" />
+        <LegalFooter />
       </footer>
     </div>
   );

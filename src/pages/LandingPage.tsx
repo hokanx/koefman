@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import BrandMark from '@/components/shared/BrandMark';
+import LegalFooter from '@/components/shared/LegalFooter';
 import FadeSection from '@/components/ui/FadeSection';
 
 const LandingPage = () => {
@@ -154,8 +155,9 @@ const LandingPage = () => {
       ))}
 
       {/* FOOTER */}
-      <footer className="py-16 text-center snap-start min-h-[50vh] flex items-center justify-center">
+      <footer className="py-16 text-center snap-start min-h-[50vh] flex flex-col items-center justify-center gap-6">
         <BrandMark variant="wordmark" size="sm" align="center" />
+        <LegalFooter />
       </footer>
     </div>
   );

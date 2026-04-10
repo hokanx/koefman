@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import BrandMark from '@/components/shared/BrandMark';
+import LegalFooter from '@/components/shared/LegalFooter';
 
 
 const Login = () => {
@@ -120,6 +121,7 @@ const Login = () => {
           </div>
         </div>
       </div>
+      <div className="absolute bottom-0 inset-x-0"><LegalFooter /></div>
     </div>
   );
 };

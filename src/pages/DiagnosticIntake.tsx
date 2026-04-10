@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import BrandMark from '@/components/shared/BrandMark';
+import LegalFooter from '@/components/shared/LegalFooter';
 
 interface AnalysisResult {
   headline: string;
@@ -619,8 +620,9 @@ export default function DiagnosticIntake() {
         </div>
       </div>
 
-      <footer className="py-10 text-center">
+      <footer className="py-10 text-center space-y-4">
         <BrandMark variant="wordmark" size="sm" align="center" />
+        <LegalFooter />
       </footer>
     </div>
   );
