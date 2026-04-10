@@ -87,6 +87,11 @@ const PublicInvoiceView = () => {
           )}
         </DocumentMeta>
 
+        {/* Intro text */}
+        {(invoice as any)?.intro_text && (
+          <p className="text-sm text-gray-700 whitespace-pre-line">{(invoice as any).intro_text}</p>
+        )}
+
         {/* Items */}
         {items.length > 0 && (
           <>
@@ -98,6 +103,14 @@ const PublicInvoiceView = () => {
               isSmallBusiness={!!isSmallBiz}
             />
           </>
+        )}
+
+        {/* Footer / closing text */}
+        {(invoice as any)?.footer_text && (
+          <p className="text-sm text-gray-700 whitespace-pre-line">{(invoice as any).footer_text}</p>
+        )}
+        {(invoice as any)?.closing_text && (
+          <p className="text-sm text-gray-700">{(invoice as any).closing_text}</p>
         )}
 
         {/* Bank details */}

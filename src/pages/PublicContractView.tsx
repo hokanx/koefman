@@ -161,36 +161,32 @@ const PublicContractView = () => {
   // Signed screen
   if (isSigned && contract) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="mx-auto max-w-3xl">
-          <div className="mt-6 rounded-xl bg-green-50 border border-green-200 p-6 text-center">
-            <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-3" />
-            <h3 className="text-lg font-bold text-green-800">Vertrag unterzeichnet</h3>
-            <p className="mt-1 text-sm text-green-600">
-              {existingAcceptance
-                ? `Unterzeichnet von ${existingAcceptance.accepted_by_name} am ${formatDateDE(existingAcceptance.accepted_at)}`
-                : signed
-                ? `Unterzeichnet von ${acceptName}`
-                : 'Dieser Vertrag wurde bereits unterzeichnet.'}
-            </p>
-          </div>
+      <DocumentShell>
+        <div className="rounded-xl bg-green-50 border border-green-200 p-6 text-center mt-6">
+          <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-3" />
+          <h3 className="text-lg font-bold text-green-800">Vertrag unterzeichnet</h3>
+          <p className="mt-1 text-sm text-green-600">
+            {existingAcceptance
+              ? `Unterzeichnet von ${existingAcceptance.accepted_by_name} am ${formatDateDE(existingAcceptance.accepted_at)}`
+              : signed
+              ? `Unterzeichnet von ${acceptName}`
+              : 'Dieser Vertrag wurde bereits unterzeichnet.'}
+          </p>
         </div>
-      </div>
+      </DocumentShell>
     );
   }
 
   // Rejected screen
   if (isRejected && contract) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="mx-auto max-w-3xl">
-          <div className="mt-6 rounded-xl bg-red-50 border border-red-200 p-6 text-center">
-            <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
-            <h3 className="text-lg font-bold text-red-800">Vertrag abgelehnt</h3>
-            <p className="mt-1 text-sm text-red-600">Dieser Vertrag wurde abgelehnt.</p>
-          </div>
+      <DocumentShell>
+        <div className="rounded-xl bg-red-50 border border-red-200 p-6 text-center mt-6">
+          <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
+          <h3 className="text-lg font-bold text-red-800">Vertrag abgelehnt</h3>
+          <p className="mt-1 text-sm text-red-600">Dieser Vertrag wurde abgelehnt.</p>
         </div>
-      </div>
+      </DocumentShell>
     );
   }
 
@@ -218,7 +214,6 @@ const PublicContractView = () => {
             { label: 'Vertragsnummer', value: contract?.contract_number || '' },
             { label: 'Vertragsbeginn', value: formatDateDE(contract?.start_date) },
             { label: contract?.end_date ? 'Vertragsende' : 'Laufzeit', value: contract?.end_date ? formatDateDE(contract.end_date) : 'Unbefristet' },
-            { label: 'Abrechnungszyklus', value: frequencyLabels[contract?.frequency || ''] || contract?.frequency || '' },
           ]}
         />
 

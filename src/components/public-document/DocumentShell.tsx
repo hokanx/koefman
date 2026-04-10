@@ -37,7 +37,7 @@ const DocumentShell = ({ children, isLoading, notFoundMessage, showNotFound }: D
 
   return (
     <div style={{ ...baseStyle, paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}>
-      <div className="mx-auto max-w-[720px] px-4 py-8 md:py-12" style={{ textTransform: 'none' }}>
+      <div className="mx-auto max-w-[720px] px-4 py-8 md:py-12 space-y-6" style={{ textTransform: 'none' }}>
         {children}
         <div className="mt-10 text-center">
           <p className="text-[11px] tracking-wide" style={{ color: '#9ca3af' }}>Bereitgestellt über KÖFMAN</p>

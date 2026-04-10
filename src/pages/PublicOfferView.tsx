@@ -234,8 +234,8 @@ const PublicOfferView = () => {
   // Success screen
   if (isAlreadyAccepted && offer) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-lg px-4 py-16 sm:py-24 text-center space-y-6">
+      <DocumentShell>
+        <div className="text-center space-y-6 py-8 sm:py-12">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
             <ShieldCheck className="h-10 w-10 text-green-600" />
           </div>
@@ -243,7 +243,7 @@ const PublicOfferView = () => {
           <p className="text-sm text-gray-500">
             Vielen Dank. Sie erhalten die weiteren Unterlagen direkt vom Anbieter.
           </p>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 text-left space-y-3">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 text-left space-y-3 mx-auto max-w-md">
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-gray-400 shrink-0" />
               <div>
@@ -267,28 +267,25 @@ const PublicOfferView = () => {
               </>
             )}
           </div>
-          <p className="text-xs text-gray-400 pt-4">Bereitgestellt über KÖFMAN</p>
         </div>
-      </div>
+      </DocumentShell>
     );
   }
 
   // Rejected screen
   if (isAlreadyRejected && offer) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="mx-auto max-w-lg">
-          <div className="mt-12 rounded-xl bg-red-50 border border-red-200 p-6 text-center">
-            <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
-            <h3 className="text-lg font-bold text-red-800">Angebot abgelehnt</h3>
-            <p className="mt-1 text-sm text-red-600">
-              {(offer as any).rejected_reason
-                ? `Grund: ${(offer as any).rejected_reason}`
-                : 'Dieses Angebot wurde abgelehnt.'}
-            </p>
-          </div>
+      <DocumentShell>
+        <div className="rounded-xl bg-red-50 border border-red-200 p-6 text-center mt-6">
+          <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
+          <h3 className="text-lg font-bold text-red-800">Angebot abgelehnt</h3>
+          <p className="mt-1 text-sm text-red-600">
+            {(offer as any).rejected_reason
+              ? `Grund: ${(offer as any).rejected_reason}`
+              : 'Dieses Angebot wurde abgelehnt.'}
+          </p>
         </div>
-      </div>
+      </DocumentShell>
     );
   }
 
