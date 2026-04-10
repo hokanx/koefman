@@ -668,6 +668,7 @@ export const generatePdf = async (data: PdfData, returnBase64 = false): Promise<
     y = renderItemsTable(doc, y, {
       items: data.items,
       labels: data.labels,
+      hidesTaxColumn: !!data.small_business_regulation,
     });
 
     // 7. TOTALS
