@@ -1,5 +1,3 @@
-
-
 interface BankDetailsProps {
   accountHolder?: string | null;
   bankName?: string | null;
@@ -12,15 +10,19 @@ const BankDetails = ({ accountHolder, bankName, iban, bic, referenceNumber }: Ba
   if (!iban) return null;
 
   return (
-    <div className="rounded-lg bg-muted/30 border border-border p-4 space-y-1 text-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">Bankverbindung</p>
-      {accountHolder && <p className="text-foreground">{accountHolder}</p>}
-      {bankName && <p className="text-muted-foreground">{bankName}</p>}
-      <p className="text-foreground font-mono text-xs">{iban}</p>
-      {bic && <p className="text-muted-foreground text-xs">BIC: {bic}</p>}
-      {referenceNumber && (
-        <p className="text-muted-foreground text-xs mt-2">Verwendungszweck: {referenceNumber}</p>
-      )}
+    <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50/60 px-5 py-4">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400 mb-2.5">
+        Bankverbindung
+      </p>
+      <div className="space-y-1 text-[13px]">
+        {accountHolder && <p className="text-gray-900 font-medium">{accountHolder}</p>}
+        {bankName && <p className="text-gray-500">{bankName}</p>}
+        <p className="text-gray-900 font-mono text-[12px] tracking-wide">{iban}</p>
+        {bic && <p className="text-gray-500 text-[12px]">BIC: {bic}</p>}
+        {referenceNumber && (
+          <p className="text-gray-400 text-[12px] mt-2">Verwendungszweck: {referenceNumber}</p>
+        )}
+      </div>
     </div>
   );
 };
