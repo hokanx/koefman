@@ -34,14 +34,24 @@ const ItemsTable = ({ items, label = 'Positionen', isSmallBusiness = false }: It
       {/* Desktop table */}
       <div className="hidden sm:block">
         <table className="w-full text-sm table-fixed">
-          <colgroup>
-            <col style={{ width: '5%' }} />
-            <col style={{ width: showTax ? '37%' : '43%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '18%' }} />
-            {showTax && <col style={{ width: '8%' }} />}
-            <col style={{ width: '18%' }} />
-          </colgroup>
+          {showTax ? (
+            <colgroup>
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '37%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '18%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '18%' }} />
+            </colgroup>
+          ) : (
+            <colgroup>
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '45%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '18%' }} />
+            </colgroup>
+          )}
           <thead>
             <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-400">
               <th className="pb-2.5 pr-2 text-left font-medium">Pos.</th>
