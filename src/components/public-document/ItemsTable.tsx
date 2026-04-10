@@ -28,12 +28,12 @@ const ItemsTable = ({ items, label = 'Positionen' }: ItemsTableProps) => {
       <div className="hidden sm:block">
         <table className="w-full text-sm table-fixed">
           <colgroup>
-            <col className="w-[36px]" />
-            <col />
-            <col className="w-[60px]" />
-            <col className="w-[52px]" />
-            <col className="w-[96px]" />
-            <col className="w-[96px]" />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '35%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '22%' }} />
           </colgroup>
           <thead>
             <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-gray-400">

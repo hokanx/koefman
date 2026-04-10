@@ -405,9 +405,10 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
     return row;
   });
 
+  const pageContentWidth = RIGHT_EDGE - MARGIN; // ~170mm
   const colStyles = opts.hidesTaxColumn
-    ? { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { halign: 'center' as const, cellWidth: 16 }, 4: { halign: 'right' as const, cellWidth: 28 }, 5: { halign: 'right' as const, cellWidth: 28, fontStyle: 'bold' as const } }
-    : { 0: { cellWidth: 12, halign: 'center' as const }, 1: { cellWidth: 'auto' as const }, 2: { halign: 'right' as const, cellWidth: 18 }, 3: { halign: 'center' as const, cellWidth: 16 }, 4: { halign: 'right' as const, cellWidth: 26 }, 5: { halign: 'right' as const, cellWidth: 16 }, 6: { halign: 'right' as const, cellWidth: 26, fontStyle: 'bold' as const } };
+    ? { 0: { cellWidth: 10, halign: 'center' as const }, 1: { cellWidth: pageContentWidth * 0.38, halign: 'left' as const }, 2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.10 }, 3: { halign: 'center' as const, cellWidth: pageContentWidth * 0.10 }, 4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18 }, 5: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18, fontStyle: 'bold' as const } }
+    : { 0: { cellWidth: 10, halign: 'center' as const }, 1: { cellWidth: pageContentWidth * 0.32, halign: 'left' as const }, 2: { halign: 'right' as const, cellWidth: pageContentWidth * 0.09 }, 3: { halign: 'center' as const, cellWidth: pageContentWidth * 0.09 }, 4: { halign: 'right' as const, cellWidth: pageContentWidth * 0.16 }, 5: { halign: 'right' as const, cellWidth: pageContentWidth * 0.10 }, 6: { halign: 'right' as const, cellWidth: pageContentWidth * 0.18, fontStyle: 'bold' as const } };
 
   autoTable(doc, {
     startY: y,
