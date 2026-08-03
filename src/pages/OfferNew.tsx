@@ -56,9 +56,9 @@ const OfferNew = () => {
   useEffect(() => {
     if (settings && !prefilled.current) {
       prefilled.current = true;
-      setIntroText((settings as any).default_offer_intro_text || 'Sehr geehrte Damen und Herren,\n\nvielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:');
-      setFooterText((settings as any).default_offer_footer_text || 'Wir freuen uns auf Ihre Rückmeldung.');
-      setClosingText((settings as any).default_closing_text || 'Mit freundlichen Grüßen');
+      setIntroText(settings.default_offer_intro_text || 'Sehr geehrte Damen und Herren,\n\nvielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:');
+      setFooterText(settings.default_offer_footer_text || 'Wir freuen uns auf Ihre Rückmeldung.');
+      setClosingText(settings.default_closing_text || 'Mit freundlichen Grüßen');
     }
   }, [settings]);
 
@@ -79,7 +79,7 @@ const OfferNew = () => {
         discount_value: discount.enabled ? discount.value : 0,
         discount_scope: discount.enabled ? discount.scope : 'both',
         discount_duration_months: discount.enabled ? discount.duration_months : null,
-      } as any).select().single();
+      }).select().single();
       if (error) throw error;
 
       if (items.length > 0) {

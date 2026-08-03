@@ -1,21 +1,33 @@
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
-import { generatePdf } from '@/lib/generatePdf';
+import { generatePdf, type BusinessInfo } from '@/lib/generatePdf';
 import { formatAddress } from '@/types';
 import { formatDateDE } from '@/lib/utils';
+import type { Database } from '@/integrations/supabase/types';
+import type { RawExtractedData } from '@/lib/extractedDataUtils';
+
+type BusinessSettingsRow = Database['public']['Tables']['business_settings']['Row'];
+type InvoiceRow = Database['public']['Tables']['invoices']['Row'];
+type CustomerRow = Database['public']['Tables']['customers']['Row'];
+type DocumentRow = Database['public']['Tables']['documents']['Row'];
+type InvoiceItemRow = Database['public']['Tables']['invoice_items']['Row'];
+
+type InvoiceSummaryRow = Pick<InvoiceRow, 'id' | 'invoice_number' | 'status' | 'subtotal' | 'tax_total' | 'grand_total' | 'date' | 'updated_at' | 'customer_id'>;
+type DocumentSummaryRow = Pick<DocumentRow, 'id' | 'file_name' | 'category' | 'status' | 'extracted_data' | 'created_at'>;
+type InvoiceWithCustomer = InvoiceRow & { customer: CustomerRow | null };
 
 export interface CleanExportOptions {
   userId: string;
   from: string;
   to: string;
-  businessSettings: any;
+  businessSettings: BusinessSettingsRow | null;
   isKleinunternehmer?: boolean;
   onProgress?: (percent: number, label: string) => void;
 }
 
 export interface TaxExportSummary {
-  paidInvoices: any[];
-  validExpenses: any[];
+  paidInvoices: InvoiceSummaryRow[];
+  validExpenses: DocumentSummaryRow[];
   totalIncome: number;
   totalExpenses: number;
   totalTax: number;
@@ -49,7 +61,7 @@ export async function fetchTaxExportSummary(
 
   // Filter expenses: only those with a positive gross amount from extracted_data
   const validExpenses = docs.filter((d) => {
-    const ext = d.extracted_data as any;
+    const ext = d.extracted_data as unknown as RawExtractedData | null;
     const gross = Number(ext?.total_amount) || Number(ext?.net_amount) || 0;
     return gross > 0;
   });
@@ -57,7 +69,7 @@ export async function fetchTaxExportSummary(
   const totalIncome = invoices.reduce((s, inv) => s + Number(inv.grand_total), 0);
   const totalTax = invoices.reduce((s, inv) => s + Number(inv.tax_total), 0);
   const totalExpenses = validExpenses.reduce((s, d) => {
-    const ext = d.extracted_data as any;
+    const ext = d.extracted_data as unknown as RawExtractedData | null;
     return s + (Number(ext?.total_amount) || Number(ext?.net_amount) || 0);
   }, 0);
 
@@ -95,7 +107,7 @@ export async function generateCleanTaxExportZip(options: CleanExportOptions): Pr
   const businessInfo = buildBusinessInfo(businessSettings);
 
   // ── 1. FETCH paid invoices + valid expenses ──
-  const [{ data: invoices = [] }, { data: docs = [] }] = await Promise.all([
+  const [{ data: invoicesRaw = [] }, { data: docs = [] }] = await Promise.all([
     supabase
       .from('invoices')
       .select('*, customer:customers(*)')
@@ -113,9 +125,10 @@ export async function generateCleanTaxExportZip(options: CleanExportOptions): Pr
       .in('status', ['geprueft', 'verarbeitet'])
       .order('created_at'),
   ]);
+  const invoices = invoicesRaw as unknown as InvoiceWithCustomer[];
 
   const validExpenses = docs.filter((d) => {
-    const ext = d.extracted_data as any;
+    const ext = d.extracted_data as unknown as RawExtractedData | null;
     return (Number(ext?.total_amount) || Number(ext?.net_amount) || 0) > 0;
   });
 
@@ -144,7 +157,7 @@ export async function generateCleanTaxExportZip(options: CleanExportOptions): Pr
         const resp = await fetch(signedData.signedUrl);
         if (resp.ok) {
           const buf = await resp.arrayBuffer();
-          ausgabenFolder.file(d.file_name.replace(/[^a-zA-Z0-9_.\-]/g, '_'), buf);
+          ausgabenFolder.file(d.file_name.replace(/[^a-zA-Z0-9_.-]/g, '_'), buf);
         }
       }
     } catch (e) {
@@ -174,26 +187,26 @@ function buildMonthLabel(from: string): string {
   return `${d.getFullYear()}-${m}`;
 }
 
-function buildBusinessInfo(s: any) {
+function buildBusinessInfo(s: BusinessSettingsRow | null): BusinessInfo {
   return {
     business_name: s?.business_name || '',
     address: formatAddress({
-      street: s?.street, house_number: s?.house_number,
-      postal_code: s?.postal_code, city: s?.city,
-      country: s?.country, address: s?.address,
+      street: s?.street ?? undefined, house_number: s?.house_number ?? undefined,
+      postal_code: s?.postal_code ?? undefined, city: s?.city ?? undefined,
+      country: s?.country ?? undefined, address: s?.address ?? undefined,
     }),
-    email: s?.email, phone: s?.phone,
-    tax_number: s?.tax_number, vat_id: s?.vat_id,
-    logo_url: s?.logo_url, payment_terms: s?.payment_terms,
-    account_holder: s?.account_holder, bank_name: s?.bank_name,
-    iban: s?.iban, bic: s?.bic, owner_name: s?.owner_name,
+    email: s?.email ?? undefined, phone: s?.phone ?? undefined,
+    tax_number: s?.tax_number ?? undefined, vat_id: s?.vat_id ?? undefined,
+    logo_url: s?.logo_url ?? undefined, payment_terms: s?.payment_terms ?? undefined,
+    account_holder: s?.account_holder ?? undefined, bank_name: s?.bank_name ?? undefined,
+    iban: s?.iban ?? undefined, bic: s?.bic ?? undefined, owner_name: s?.owner_name ?? undefined,
   };
 }
 
-async function generateInvoicePdf(inv: any, folder: JSZip, businessInfo: any, isSmallBiz: boolean) {
+async function generateInvoicePdf(inv: InvoiceWithCustomer, folder: JSZip, businessInfo: BusinessInfo, isSmallBiz: boolean) {
   const { data: items = [] } = await supabase
     .from('invoice_items').select('*').eq('invoice_id', inv.id).order('sort_order');
-  const customer = inv.customer as any;
+  const customer = inv.customer;
   const customerAddress = customer
     ? formatAddress({
         street: customer.street, house_number: customer.house_number,
@@ -206,9 +219,9 @@ async function generateInvoicePdf(inv: any, folder: JSZip, businessInfo: any, is
       type: 'invoice', documentTitle: 'Rechnung',
       documentNumber: inv.invoice_number, date: inv.date, dueDate: inv.due_date,
       business: businessInfo,
-      customer: { name: customer?.name || '', address: customerAddress, email: customer?.email, phone: customer?.phone },
-      items: items.map((it: any) => ({
-        title: it.title, description: it.description,
+      customer: { name: customer?.name || '', address: customerAddress, email: customer?.email ?? undefined, phone: customer?.phone ?? undefined },
+      items: items.map((it: InvoiceItemRow) => ({
+        title: it.title, description: it.description ?? undefined,
         quantity: Number(it.quantity), unit: it.unit,
         unit_price: Number(it.unit_price), tax_rate: Number(it.tax_rate),
         total: Number(it.total),
@@ -243,7 +256,7 @@ function fmtDate(d: string | Date): string {
   return formatDateDE(d);
 }
 
-function buildZusammenfassungRows(invoices: any[], expenses: any[]): string {
+function buildZusammenfassungRows(invoices: InvoiceWithCustomer[], expenses: DocumentRow[]): string {
   const header = ['Datum', 'Typ', 'Name', 'Betrag Netto', 'USt', 'Betrag Brutto', 'Kategorie', 'Dokumentnummer'];
 
   const rows: string[][] = [];
@@ -254,7 +267,7 @@ function buildZusammenfassungRows(invoices: any[], expenses: any[]): string {
   for (const inv of invoices) {
     if (seenIds.has(inv.id)) continue;
     seenIds.add(inv.id);
-    const customer = inv.customer as any;
+    const customer = inv.customer;
     rows.push([
       fmtDate(inv.date),
       'Einnahme',
@@ -270,7 +283,7 @@ function buildZusammenfassungRows(invoices: any[], expenses: any[]): string {
   for (const d of expenses) {
     if (seenIds.has(d.id)) continue;
     seenIds.add(d.id);
-    const ext = d.extracted_data as any;
+    const ext = d.extracted_data as unknown as RawExtractedData | null;
     const net = Number(ext?.net_amount) || 0;
     const vat = Number(ext?.vat_amount) || 0;
     const gross = Number(ext?.total_amount) || net;

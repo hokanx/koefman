@@ -11,6 +11,10 @@ import { DOCUMENT_GROUPS, getCategoryInfo } from '@/lib/documentCategories';
 import { normalizeExtracted, formatAmountDE } from '@/lib/extractedDataUtils';
 import DocumentPreviewModal from '@/components/documents/DocumentPreviewModal';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import type { Tables } from '@/integrations/supabase/types';
+import type { RawExtractedData } from '@/lib/extractedDataUtils';
+
+type DocumentRow = Tables<'documents'>;
 
 const getStoragePath = (fileUrl: string): string => {
   if (fileUrl.includes('/client-documents/')) {
@@ -29,7 +33,7 @@ const Expenses = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('eingangsrechnungen');
-  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
 
   const targetUserId = effectiveUserId || user?.id;
 
@@ -106,20 +110,20 @@ const Expenses = () => {
           }
         });
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Upload fehlgeschlagen');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
     } finally {
       setUploading(false);
       e.target.value = '';
     }
   };
 
-  const totalExpenseAmount = documents.reduce((sum: number, doc: any) => {
-    const norm = normalizeExtracted(doc.extracted_data);
+  const totalExpenseAmount = documents.reduce((sum: number, doc) => {
+    const norm = normalizeExtracted(doc.extracted_data as RawExtractedData | null);
     return sum + (norm.gross_amount || 0);
   }, 0);
 
-  const handleDownload = async (doc: any) => {
+  const handleDownload = async (doc: DocumentRow) => {
     try {
       const path = getStoragePath(doc.file_url);
       const { data, error } = await supabase.storage.from('client-documents').createSignedUrl(path, 600);
@@ -205,9 +209,9 @@ const Expenses = () => {
         </div>
       ) : (
         <div className="space-y-2">
-          {documents.map((doc: any) => {
+          {documents.map((doc) => {
             const catInfo = getCategoryInfo(doc.category);
-            const norm = normalizeExtracted(doc.extracted_data);
+            const norm = normalizeExtracted(doc.extracted_data as RawExtractedData | null);
             return (
               <div key={doc.id}
                 className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 cursor-pointer hover:border-primary/40 transition"

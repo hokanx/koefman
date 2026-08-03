@@ -14,16 +14,32 @@ export interface NormalizedExtracted {
   description?: string;
 }
 
-export function normalizeExtracted(raw: Record<string, any> | null | undefined): NormalizedExtracted {
+/** Raw shape returned by the AI document analysis step (field names are not fully standardized). */
+export interface RawExtractedData {
+  vendor?: string | null;
+  vendor_name?: string | null;
+  date?: string | null;
+  receipt_date?: string | null;
+  net_amount?: number | string | null;
+  vat_amount?: number | string | null;
+  gross_amount?: number | string | null;
+  total_amount?: number | string | null;
+  suggested_category?: string | null;
+  confidence?: string | null;
+  notes?: string | null;
+  description?: string | null;
+}
+
+export function normalizeExtracted(raw: RawExtractedData | null | undefined): NormalizedExtracted {
   if (!raw) return {};
 
   const vendor = raw.vendor || raw.vendor_name || undefined;
   const date = raw.date || raw.receipt_date || undefined;
-  const net = raw.net_amount != null && raw.net_amount > 0 ? Number(raw.net_amount) : undefined;
-  const vat = raw.vat_amount != null && raw.vat_amount > 0 ? Number(raw.vat_amount) : undefined;
+  const net = raw.net_amount != null && Number(raw.net_amount) > 0 ? Number(raw.net_amount) : undefined;
+  const vat = raw.vat_amount != null && Number(raw.vat_amount) > 0 ? Number(raw.vat_amount) : undefined;
 
   // gross_amount or total_amount
-  let gross = raw.gross_amount != null ? Number(raw.gross_amount) : 
+  let gross = raw.gross_amount != null ? Number(raw.gross_amount) :
               raw.total_amount != null ? Number(raw.total_amount) : undefined;
 
   // Auto-calculate brutto if missing but netto + ust exist
@@ -50,7 +66,7 @@ export function formatAmountDE(n: number | undefined): string {
 }
 
 /** Check if extracted data is incomplete (missing key fields) */
-export function isAnalysisIncomplete(raw: Record<string, any> | null | undefined): boolean {
+export function isAnalysisIncomplete(raw: RawExtractedData | null | undefined): boolean {
   if (!raw) return true;
   const norm = normalizeExtracted(raw);
   // Missing vendor OR missing any amount

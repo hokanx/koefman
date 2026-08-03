@@ -45,14 +45,14 @@ const AppLayout = () => {
     refetchInterval: 30000,
   });
 
-  const primaryNavItems = [
+  const primaryNavItems: { to: string; icon: typeof LayoutDashboard; label: string; badge?: number }[] = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Übersicht' },
     { to: '/revenue', icon: Receipt, label: 'Einnahmen' },
     { to: '/expenses', icon: FolderOpen, label: 'Ausgaben' },
     { to: '/tax-export', icon: PiggyBank, label: 'Steuer Export' },
   ];
 
-  const secondaryNavItems = [
+  const secondaryNavItems: { to: string; icon: typeof LayoutDashboard; label: string; badge?: number }[] = [
     { to: '/customers', icon: Users, label: t.nav.customers, badge: 0 },
     { to: '/leads', icon: Inbox, label: t.nav.leads, badge: newLeadsCount },
     { to: '/contracts', icon: ScrollText, label: 'Verträge', badge: 0 },
@@ -133,9 +133,9 @@ const AppLayout = () => {
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
-                {'badge' in item && (item as any).badge > 0 && (
+                {typeof item.badge === 'number' && item.badge > 0 && (
                   <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                    {(item as any).badge}
+                    {item.badge}
                   </span>
                 )}
               </NavLink>

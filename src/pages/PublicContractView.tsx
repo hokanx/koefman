@@ -6,6 +6,11 @@ import { CheckCircle, FileText, XCircle } from 'lucide-react';
 import SignaturePad from '@/components/shared/SignaturePad';
 import { formatDateDE } from '@/lib/utils';
 import { DocumentShell, DocumentHeader, DocumentMeta, ItemsTable, TotalsBlock } from '@/components/public-document';
+import type { Tables } from '@/integrations/supabase/types';
+
+type ContractRow = Tables<'contracts'>;
+type CustomerRow = Tables<'customers'>;
+type ContractWithCustomer = ContractRow & { customer: CustomerRow | null };
 
 const PublicContractView = () => {
   const { token } = useParams<{ token: string }>();
@@ -28,7 +33,7 @@ const PublicContractView = () => {
         .eq('public_token', token!)
         .single();
       if (error) throw error;
-      return data;
+      return data as ContractWithCustomer;
     },
     enabled: !!token,
   });
@@ -63,13 +68,13 @@ const PublicContractView = () => {
     queryKey: ['public-contract-acceptance', contract?.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from('contract_acceptances' as any)
+        .from('contract_acceptances')
         .select('*')
         .eq('contract_id', contract!.id)
         .order('accepted_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data as any;
+      return data;
     },
     enabled: !!contract?.id,
   });
@@ -88,16 +93,16 @@ const PublicContractView = () => {
       if (!hasValidSignature) throw new Error('missing_signature');
       if (!signatureImage) throw new Error('invalid_signature_data');
 
-      const { error: acceptError } = await supabase.from('contract_acceptances' as any).insert({
+      const { error: acceptError } = await supabase.from('contract_acceptances').insert({
         contract_id: contract!.id,
         accepted_by_name: trimmedName,
         signature_image: signatureImage,
-      } as any);
+      });
       if (acceptError) throw acceptError;
 
       const { error: updateError } = await supabase
         .from('contracts')
-        .update({ status: 'aktiv' } as any)
+        .update({ status: 'aktiv' })
         .eq('id', contract!.id);
       if (updateError) throw updateError;
     },
@@ -109,13 +114,14 @@ const PublicContractView = () => {
       queryClient.invalidateQueries({ queryKey: ['public-contract', token] });
       queryClient.invalidateQueries({ queryKey: ['public-contract-acceptance', contract?.id] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setShowValidation(true);
-      if (error?.message === 'missing_name') {
+      const message = error instanceof Error ? error.message : undefined;
+      if (message === 'missing_name') {
         setErrorMessage('Bitte geben Sie Ihren Namen ein.');
-      } else if (error?.message === 'missing_signature') {
+      } else if (message === 'missing_signature') {
         setErrorMessage('Bitte unterschreiben Sie den Vertrag.');
-      } else if (error?.message === 'invalid_signature_data') {
+      } else if (message === 'invalid_signature_data') {
         setErrorMessage('Die Unterschrift konnte nicht verarbeitet werden.');
       } else {
         setErrorMessage('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
@@ -127,7 +133,7 @@ const PublicContractView = () => {
     mutationFn: async () => {
       const { error } = await supabase
         .from('contracts')
-        .update({ status: 'abgelehnt' } as any)
+        .update({ status: 'abgelehnt' })
         .eq('id', contract!.id);
       if (error) throw error;
     },
@@ -155,8 +161,8 @@ const PublicContractView = () => {
   const isSigned = contract?.status === 'unterzeichnet' || contract?.status === 'aktiv' || !!existingAcceptance || signed;
   const isRejected = contract?.status === 'abgelehnt' || rejected;
 
-  const customer = contract ? (contract as any).customer : null;
-  const isSmallBusiness = !!(settings as any)?.small_business_regulation;
+  const customer = contract ? contract.customer : null;
+  const isSmallBusiness = !!settings?.small_business_regulation;
 
   // Signed screen
   if (isSigned && contract) {
@@ -191,17 +197,17 @@ const PublicContractView = () => {
   }
 
   return (
-    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !contract} notFoundMessage="Vertrag nicht gefunden" footerInfo={settings ? { businessName: settings.business_name, ownerName: settings.owner_name ?? undefined, address: [settings.street, (settings as any).house_number].filter(Boolean).join(' ') + (settings.postal_code || settings.city ? ', ' + [settings.postal_code, settings.city].filter(Boolean).join(' ') : ''), phone: settings.phone ?? undefined, email: settings.email ?? undefined, website: (settings as any).website ?? undefined, taxNumber: settings.tax_number ?? undefined } : undefined}>
+    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !contract} notFoundMessage="Vertrag nicht gefunden" footerInfo={settings ? { businessName: settings.business_name, ownerName: settings.owner_name ?? undefined, address: [settings.street, settings.house_number].filter(Boolean).join(' ') + (settings.postal_code || settings.city ? ', ' + [settings.postal_code, settings.city].filter(Boolean).join(' ') : ''), phone: settings.phone ?? undefined, email: settings.email ?? undefined, website: settings.website ?? undefined, taxNumber: settings.tax_number ?? undefined } : undefined}>
       <DocumentHeader
         businessName={settings?.business_name}
         street={settings?.street ?? undefined}
-        houseNumber={(settings as any)?.house_number ?? undefined}
+        houseNumber={settings?.house_number ?? undefined}
         postalCode={settings?.postal_code ?? undefined}
         city={settings?.city ?? undefined}
         logoUrl={settings?.logo_url ?? undefined}
         email={settings?.email ?? undefined}
         phone={settings?.phone ?? undefined}
-        website={(settings as any)?.website ?? undefined}
+        website={settings?.website ?? undefined}
         recipientName={customer?.name}
         recipientAddress={customer ? [customer.street && customer.house_number ? `${customer.street} ${customer.house_number}` : customer.street, customer.postal_code && customer.city ? `${customer.postal_code} ${customer.city}` : customer.city].filter(Boolean).join('\n') : undefined}
       />
@@ -221,7 +227,7 @@ const PublicContractView = () => {
         {/* Items */}
         {items.length > 0 && (
           <div>
-            <ItemsTable items={items as any[]} label="Leistungsumfang" isSmallBusiness={isSmallBusiness} />
+            <ItemsTable items={items} label="Leistungsumfang" isSmallBusiness={isSmallBusiness} />
             <TotalsBlock
               subtotal={contract?.subtotal || 0}
               taxTotal={contract?.tax_total || 0}

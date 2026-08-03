@@ -105,7 +105,7 @@ const Invoices = () => {
                     <h3 className="font-medium text-foreground">{invoice.invoice_number}</h3>
                     <p className="text-sm text-muted-foreground">{invoice.customer?.name}</p>
                   </div>
-                  <StatusBadge status={displayStatus as any} label={statusLabels[displayStatus as InvoiceStatus]} />
+                  <StatusBadge status={displayStatus} label={statusLabels[displayStatus as InvoiceStatus]} />
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
                   <div>

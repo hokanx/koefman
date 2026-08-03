@@ -5,7 +5,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import StatusBadge from '@/components/shared/StatusBadge';
+import StatusBadge, { StatusBadgeProps } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { generateDocumentNumber } from '@/lib/documentUtils';
 import { generatePdf, formatDateDE } from '@/lib/generatePdf';
@@ -17,6 +17,11 @@ import EmailModal from '@/components/shared/EmailModal';
 import ContractSetupModal from '@/components/shared/ContractSetupModal';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
 import { applyDiscount, formatDiscountLabel, type DiscountData } from '@/components/shared/DiscountEditor';
+import type { Tables } from '@/integrations/supabase/types';
+
+type OfferRow = Tables<'offers'>;
+type CustomerRow = Tables<'customers'>;
+type OfferWithCustomer = OfferRow & { customer: CustomerRow | null };
 
 const OfferDetail = () => {
   const { t } = useLanguage();
@@ -24,7 +29,7 @@ const OfferDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const backPath = (location.state as any)?.from || '/revenue';
+  const backPath = (location.state as { from?: string } | null)?.from || '/revenue';
   const backLabel = backPath === '/offers' ? 'Zurück zu Angebote' : backPath === '/revenue' ? 'Zurück zu Einnahmen' : 'Zurück';
   const queryClient = useQueryClient();
   const [generating, setGenerating] = useState(false);
@@ -43,7 +48,7 @@ const OfferDetail = () => {
       const { data, error } = await supabase
         .from('offers').select('*, customer:customers(*)').eq('id', id!).eq('user_id', user!.id).single();
       if (error) throw error;
-      return data;
+      return data as OfferWithCustomer;
     },
     enabled: !!user && !!id,
   });
@@ -113,7 +118,7 @@ const OfferDetail = () => {
 
   const getPublicLink = () => {
     if (!offer) return '';
-    const token = (offer as any).public_token;
+    const token = offer.public_token;
     return `${window.location.origin}/offer/view/${token}`;
   };
 
@@ -125,7 +130,7 @@ const OfferDetail = () => {
 
   const getValidityDate = (): string | null => {
     if (!offer) return null;
-    const days = (offer as any).validity_days || 14;
+    const days = offer.validity_days || 14;
     const offerDate = new Date(offer.date);
     offerDate.setDate(offerDate.getDate() + days);
     return formatDateDE(offerDate);
@@ -135,11 +140,11 @@ const OfferDetail = () => {
     if (!offer) return;
     setGenerating(true);
     try {
-      const customer = (offer as any).customer;
-      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customer = offer.customer;
+      const businessAddress = settings ? formatAddress(settings) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
-      const customTitle = (settings as any)?.default_offer_title || t.offers.documentTitle;
-      const validityDays = (offer as any).validity_days || 14;
+      const customTitle = settings?.default_offer_title || t.offers.documentTitle;
+      const validityDays = offer.validity_days || 14;
       const validityDate = getValidityDate();
 
       const isSmallBiz = isKleinunternehmer;
@@ -152,7 +157,7 @@ const OfferDetail = () => {
         validityDate: validityDate || undefined,
         validity_days: validityDays,
         small_business_regulation: isSmallBiz,
-        service_type_label: (offer as any).service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
+        service_type_label: offer.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
@@ -161,21 +166,21 @@ const OfferDetail = () => {
           tax_number: settings?.tax_number || undefined,
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
-          website: (settings as any)?.website || undefined,
-          owner_name: (settings as any)?.owner_name || undefined,
+          website: settings?.website || undefined,
+          owner_name: settings?.owner_name || undefined,
         },
         customer: {
           name: customer?.name || '',
           address: customerAddress || undefined,
         },
-        items: items.map((i: any) => ({
+        items: items.map((i) => ({
           title: i.title, description: i.description, quantity: i.quantity,
           unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
         })),
         subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
-        intro_text: (offer as any).intro_text || undefined,
-        footer_text: (offer as any).footer_text || undefined,
-        closing_text: (offer as any).closing_text || undefined,
+        intro_text: offer.intro_text || undefined,
+        footer_text: offer.footer_text || undefined,
+        closing_text: offer.closing_text || undefined,
         notes: offer.notes || undefined,
         labels: {
           date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
@@ -193,11 +198,11 @@ const OfferDetail = () => {
     if (!offer || !acceptance) return;
     setGeneratingConfirmation(true);
     try {
-      const customer = (offer as any).customer;
-      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customer = offer.customer;
+      const businessAddress = settings ? formatAddress(settings) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
 
-      const acceptedAtDate = new Date((acceptance as any).accepted_at);
+      const acceptedAtDate = new Date(acceptance.accepted_at);
 
       await generatePdf({
         type: 'confirmation',
@@ -206,11 +211,11 @@ const OfferDetail = () => {
         date: formatDateDE(new Date()),
         reference_offer_number: offer.offer_number,
         reference_offer_date: formatDateDE(offer.date),
-        accepted_by_name: (acceptance as any).accepted_by_name,
+        accepted_by_name: acceptance.accepted_by_name,
         accepted_at: formatDateDE(acceptedAtDate),
         accepted_at_time: acceptedAtDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        signature_text: (acceptance as any).signature_text || undefined,
-        signature_image: (acceptance as any).signature_image || undefined,
+        signature_text: acceptance.signature_text || undefined,
+        signature_image: acceptance.signature_image || undefined,
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
@@ -219,20 +224,20 @@ const OfferDetail = () => {
           tax_number: settings?.tax_number || undefined,
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
-          website: (settings as any)?.website || undefined,
-          owner_name: (settings as any)?.owner_name || undefined,
+          website: settings?.website || undefined,
+          owner_name: settings?.owner_name || undefined,
         },
         customer: {
           name: customer?.name || '',
           address: customerAddress || undefined,
         },
-        items: items.map((i: any) => ({
+        items: items.map((i) => ({
           title: i.title, description: i.description, quantity: i.quantity,
           unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
         })),
         subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
         small_business_regulation: isKleinunternehmer,
-        closing_text: (offer as any).closing_text || 'Mit freundlichen Grüßen',
+        closing_text: offer.closing_text || 'Mit freundlichen Grüßen',
         labels: {
           date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
           unitPrice: t.offers.unitPrice, taxRate: t.offers.taxRate, total: t.offers.total,
@@ -264,16 +269,16 @@ const OfferDetail = () => {
         date: new Date().toISOString().split('T')[0],
         due_date: dueDate.toISOString().split('T')[0],
         status: 'open', notes: sanitizeNotes(offer.notes) || null,
-        intro_text: (settings as any)?.default_invoice_intro_text || '',
-        footer_text: (settings as any)?.default_invoice_footer_text || '',
-        closing_text: (settings as any)?.default_closing_text || '',
+        intro_text: settings?.default_invoice_intro_text || '',
+        footer_text: settings?.default_invoice_footer_text || '',
+        closing_text: settings?.default_closing_text || '',
         subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
-      } as any).select().single();
+      }).select().single();
       if (error) throw error;
 
       if (items.length > 0) {
         await supabase.from('invoice_items').insert(
-          items.map((item: any, index: number) => ({
+          items.map((item, index: number) => ({
             invoice_id: invoice!.id, title: item.title, description: item.description,
             quantity: item.quantity, unit: item.unit, unit_price: item.unit_price,
             tax_rate: item.tax_rate, total: item.total, sort_order: index,
@@ -305,15 +310,15 @@ const OfferDetail = () => {
         user_id: user.id, customer_id: offer.customer_id, offer_number: offerNumber,
         date: new Date().toISOString().split('T')[0], status: 'draft',
         notes: offer.notes, internal_notes: offer.internal_notes,
-        intro_text: (offer as any).intro_text, footer_text: (offer as any).footer_text,
-        closing_text: (offer as any).closing_text,
+        intro_text: offer.intro_text, footer_text: offer.footer_text,
+        closing_text: offer.closing_text,
         subtotal: offer.subtotal, tax_total: offer.tax_total, grand_total: offer.grand_total,
-      } as any).select().single();
+      }).select().single();
       if (error) throw error;
 
       if (items.length > 0) {
         await supabase.from('offer_items').insert(
-          items.map((item: any, index: number) => ({
+          items.map((item, index: number) => ({
             offer_id: newOffer!.id, title: item.title, description: item.description,
             quantity: item.quantity, unit: item.unit, unit_price: item.unit_price,
             tax_rate: item.tax_rate, total: item.total, sort_order: index,
@@ -332,11 +337,11 @@ const OfferDetail = () => {
   };
 
   const getOfferPdfBase64 = async (): Promise<string> => {
-    const customer = (offer as any)?.customer;
-    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customer = offer?.customer;
+    const businessAddress = settings ? formatAddress(settings) : '';
     const customerAddress = customer ? formatAddress(customer) : '';
-    const customTitle = (settings as any)?.default_offer_title || t.offers.documentTitle;
-    const validityDays = (offer as any)?.validity_days || 14;
+    const customTitle = settings?.default_offer_title || t.offers.documentTitle;
+    const validityDays = offer?.validity_days || 14;
     const validityDate = getValidityDate();
     const isSmallBiz = isKleinunternehmer;
     const result = await generatePdf({
@@ -347,7 +352,7 @@ const OfferDetail = () => {
       validityDate: validityDate || undefined,
       validity_days: validityDays,
       small_business_regulation: isSmallBiz,
-      service_type_label: (offer as any).service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
+      service_type_label: offer!.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig',
       business: {
         business_name: settings?.business_name || '',
         address: businessAddress || undefined,
@@ -356,18 +361,18 @@ const OfferDetail = () => {
         tax_number: settings?.tax_number || undefined,
         vat_id: settings?.vat_id || undefined,
         logo_url: settings?.logo_url || undefined,
-        website: (settings as any)?.website || undefined,
-        owner_name: (settings as any)?.owner_name || undefined,
+        website: settings?.website || undefined,
+        owner_name: settings?.owner_name || undefined,
       },
       customer: { name: customer?.name || '', address: customerAddress || undefined },
-      items: items.map((i: any) => ({
+      items: items.map((i) => ({
         title: i.title, description: i.description, quantity: i.quantity,
         unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
       })),
       subtotal: offer!.subtotal, tax_total: offer!.tax_total, grand_total: offer!.grand_total,
-      intro_text: (offer as any).intro_text || undefined,
-      footer_text: (offer as any).footer_text || undefined,
-      closing_text: (offer as any).closing_text || undefined,
+      intro_text: offer!.intro_text || undefined,
+      footer_text: offer!.footer_text || undefined,
+      closing_text: offer!.closing_text || undefined,
       notes: sanitizeNotes(offer!.notes) || undefined,
       labels: {
         date: t.offers.date, quantity: t.offers.quantity, unit: t.offers.unit,
@@ -408,14 +413,14 @@ const OfferDetail = () => {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold text-foreground">{offer.offer_number}</h2>
-              <p className="text-sm text-muted-foreground">{(offer as any).customer?.name || 'Noch kein Kunde zugewiesen'}</p>
+              <p className="text-sm text-muted-foreground">{offer.customer?.name || 'Noch kein Kunde zugewiesen'}</p>
             </div>
-            <StatusBadge status={offer.status as any} label={statusLabels[offer.status as OfferStatus]} />
+            <StatusBadge status={offer.status as StatusBadgeProps['status']} label={statusLabels[offer.status as OfferStatus]} />
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>{t.offers.date}: {formatDateDE(offer.date)}</p>
             <p>{t.offers.validUntil}: {getValidityDate()}</p>
-            <p>Leistungsart: {(offer as any).service_type === 'laufend' ? 'Laufender Vertrag' : 'Einmalige Leistung'}</p>
+            <p>Leistungsart: {offer.service_type === 'laufend' ? 'Laufender Vertrag' : 'Einmalige Leistung'}</p>
           </div>
           {sanitizeNotes(offer.notes) && <p className="mt-2 text-sm text-foreground">{sanitizeNotes(offer.notes)}</p>}
 
@@ -435,10 +440,10 @@ const OfferDetail = () => {
             <div className="mt-3 rounded-lg bg-success/10 border border-success/20 p-3 text-sm">
               <p className="font-medium text-success">{t.offers.acceptedDigitally}</p>
               <div className="mt-1 space-y-0.5 text-muted-foreground">
-                <p>{t.offers.acceptedBy}: {(acceptance as any).accepted_by_name}</p>
-                <p>{t.offers.acceptedAt}: {formatDateDE((acceptance as any).accepted_at)}</p>
-                {(acceptance as any).signature_image && (
-                  <img src={(acceptance as any).signature_image} alt="Signature" className="mt-2 h-12 w-auto border border-border rounded bg-white p-1" />
+                <p>{t.offers.acceptedBy}: {acceptance.accepted_by_name}</p>
+                <p>{t.offers.acceptedAt}: {formatDateDE(acceptance.accepted_at)}</p>
+                {acceptance.signature_image && (
+                  <img src={acceptance.signature_image} alt="Signature" className="mt-2 h-12 w-auto border border-border rounded bg-white p-1" />
                 )}
               </div>
             </div>
@@ -449,11 +454,11 @@ const OfferDetail = () => {
             <div className="mt-3 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm">
               <p className="font-medium text-destructive">{t.offers.rejectedStatus}</p>
               <div className="mt-1 space-y-0.5 text-muted-foreground">
-                {(offer as any).rejected_at && (
-                  <p>{t.offers.rejectedAt}: {formatDateDE((offer as any).rejected_at)}</p>
+                {offer.rejected_at && (
+                  <p>{t.offers.rejectedAt}: {formatDateDE(offer.rejected_at)}</p>
                 )}
-                {(offer as any).rejected_reason && (
-                  <p>{t.offers.rejectedReason}: {(offer as any).rejected_reason}</p>
+                {offer.rejected_reason && (
+                  <p>{t.offers.rejectedReason}: {offer.rejected_reason}</p>
                 )}
               </div>
             </div>
@@ -506,19 +511,19 @@ const OfferDetail = () => {
                 <ClipboardCheck className="h-4 w-4" /> {generatingConfirmation ? t.common.generating : t.offers.downloadConfirmation}
               </button>
             )}
-            {offer.status === 'accepted' && (offer as any).service_type !== 'laufend' && (
+            {offer.status === 'accepted' && offer.service_type !== 'laufend' && (
               <button onClick={handleConvertToInvoice} disabled={converting}
                 className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                 <FileText className="h-4 w-4" /> {converting ? t.common.loading : t.offers.convertToInvoice}
               </button>
             )}
-            {offer.status === 'accepted' && (offer as any).service_type === 'laufend' && offer.customer_id && (
+            {offer.status === 'accepted' && offer.service_type === 'laufend' && offer.customer_id && (
               <button onClick={() => setContractOpen(true)}
                 className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-                <ScrollText className="h-4 w-4" /> {(t as any).contracts.createFromOffer}
+                <ScrollText className="h-4 w-4" /> {t.contracts.createFromOffer}
               </button>
             )}
-            {offer.status === 'accepted' && (offer as any).service_type === 'laufend' && !offer.customer_id && (
+            {offer.status === 'accepted' && offer.service_type === 'laufend' && !offer.customer_id && (
               <div className="flex items-center gap-2 rounded-lg border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
                 <ScrollText className="h-4 w-4" />
                 Bitte zuerst Kundendaten vervollständigen, um einen Vertrag zu erstellen.
@@ -539,7 +544,7 @@ const OfferDetail = () => {
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
             <h3 className="mb-3 font-semibold text-foreground">{t.offers.items}</h3>
             <div className="space-y-2">
-              {items.map((item: any) => (
+              {items.map((item) => (
                 <div key={item.id} className="flex justify-between rounded-lg bg-muted/30 p-3 text-sm">
                   <div>
                     <p className="font-medium text-foreground">{item.title}</p>
@@ -566,11 +571,11 @@ const OfferDetail = () => {
               </div>
               {(() => {
                 const disc: DiscountData = {
-                  enabled: !!(offer as any).discount_type,
-                  type: (offer as any).discount_type || 'percentage',
-                  value: (offer as any).discount_value || 0,
-                  scope: (offer as any).discount_scope || 'both',
-                  duration_months: (offer as any).discount_duration_months ?? null,
+                  enabled: !!offer.discount_type,
+                  type: (offer.discount_type as DiscountData['type']) || 'percentage',
+                  value: offer.discount_value || 0,
+                  scope: (offer.discount_scope as DiscountData['scope']) || 'both',
+                  duration_months: offer.discount_duration_months ?? null,
                 };
                 const discountLabel = formatDiscountLabel(disc);
                 const discountedTotal = applyDiscount(offer.grand_total, disc);
@@ -604,7 +609,7 @@ const OfferDetail = () => {
               <Mail className="h-4 w-4" /> {t.email.emailHistory}
             </h3>
             <div className="space-y-2">
-              {sentEmails.map((e: any) => (
+              {sentEmails.map((e) => (
                 <div key={e.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
                   <span className="text-foreground">{t.email.sentAt} {formatDateDE(e.sent_at)}</span>
                   <span className="text-xs text-muted-foreground">{e.recipient_email}</span>
@@ -618,7 +623,7 @@ const OfferDetail = () => {
       <EmailModal
         open={emailOpen}
         onClose={() => setEmailOpen(false)}
-        recipientEmail={(offer as any)?.customer?.email || ''}
+        recipientEmail={offer?.customer?.email || ''}
         defaultSubject={`Angebot ${offer?.offer_number} von ${settings?.business_name || 'uns'}`}
         defaultBody={`Guten Tag,\n\nanbei erhalten Sie unser Angebot ${offer?.offer_number}.\n\nBitte prüfen Sie die Details und bestätigen Sie direkt über den Link.\n\nMit freundlichen Grüßen\n${settings?.business_name || ''}`}
         publicLink={getPublicLink()}
@@ -639,10 +644,10 @@ const OfferDetail = () => {
           taxTotal={offer.tax_total}
           grandTotal={offer.grand_total}
           discount={{
-            type: (offer as any).discount_type || null,
-            value: (offer as any).discount_value || 0,
-            scope: (offer as any).discount_scope || 'both',
-            duration_months: (offer as any).discount_duration_months ?? null,
+            type: offer.discount_type || null,
+            value: offer.discount_value || 0,
+            scope: offer.discount_scope || 'both',
+            duration_months: offer.discount_duration_months ?? null,
           }}
         />
       )}

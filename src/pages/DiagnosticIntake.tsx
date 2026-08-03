@@ -206,7 +206,7 @@ export default function DiagnosticIntake() {
 
     try {
       let qrSessionId: string | null = null;
-      try { qrSessionId = sessionStorage.getItem('qr_session_id'); } catch {}
+      try { qrSessionId = sessionStorage.getItem('qr_session_id'); } catch { /* sessionStorage unavailable */ }
 
       const response = await supabase.functions.invoke('generate-lead-analysis', {
         body: {

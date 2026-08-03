@@ -265,9 +265,10 @@ const Onboarding = () => {
 
       toast.success('Einrichtung abgeschlossen!');
       navigate('/dashboard');
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error('Fehler beim Speichern: ' + (err.message || 'Unbekannter Fehler'));
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Speichern: ' + message);
     } finally {
       setSaving(false);
     }

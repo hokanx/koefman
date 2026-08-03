@@ -11,6 +11,11 @@ import { DOCUMENT_GROUPS, getCategoryInfo, getStatusInfo, STATUS_OPTIONS } from 
 import { normalizeExtracted, formatAmountDE } from '@/lib/extractedDataUtils';
 import DocumentPreviewModal from '@/components/documents/DocumentPreviewModal';
 import DocumentStats from '@/components/documents/DocumentStats';
+import type { Tables } from '@/integrations/supabase/types';
+import type { RawExtractedData } from '@/lib/extractedDataUtils';
+
+type DocumentRow = Tables<'documents'>;
+type DocumentWithMonthLabel = DocumentRow & { _monthLabel: string };
 
 const getStoragePath = (fileUrl: string): string => {
   if (fileUrl.includes('/client-documents/')) {
@@ -31,7 +36,7 @@ const Documents = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('eingangsrechnungen');
-  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
 
   const targetUserId = effectiveUserId || user?.id;
 
@@ -119,8 +124,8 @@ const Documents = () => {
           }
         });
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Upload fehlgeschlagen');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -134,28 +139,28 @@ const Documents = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const filtered = documents.filter((doc: any) => {
+  const filtered = documents.filter((doc) => {
     if (filterStatus !== 'alle' && doc.status !== filterStatus) return false;
     if (!search) return true;
     const s = search.toLowerCase();
-    const norm = normalizeExtracted(doc.extracted_data);
+    const norm = normalizeExtracted(doc.extracted_data as RawExtractedData | null);
     return doc.file_name?.toLowerCase().includes(s)
       || doc.description?.toLowerCase().includes(s)
       || norm.vendor?.toLowerCase().includes(s);
   });
 
-  const grouped = filtered.reduce((acc: Record<string, any[]>, doc: any) => {
+  const grouped = filtered.reduce((acc: Record<string, DocumentWithMonthLabel[]>, doc) => {
     const d = new Date(doc.created_at);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const label = d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
     if (!acc[key]) acc[key] = [];
     acc[key].push({ ...doc, _monthLabel: label });
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, DocumentWithMonthLabel[]>);
 
   const sortedMonths = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
-  const handleDownload = async (doc: any) => {
+  const handleDownload = async (doc: DocumentRow) => {
     try {
       const path = getStoragePath(doc.file_url);
       const { data, error } = await supabase.storage.from('client-documents').createSignedUrl(path, 600);
@@ -290,10 +295,10 @@ const Documents = () => {
               <div key={monthKey}>
                 <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{monthLabel} ({docs.length})</h2>
                 <div className="space-y-2">
-                  {docs.map((doc: any) => {
+                  {docs.map((doc) => {
                     const catInfo = getCategoryInfo(doc.category);
                     const statusInfo = getStatusInfo(doc.status);
-                    const norm = normalizeExtracted(doc.extracted_data);
+                    const norm = normalizeExtracted(doc.extracted_data as RawExtractedData | null);
                     return (
                       <div key={doc.id}
                         className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 cursor-pointer hover:border-primary/40 transition"

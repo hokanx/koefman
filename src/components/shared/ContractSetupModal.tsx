@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText } from 'lucide-react';
 import { generateDocumentNumber } from '@/lib/documentUtils';
+import type { LineItem } from '@/types';
 
 interface ContractSetupModalProps {
   open: boolean;
@@ -20,7 +21,7 @@ interface ContractSetupModalProps {
   offerId: string;
   customerId: string;
   offerNumber: string;
-  items: any[];
+  items: LineItem[];
   subtotal: number;
   taxTotal: number;
   grandTotal: number;
@@ -39,7 +40,7 @@ const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, i
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
 
-  const ct = (t as any).contracts;
+  const ct = t.contracts;
   const today = new Date().toISOString().split('T')[0];
   const [title, setTitle] = useState(ct.defaultTitle);
   const [frequency, setFrequency] = useState('monthly');
@@ -71,13 +72,13 @@ const ContractSetupModal = ({ open, onClose, offerId, customerId, offerNumber, i
         discount_value: discount?.value || 0,
         discount_scope: discount?.scope || 'both',
         discount_duration_months: discount?.duration_months ?? null,
-      } as any).select().single();
+      }).select().single();
       if (error) throw error;
 
       // Copy line items
       if (items.length > 0) {
         await supabase.from('contract_items').insert(
-          items.map((item: any, i: number) => ({
+          items.map((item: LineItem, i: number) => ({
             contract_id: contract!.id,
             title: item.title,
             description: item.description,

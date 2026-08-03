@@ -7,6 +7,11 @@ import SignaturePad from '@/components/shared/SignaturePad';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatEUR, formatDateDE } from '@/lib/utils';
 import { DocumentShell, DocumentHeader, DocumentMeta, ItemsTable, TotalsBlock } from '@/components/public-document';
+import type { Tables } from '@/integrations/supabase/types';
+
+type OfferRow = Tables<'offers'>;
+type CustomerRow = Tables<'customers'>;
+type OfferWithCustomer = OfferRow & { customer: CustomerRow | null };
 
 const PublicOfferView = () => {
   const { token } = useParams<{ token: string }>();
@@ -42,7 +47,7 @@ const PublicOfferView = () => {
         .eq('public_token', token!)
         .single();
       if (error) throw error;
-      return data;
+      return data as OfferWithCustomer;
     },
     enabled: !!token,
   });
@@ -90,7 +95,7 @@ const PublicOfferView = () => {
 
   useEffect(() => {
     if (offer) {
-      const customer = (offer as any).customer;
+      const customer = offer.customer;
       if (customer) {
         setCompanyName(customer.name || '');
         setContactPerson(customer.contact_person || '');
@@ -111,7 +116,7 @@ const PublicOfferView = () => {
       if (!city.trim()) throw new Error('missing_city');
       if (!hasValidSignature || !signatureImage) throw new Error('missing_signature');
 
-      const customer = (offer as any).customer;
+      const customer = offer!.customer;
       let customerId = offer!.customer_id;
 
       if (customer) {
@@ -123,7 +128,7 @@ const PublicOfferView = () => {
           postal_code: postalCode.trim(),
           city: city.trim(),
           email: email.trim() || null,
-        } as any).eq('id', customer.id);
+        }).eq('id', customer.id);
       } else {
         const newId = crypto.randomUUID();
         const { error: custError } = await supabase.from('customers').insert({
@@ -136,7 +141,7 @@ const PublicOfferView = () => {
           postal_code: postalCode.trim(),
           city: city.trim(),
           email: email.trim() || null,
-        } as any);
+        });
         if (custError) throw custError;
         customerId = newId;
       }
@@ -145,7 +150,7 @@ const PublicOfferView = () => {
         offer_id: offer!.id,
         accepted_by_name: companyName.trim(),
         signature_image: signatureImage,
-      } as any);
+      });
       if (acceptError) throw acceptError;
 
       const { error: updateError } = await supabase
@@ -153,7 +158,7 @@ const PublicOfferView = () => {
         .update({
           status: 'accepted',
           customer_id: customerId,
-        } as any)
+        })
         .eq('id', offer!.id);
       if (updateError) throw updateError;
     },
@@ -164,7 +169,7 @@ const PublicOfferView = () => {
       queryClient.invalidateQueries({ queryKey: ['public-offer', token] });
       queryClient.invalidateQueries({ queryKey: ['public-offer-acceptance', offer?.id] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setShowValidation(true);
       const errorMap: Record<string, string> = {
         missing_name: 'Bitte geben Sie Ihren Firmen-/Namen ein.',
@@ -173,7 +178,8 @@ const PublicOfferView = () => {
         missing_city: 'Bitte geben Sie Ihren Ort ein.',
         missing_signature: t.offers.signatureRequired,
       };
-      setErrorMessage(errorMap[error?.message] || t.offers.acceptSubmitFailed);
+      const message = error instanceof Error ? error.message : undefined;
+      setErrorMessage((message && errorMap[message]) || t.offers.acceptSubmitFailed);
     },
   });
 
@@ -185,7 +191,7 @@ const PublicOfferView = () => {
           status: 'rejected',
           rejected_at: new Date().toISOString(),
           rejected_reason: rejectReason.trim() || null,
-        } as any)
+        })
         .eq('id', offer!.id);
       if (error) throw error;
     },
@@ -217,7 +223,7 @@ const PublicOfferView = () => {
 
   const getValidityDate = (): string | null => {
     if (!offer) return null;
-    const days = (offer as any).validity_days || 14;
+    const days = offer.validity_days || 14;
     const offerDate = new Date(offer.date);
     offerDate.setDate(offerDate.getDate() + days);
     return formatDateDE(offerDate);
@@ -225,7 +231,7 @@ const PublicOfferView = () => {
 
   const isExpired = (): boolean => {
     if (!offer) return false;
-    const days = (offer as any).validity_days || 14;
+    const days = offer.validity_days || 14;
     const offerDate = new Date(offer.date);
     offerDate.setDate(offerDate.getDate() + days);
     return new Date() > offerDate;
@@ -257,11 +263,11 @@ const PublicOfferView = () => {
             {existingAcceptance && (
               <>
                 <p className="text-sm text-gray-500">
-                  Bestätigt von: <span className="font-medium text-gray-900">{(existingAcceptance as any).accepted_by_name}</span>
+                  Bestätigt von: <span className="font-medium text-gray-900">{existingAcceptance.accepted_by_name}</span>
                 </p>
-                {(existingAcceptance as any).signature_image && (
+                {existingAcceptance.signature_image && (
                   <div className="mt-2 max-w-[200px]">
-                    <img src={(existingAcceptance as any).signature_image} alt="Unterschrift" className="border border-gray-200 rounded" />
+                    <img src={existingAcceptance.signature_image} alt="Unterschrift" className="border border-gray-200 rounded" />
                   </div>
                 )}
               </>
@@ -280,8 +286,8 @@ const PublicOfferView = () => {
           <XCircle className="mx-auto h-12 w-12 text-red-400 mb-3" />
           <h3 className="text-lg font-bold text-red-800">Angebot abgelehnt</h3>
           <p className="mt-1 text-sm text-red-600">
-            {(offer as any).rejected_reason
-              ? `Grund: ${(offer as any).rejected_reason}`
+            {offer.rejected_reason
+              ? `Grund: ${offer.rejected_reason}`
               : 'Dieses Angebot wurde abgelehnt.'}
           </p>
         </div>
@@ -289,19 +295,19 @@ const PublicOfferView = () => {
     );
   }
 
-  const customer = offer ? (offer as any).customer : null;
+  const customer = offer ? offer.customer : null;
   const validityDate = getValidityDate();
   const expired = isExpired();
-  const isSmallBusiness = !!(settings as any)?.small_business_regulation;
+  const isSmallBusiness = !!settings?.small_business_regulation;
 
   const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
   return (
-    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !offer} notFoundMessage="Angebot nicht gefunden" footerInfo={settings ? { businessName: settings.business_name, ownerName: settings.owner_name ?? undefined, address: [settings.street, settings.house_number].filter(Boolean).join(' ') + (settings.postal_code || settings.city ? ', ' + [settings.postal_code, settings.city].filter(Boolean).join(' ') : ''), phone: settings.phone ?? undefined, email: settings.email ?? undefined, website: (settings as any).website ?? undefined, taxNumber: settings.tax_number ?? undefined } : undefined}>
+    <DocumentShell isLoading={isLoading} showNotFound={!isLoading && !offer} notFoundMessage="Angebot nicht gefunden" footerInfo={settings ? { businessName: settings.business_name, ownerName: settings.owner_name ?? undefined, address: [settings.street, settings.house_number].filter(Boolean).join(' ') + (settings.postal_code || settings.city ? ', ' + [settings.postal_code, settings.city].filter(Boolean).join(' ') : ''), phone: settings.phone ?? undefined, email: settings.email ?? undefined, website: settings.website ?? undefined, taxNumber: settings.tax_number ?? undefined } : undefined}>
       <DocumentHeader
         businessName={settings?.business_name}
         street={settings?.street ?? undefined}
-        houseNumber={(settings as any)?.house_number ?? undefined}
+        houseNumber={settings?.house_number ?? undefined}
         postalCode={settings?.postal_code ?? undefined}
         city={settings?.city ?? undefined}
         logoUrl={settings?.logo_url ?? undefined}
@@ -309,7 +315,7 @@ const PublicOfferView = () => {
         phone={settings?.phone ?? undefined}
         taxNumber={settings?.tax_number ?? undefined}
         vatId={settings?.vat_id ?? undefined}
-        website={(settings as any)?.website ?? undefined}
+        website={settings?.website ?? undefined}
         recipientName={customer?.name}
         recipientAddress={customer ? [customer.street && customer.house_number ? `${customer.street} ${customer.house_number}` : customer.street, customer.postal_code && customer.city ? `${customer.postal_code} ${customer.city}` : customer.city].filter(Boolean).join('\n') : undefined}
       />
@@ -317,8 +323,8 @@ const PublicOfferView = () => {
       {/* Offer details */}
       <div className="rounded-2xl bg-white border border-gray-200 shadow-sm px-7 py-6 space-y-6">
         <DocumentMeta
-          title={(settings as any)?.default_offer_title || 'Angebot'}
-          serviceTypeLabel={(offer as any)?.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig'}
+          title={settings?.default_offer_title || 'Angebot'}
+          serviceTypeLabel={offer?.service_type === 'laufend' ? 'Wiederkehrend' : 'Einmalig'}
           fields={[
             { label: 'Angebotsnummer', value: offer?.offer_number || '' },
             { label: 'Datum', value: formatDateDE(offer?.date) },
@@ -327,14 +333,14 @@ const PublicOfferView = () => {
         />
 
         {/* Intro text */}
-        {(offer as any)?.intro_text && (
+        {offer?.intro_text && (
           <p className="mb-6 text-sm text-gray-700 whitespace-pre-line">
-            {(offer as any).intro_text}
+            {offer.intro_text}
           </p>
         )}
 
         {/* Items */}
-        <ItemsTable items={items as any[]} isSmallBusiness={isSmallBusiness} />
+        <ItemsTable items={items} isSmallBusiness={isSmallBusiness} />
 
         {/* Totals */}
         {items.length > 0 && (
@@ -347,11 +353,11 @@ const PublicOfferView = () => {
         )}
 
         {/* Footer / closing text */}
-        {(offer as any)?.footer_text && (
-          <p className="mb-4 mt-6 text-sm text-gray-700 whitespace-pre-line">{(offer as any).footer_text}</p>
+        {offer?.footer_text && (
+          <p className="mb-4 mt-6 text-sm text-gray-700 whitespace-pre-line">{offer.footer_text}</p>
         )}
-        {(offer as any)?.closing_text && (
-          <p className="mb-4 text-sm text-gray-700">{(offer as any).closing_text}</p>
+        {offer?.closing_text && (
+          <p className="mb-4 text-sm text-gray-700">{offer.closing_text}</p>
         )}
 
         {/* Validity (already shown in meta row) */}

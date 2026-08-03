@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { LineItem } from '@/types';
+import type { Tables } from '@/integrations/supabase/types';
 
 interface TemplatePickerProps {
   onInsert: (items: LineItem[]) => void;
@@ -36,7 +37,7 @@ const TemplatePicker = ({ onInsert }: TemplatePickerProps) => {
       .order('sort_order');
 
     if (templateItems && templateItems.length > 0) {
-      const newItems: LineItem[] = templateItems.map((i: any, idx: number) => ({
+      const newItems: LineItem[] = templateItems.map((i: Tables<'service_template_items'>, idx: number) => ({
         id: crypto.randomUUID(),
         title: i.title,
         description: i.description || '',
@@ -77,7 +78,7 @@ const TemplatePicker = ({ onInsert }: TemplatePickerProps) => {
         <p className="py-4 text-center text-sm text-muted-foreground">{t.templates.noTemplates}</p>
       ) : (
         <div className="space-y-1">
-          {templates.map((tmpl: any) => (
+          {templates.map((tmpl: Tables<'service_templates'>) => (
             <button
               key={tmpl.id}
               type="button"

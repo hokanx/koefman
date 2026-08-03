@@ -51,7 +51,7 @@ const IntakeForm = () => {
     if (!ownerId || !form.company_or_name.trim()) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('intake_submissions' as any).insert({
+      const { error } = await supabase.from('intake_submissions').insert({
         owner_id: ownerId,
         company_or_name: form.company_or_name,
         contact_person: form.contact_person || null,
@@ -74,7 +74,7 @@ const IntakeForm = () => {
         service_location: form.service_location || null,
         service_notes: form.service_notes || null,
         status: 'new',
-      } as any);
+      });
       if (error) throw error;
       setSubmitted(true);
     } catch {

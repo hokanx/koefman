@@ -15,6 +15,9 @@ import { formatEUR } from '@/lib/utils';
 import EmailModal from '@/components/shared/EmailModal';
 import RecurringSetupModal from '@/components/shared/RecurringSetupModal';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import type { Tables } from '@/integrations/supabase/types';
+
+type InvoiceRow = Tables<'invoices'> & { customer: Tables<'customers'> | null };
 
 const InvoiceDetail = () => {
   const { t } = useLanguage();
@@ -35,7 +38,7 @@ const InvoiceDetail = () => {
   const { data: invoice, isLoading } = useQuery({
     queryKey: ['invoice', id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('invoices').select('*, customer:customers(*)').eq('id', id!).eq('user_id', user!.id).single();
+      const { data, error } = await supabase.from('invoices').select('*, customer:customers(*)').eq('id', id!).eq('user_id', user!.id).single().returns<InvoiceRow>();
       if (error) throw error;
       return data;
     },
@@ -110,15 +113,15 @@ const InvoiceDetail = () => {
         date: new Date().toISOString().split('T')[0],
         due_date: dueDate.toISOString().split('T')[0],
         status: 'open', notes: invoice.notes,
-        intro_text: (invoice as any).intro_text, footer_text: (invoice as any).footer_text,
-        closing_text: (invoice as any).closing_text,
+        intro_text: invoice.intro_text, footer_text: invoice.footer_text,
+        closing_text: invoice.closing_text,
         subtotal: invoice.subtotal, tax_total: invoice.tax_total, grand_total: invoice.grand_total,
-      } as any).select().single();
+      }).select().single();
       if (error) throw error;
 
       if (items.length > 0) {
         await supabase.from('invoice_items').insert(
-          items.map((item: any, index: number) => ({
+          items.map((item, index: number) => ({
             invoice_id: newInvoice!.id, title: item.title, description: item.description,
             quantity: item.quantity, unit: item.unit, unit_price: item.unit_price,
             tax_rate: item.tax_rate, total: item.total, sort_order: index,
@@ -140,15 +143,15 @@ const InvoiceDetail = () => {
     if (!invoice) return;
     setGenerating(true);
     try {
-      const customer = (invoice as any).customer;
-      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customer = invoice.customer;
+      const businessAddress = settings ? formatAddress(settings) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
 
       const isSmallBiz = isKleinunternehmer;
       await generatePdf({
         type: 'invoice',
         small_business_regulation: isSmallBiz,
-        service_type_label: (invoice as any).source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
+        service_type_label: invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
         documentTitle: t.invoices.documentTitle,
         documentNumber: invoice.invoice_number,
         date: formatDateDE(invoice.date),
@@ -161,26 +164,26 @@ const InvoiceDetail = () => {
           tax_number: settings?.tax_number || undefined,
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
-          website: (settings as any)?.website || undefined,
+          website: settings?.website || undefined,
           payment_terms: settings?.payment_terms || undefined,
-          account_holder: (settings as any)?.account_holder || undefined,
-          bank_name: (settings as any)?.bank_name || undefined,
-          iban: (settings as any)?.iban || undefined,
-          bic: (settings as any)?.bic || undefined,
-          owner_name: (settings as any)?.owner_name || undefined,
+          account_holder: settings?.account_holder || undefined,
+          bank_name: settings?.bank_name || undefined,
+          iban: settings?.iban || undefined,
+          bic: settings?.bic || undefined,
+          owner_name: settings?.owner_name || undefined,
         },
         customer: {
           name: customer?.name || '',
           address: customerAddress || undefined,
         },
-        items: items.map((i: any) => ({
+        items: items.map((i) => ({
           title: i.title, description: i.description, quantity: i.quantity,
           unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
         })),
         subtotal: invoice.subtotal, tax_total: invoice.tax_total, grand_total: invoice.grand_total,
-        intro_text: (invoice as any).intro_text || undefined,
-        footer_text: (invoice as any).footer_text || undefined,
-        closing_text: (invoice as any).closing_text || undefined,
+        intro_text: invoice.intro_text || undefined,
+        footer_text: invoice.footer_text || undefined,
+        closing_text: invoice.closing_text || undefined,
         notes: invoice.notes || undefined,
         labels: {
           date: t.invoices.date, dueDate: t.invoices.dueDate, quantity: t.invoices.quantity,
@@ -198,8 +201,8 @@ const InvoiceDetail = () => {
     if (!invoice || !user || !settings) return;
     setCreatingReminder(true);
     try {
-      const customer = (invoice as any).customer;
-      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const customer = invoice.customer;
+      const businessAddress = settings ? formatAddress(settings) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
       const nextLevel = reminders.length + 1;
 
@@ -209,7 +212,7 @@ const InvoiceDetail = () => {
         user_id: user.id,
         reminder_type: 'zahlungserinnerung',
         reminder_level: nextLevel,
-      } as any);
+      });
 
       // Generate PDF
       await generateReminderPdf({
@@ -221,13 +224,13 @@ const InvoiceDetail = () => {
           tax_number: settings?.tax_number || undefined,
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
-          website: (settings as any)?.website || undefined,
+          website: settings?.website || undefined,
           payment_terms: settings?.payment_terms || undefined,
-          account_holder: (settings as any)?.account_holder || undefined,
-          bank_name: (settings as any)?.bank_name || undefined,
-          iban: (settings as any)?.iban || undefined,
-          bic: (settings as any)?.bic || undefined,
-          owner_name: (settings as any)?.owner_name || undefined,
+          account_holder: settings?.account_holder || undefined,
+          bank_name: settings?.bank_name || undefined,
+          iban: settings?.iban || undefined,
+          bic: settings?.bic || undefined,
+          owner_name: settings?.owner_name || undefined,
         },
         customer: {
           name: customer?.name || '',
@@ -252,14 +255,14 @@ const InvoiceDetail = () => {
   };
 
   const getInvoicePdfBase64 = async (): Promise<string> => {
-    const customer = (invoice as any)?.customer;
-    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customer = invoice?.customer;
+    const businessAddress = settings ? formatAddress(settings) : '';
     const customerAddress = customer ? formatAddress(customer) : '';
     const isSmallBiz = isKleinunternehmer;
     const result = await generatePdf({
       type: 'invoice',
       small_business_regulation: isSmallBiz,
-      service_type_label: (invoice as any).source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
+      service_type_label: invoice!.source_recurring_id ? 'Wiederkehrend' : 'Einmalig',
       documentTitle: t.invoices.documentTitle,
       documentNumber: invoice!.invoice_number,
       date: formatDateDE(invoice!.date),
@@ -272,23 +275,23 @@ const InvoiceDetail = () => {
         tax_number: settings?.tax_number || undefined,
         vat_id: settings?.vat_id || undefined,
         logo_url: settings?.logo_url || undefined,
-        website: (settings as any)?.website || undefined,
+        website: settings?.website || undefined,
         payment_terms: settings?.payment_terms || undefined,
-        account_holder: (settings as any)?.account_holder || undefined,
-        bank_name: (settings as any)?.bank_name || undefined,
-        iban: (settings as any)?.iban || undefined,
-        bic: (settings as any)?.bic || undefined,
-        owner_name: (settings as any)?.owner_name || undefined,
+        account_holder: settings?.account_holder || undefined,
+        bank_name: settings?.bank_name || undefined,
+        iban: settings?.iban || undefined,
+        bic: settings?.bic || undefined,
+        owner_name: settings?.owner_name || undefined,
       },
       customer: { name: customer?.name || '', address: customerAddress || undefined },
-      items: items.map((i: any) => ({
+      items: items.map((i) => ({
         title: i.title, description: i.description, quantity: i.quantity,
         unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
       })),
       subtotal: invoice!.subtotal, tax_total: invoice!.tax_total, grand_total: invoice!.grand_total,
-      intro_text: (invoice as any).intro_text || undefined,
-      footer_text: (invoice as any).footer_text || undefined,
-      closing_text: (invoice as any).closing_text || undefined,
+      intro_text: invoice!.intro_text || undefined,
+      footer_text: invoice!.footer_text || undefined,
+      closing_text: invoice!.closing_text || undefined,
       notes: invoice!.notes || undefined,
       labels: {
         date: t.invoices.date, dueDate: t.invoices.dueDate, quantity: t.invoices.quantity,
@@ -302,8 +305,8 @@ const InvoiceDetail = () => {
   };
 
   const getReminderPdfBase64 = async (): Promise<string> => {
-    const customer = (invoice as any)?.customer;
-    const businessAddress = settings ? formatAddress(settings as any) : '';
+    const customer = invoice?.customer;
+    const businessAddress = settings ? formatAddress(settings) : '';
     const customerAddress = customer ? formatAddress(customer) : '';
     const result = await generateReminderPdf({
       business: {
@@ -314,13 +317,13 @@ const InvoiceDetail = () => {
         tax_number: settings?.tax_number || undefined,
         vat_id: settings?.vat_id || undefined,
         logo_url: settings?.logo_url || undefined,
-        website: (settings as any)?.website || undefined,
+        website: settings?.website || undefined,
         payment_terms: settings?.payment_terms || undefined,
-        account_holder: (settings as any)?.account_holder || undefined,
-        bank_name: (settings as any)?.bank_name || undefined,
-        iban: (settings as any)?.iban || undefined,
-        bic: (settings as any)?.bic || undefined,
-        owner_name: (settings as any)?.owner_name || undefined,
+        account_holder: settings?.account_holder || undefined,
+        bank_name: settings?.bank_name || undefined,
+        iban: settings?.iban || undefined,
+        bic: settings?.bic || undefined,
+        owner_name: settings?.owner_name || undefined,
       },
       customer: { name: customer?.name || '', address: customerAddress || undefined },
       invoiceNumber: invoice!.invoice_number,
@@ -354,16 +357,16 @@ const InvoiceDetail = () => {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold text-foreground">{invoice.invoice_number}</h2>
-              <p className="text-sm text-muted-foreground">{(invoice as any).customer?.name}</p>
+              <p className="text-sm text-muted-foreground">{invoice.customer?.name}</p>
             </div>
-            <StatusBadge status={displayStatus as any} label={statusLabels[displayStatus as InvoiceStatus]} />
+            <StatusBadge status={displayStatus} label={statusLabels[displayStatus as InvoiceStatus]} />
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>{t.invoices.date}: {formatDateDE(invoice.date)}</p>
             <p className={isOverdue ? 'text-destructive font-medium' : ''}>
               {t.invoices.dueDate}: {formatDateDE(invoice.due_date)}
             </p>
-            <p>Leistungsart: {(invoice as any).source_recurring_id ? 'Wiederkehrend' : 'Einmalig'}</p>
+            <p>Leistungsart: {invoice.source_recurring_id ? 'Wiederkehrend' : 'Einmalig'}</p>
             {settings?.payment_terms && (
               <p>{t.invoices.paymentTerms}: {settings.payment_terms}</p>
             )}
@@ -434,7 +437,7 @@ const InvoiceDetail = () => {
             <button onClick={async () => {
                 setEmailType('invoice');
                 // Ensure public token exists
-                let token = (invoice as any).public_token;
+                let token = invoice.public_token;
                 if (!token) {
                   token = crypto.randomUUID();
                   await supabase.from('invoices').update({ public_token: token }).eq('id', id!);
@@ -454,7 +457,7 @@ const InvoiceDetail = () => {
             )}
             <button onClick={() => setRecurringOpen(true)}
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
-              <RepeatIcon className="h-4 w-4" /> {(t as any).recurring.saveAsRecurring}
+              <RepeatIcon className="h-4 w-4" /> {t.recurring.saveAsRecurring}
             </button>
           </div>
         </div>
@@ -463,7 +466,7 @@ const InvoiceDetail = () => {
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
             <h3 className="mb-3 font-semibold text-foreground">{t.invoices.items}</h3>
             <div className="space-y-2">
-              {items.map((item: any) => (
+              {items.map((item) => (
                 <div key={item.id} className="flex justify-between rounded-lg bg-muted/30 p-3 text-sm">
                   <div>
                     <p className="font-medium text-foreground">{item.title}</p>
@@ -504,7 +507,7 @@ const InvoiceDetail = () => {
             <p className="text-sm text-muted-foreground">{t.invoices.noReminders}</p>
           ) : (
             <div className="space-y-2">
-              {reminders.map((r: any) => (
+              {reminders.map((r) => (
                 <div key={r.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
                   <div className="flex items-center gap-2">
                     <Bell className="h-3.5 w-3.5 text-warning" />
@@ -528,7 +531,7 @@ const InvoiceDetail = () => {
               <Mail className="h-4 w-4" /> {t.email.emailHistory}
             </h3>
             <div className="space-y-2">
-              {sentEmails.map((e: any) => (
+              {sentEmails.map((e) => (
                 <div key={e.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm">
                   <span className="text-foreground">{t.email.sentAt} {formatDateDE(e.sent_at)}</span>
                   <span className="text-xs text-muted-foreground">{e.recipient_email}</span>
@@ -542,7 +545,7 @@ const InvoiceDetail = () => {
       <EmailModal
         open={emailOpen}
         onClose={() => setEmailOpen(false)}
-        recipientEmail={(invoice as any)?.customer?.email || ''}
+        recipientEmail={invoice?.customer?.email || ''}
         defaultSubject={emailType === 'reminder'
           ? t.email.reminderSubject.replace('{number}', invoice?.invoice_number || '')
           : t.email.invoiceSubject.replace('{number}', invoice?.invoice_number || '')}

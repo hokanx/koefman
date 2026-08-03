@@ -13,6 +13,8 @@ import { Pause, Play, XCircle, Download, RepeatIcon, Send, Copy, CheckCircle, Ex
 import EmailModal from '@/components/shared/EmailModal';
 import { formatEUR } from '@/lib/utils';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import type { Tables } from '@/integrations/supabase/types';
+import type { StatusBadgeProps } from '@/components/shared/StatusBadge';
 
 const frequencyLabels: Record<string, Record<string, string>> = {
   weekly: { de: 'Wöchentlich', en: 'Weekly', ar: 'أسبوعياً' },
@@ -21,12 +23,17 @@ const frequencyLabels: Record<string, Record<string, string>> = {
   quarterly: { de: 'Vierteljährlich', en: 'Quarterly', ar: 'ربع سنوي' },
 };
 
+type ContractRow = Tables<'contracts'> & {
+  customer: Pick<Tables<'customers'>, 'name' | 'email'> | null;
+  source_offer: Pick<Tables<'offers'>, 'offer_number'> | null;
+};
+
 const Contracts = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const ct = (t as any).contracts;
+  const ct = t.contracts;
   const { isKleinunternehmer } = useOrgTaxMode();
 
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
@@ -38,7 +45,8 @@ const Contracts = () => {
         .from('contracts')
         .select('*, customer:customers(name, email), source_offer:offers(offer_number)')
         .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .returns<ContractRow[]>();
       if (error) throw error;
       return data || [];
     },
@@ -47,7 +55,7 @@ const Contracts = () => {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from('contracts').update({ status } as any).eq('id', id);
+      const { error } = await supabase.from('contracts').update({ status }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -66,18 +74,18 @@ const Contracts = () => {
   });
 
   const [emailOpen, setEmailOpen] = useState(false);
-  const [emailContract, setEmailContract] = useState<any>(null);
+  const [emailContract, setEmailContract] = useState<ContractRow | null>(null);
 
-  const handleSendContract = async (contract: any) => {
+  const handleSendContract = async (contract: ContractRow) => {
     // Ensure public token exists
-    let publicToken = (contract as any).public_token;
+    let publicToken = contract.public_token;
     if (!publicToken) {
       publicToken = crypto.randomUUID();
-      await supabase.from('contracts').update({ public_token: publicToken } as any).eq('id', contract.id);
+      await supabase.from('contracts').update({ public_token: publicToken }).eq('id', contract.id);
     }
     // Mark as sent if still draft
     if (contract.status === 'entwurf') {
-      await supabase.from('contracts').update({ status: 'gesendet' } as any).eq('id', contract.id);
+      await supabase.from('contracts').update({ status: 'gesendet' }).eq('id', contract.id);
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       toast.success(ct.contractSent);
     }
@@ -86,8 +94,8 @@ const Contracts = () => {
     setEmailOpen(true);
   };
 
-  const handleCopyLink = async (contract: any) => {
-    const publicToken = (contract as any).public_token;
+  const handleCopyLink = async (contract: ContractRow) => {
+    const publicToken = contract.public_token;
     if (publicToken) {
       const url = `${window.location.origin}/contract/view/${publicToken}`;
       await navigator.clipboard.writeText(url);
@@ -95,7 +103,7 @@ const Contracts = () => {
     }
   };
 
-  const handleDownloadPdf = async (contract: any) => {
+  const handleDownloadPdf = async (contract: ContractRow) => {
     setGeneratingPdf(contract.id);
     try {
       const { data: contractItems } = await supabase
@@ -123,16 +131,16 @@ const Contracts = () => {
 
         if (acceptance) {
           signatureData = {
-            signedByName: (acceptance as any).accepted_by_name || 'Unbekannt',
-            signedAt: (acceptance as any).accepted_at
-              ? new Date((acceptance as any).accepted_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            signedByName: acceptance.accepted_by_name || 'Unbekannt',
+            signedAt: acceptance.accepted_at
+              ? new Date(acceptance.accepted_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
               : 'Unbekannt',
-            signatureImage: (acceptance as any).signature_image || null,
+            signatureImage: acceptance.signature_image || null,
           };
         }
       }
 
-      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const businessAddress = settings ? formatAddress(settings) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
       const isSmallBiz = isKleinunternehmer;
 
@@ -152,14 +160,14 @@ const Contracts = () => {
           tax_number: settings?.tax_number || undefined,
           vat_id: settings?.vat_id || undefined,
           logo_url: settings?.logo_url || undefined,
-          website: (settings as any)?.website || undefined,
-          owner_name: (settings as any)?.owner_name || undefined,
+          website: settings?.website || undefined,
+          owner_name: settings?.owner_name || undefined,
         },
         customer: {
           name: customer?.name || '',
           address: customerAddress || undefined,
         },
-        items: (contractItems || []).map((i: any) => ({
+        items: (contractItems || []).map((i) => ({
           title: i.title,
           description: i.description,
           quantity: i.quantity,
@@ -209,10 +217,10 @@ const Contracts = () => {
           signatureDateLabel: ct.pdfSignatureDateLabel,
           signatureContractor: ct.pdfSignatureContractor,
           signatureClient: ct.pdfSignatureClient,
-          paymentTerms: (settings as any)?.payment_terms || ct.pdfPaymentTerms,
+          paymentTerms: settings?.payment_terms || ct.pdfPaymentTerms,
           perCycle: ct.pdfPerCycle,
         },
-        closing_text: (settings as any)?.default_closing_text || 'Mit freundlichen Grüßen',
+        closing_text: settings?.default_closing_text || 'Mit freundlichen Grüßen',
       });
     } catch {
       toast.error(t.common.error);
@@ -221,7 +229,7 @@ const Contracts = () => {
     }
   };
 
-  const handleActivateRecurring = async (contract: any) => {
+  const handleActivateRecurring = async (contract: ContractRow) => {
     if (!user) return;
     // Gate: must be signed
     if (contract.status !== 'unterzeichnet' && contract.status !== 'aktiv') {
@@ -257,15 +265,15 @@ const Contracts = () => {
         subtotal: contract.subtotal,
         tax_total: contract.tax_total,
         grand_total: contract.grand_total,
-        intro_text: (settings as any)?.default_invoice_intro_text || '',
-        footer_text: (settings as any)?.default_invoice_footer_text || '',
-        closing_text: (settings as any)?.default_closing_text || '',
-      } as any).select().single();
+        intro_text: settings?.default_invoice_intro_text || '',
+        footer_text: settings?.default_invoice_footer_text || '',
+        closing_text: settings?.default_closing_text || '',
+      }).select().single();
       if (invoiceError) throw invoiceError;
 
       if (contractItems && contractItems.length > 0) {
         await supabase.from('invoice_items').insert(
-          contractItems.map((item: any, i: number) => ({
+          contractItems.map((item, i: number) => ({
             invoice_id: invoice!.id,
             title: item.title,
             description: item.description,
@@ -301,7 +309,7 @@ const Contracts = () => {
         status: 'active',
         auto_generate: true,
         source_contract_id: contract.id,
-      } as any);
+      });
 
       queryClient.invalidateQueries({ queryKey: ['recurring-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
@@ -311,10 +319,10 @@ const Contracts = () => {
     }
   };
 
-  const handleDownloadConfirmation = async (contract: any) => {
+  const handleDownloadConfirmation = async (contract: ContractRow) => {
     try {
       const { data: acceptance } = await supabase
-        .from('contract_acceptances' as any)
+        .from('contract_acceptances')
         .select('*')
         .eq('contract_id', contract.id)
         .order('accepted_at', { ascending: false })
@@ -333,18 +341,18 @@ const Contracts = () => {
         .eq('id', contract.customer_id)
         .single();
 
-      const businessAddress = settings ? formatAddress(settings as any) : '';
+      const businessAddress = settings ? formatAddress(settings) : '';
       const customerAddress = customer ? formatAddress(customer) : '';
 
       await generateContractConfirmationPdf({
         contractNumber: contract.contract_number,
         title: contract.title,
         date: formatDateDE(new Date()),
-        signedByName: (acceptance as any)?.accepted_by_name || 'Unbekannt',
-        signedAt: (acceptance as any)?.accepted_at
-          ? new Date((acceptance as any).accepted_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        signedByName: acceptance?.accepted_by_name || 'Unbekannt',
+        signedAt: acceptance?.accepted_at
+          ? new Date(acceptance.accepted_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
           : 'Unbekannt',
-        signatureImage: (acceptance as any)?.signature_image || null,
+        signatureImage: acceptance?.signature_image || null,
         business: {
           business_name: settings?.business_name || '',
           address: businessAddress || undefined,
@@ -357,7 +365,7 @@ const Contracts = () => {
           name: customer?.name || '',
           address: customerAddress || undefined,
         },
-        items: (contractItems || []).map((i: any) => ({
+        items: (contractItems || []).map((i) => ({
           title: i.title, description: i.description, quantity: i.quantity,
           unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate, total: i.total,
         })),
@@ -374,7 +382,7 @@ const Contracts = () => {
     }
   };
 
-  const statusMap: Record<string, string> = {
+  const statusMap: Record<string, StatusBadgeProps['status']> = {
     entwurf: 'draft',
     active: 'draft',
     gesendet: 'sent',
@@ -409,7 +417,7 @@ const Contracts = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {contracts.map((c: any) => (
+          {contracts.map((c) => (
             <div key={c.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-start justify-between">
                 <div>
@@ -419,7 +427,7 @@ const Contracts = () => {
                   <p className="text-xs text-muted-foreground">Leistungsart: Wiederkehrend ({frequencyLabels[c.frequency]?.[language] || c.frequency})</p>
                 </div>
                 <StatusBadge
-                  status={statusMap[c.status] as any || 'draft'}
+                  status={statusMap[c.status] || 'draft'}
                   label={statusLabel[c.status] || c.status}
                 />
               </div>
@@ -474,13 +482,13 @@ const Contracts = () => {
                     <Button size="sm" variant="outline" onClick={() => handleSendContract(c)}>
                       <Send className="h-3.5 w-3.5 mr-1" /> {ct.sendContract}
                     </Button>
-                    {(c as any).public_token && (
+                    {c.public_token && (
                       <>
                         <Button size="sm" variant="outline" onClick={() => handleCopyLink(c)}>
                           <Copy className="h-3.5 w-3.5 mr-1" /> {ct.copyLink}
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => {
-                          window.open(`${window.location.origin}/contract/view/${(c as any).public_token}`, '_blank');
+                          window.open(`${window.location.origin}/contract/view/${c.public_token}`, '_blank');
                         }}>
                           <ExternalLink className="h-3.5 w-3.5 mr-1" /> Link öffnen
                         </Button>
@@ -527,10 +535,10 @@ const Contracts = () => {
         <EmailModal
           open={emailOpen}
           onClose={() => { setEmailOpen(false); setEmailContract(null); }}
-          recipientEmail={(emailContract as any)?.customer?.email || ''}
+          recipientEmail={emailContract?.customer?.email || ''}
           defaultSubject={`Vertrag ${emailContract?.contract_number} von ${settings?.business_name || 'uns'}`}
           defaultBody={`Guten Tag,\n\nanbei erhalten Sie Ihren Vertrag ${emailContract?.contract_number}.\n\nBitte prüfen Sie die Details und bestätigen Sie direkt über den Link.\n\nMit freundlichen Grüßen\n${settings?.business_name || ''}`}
-          publicLink={`${window.location.origin}/contract/view/${(emailContract as any)?.public_token}`}
+          publicLink={`${window.location.origin}/contract/view/${emailContract?.public_token}`}
           documentType="contract"
           documentId={emailContract?.id}
           onSent={() => queryClient.invalidateQueries({ queryKey: ['contracts'] })}

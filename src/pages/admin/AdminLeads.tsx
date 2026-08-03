@@ -13,6 +13,7 @@ import { de } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 
 const INDUSTRY_LABELS: Record<string, string> = {
   cleaning: 'Gebäudereinigung', garage: 'Kfz / Werkstatt', service: 'Dienstleistung',
@@ -191,9 +192,9 @@ const AdminLeads = () => {
     return acc;
   }, {} as Record<string, number>);
 
-  const updateField = async (id: string, fields: Record<string, any>) => {
+  const updateField = async (id: string, fields: TablesUpdate<'diagnostic_submissions'>) => {
     setSaving(true);
-    const { error } = await supabase.from('diagnostic_submissions').update(fields as any).eq('id', id);
+    const { error } = await supabase.from('diagnostic_submissions').update(fields).eq('id', id);
     if (error) { toast.error('Fehler beim Speichern'); setSaving(false); return; }
     await fetchSubmissions();
     setSelected(prev => prev ? { ...prev, ...fields } : null);

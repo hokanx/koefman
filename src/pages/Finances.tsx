@@ -11,6 +11,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import type { LucideIcon } from 'lucide-react';
+import type { TablesInsert } from '@/integrations/supabase/types';
+import type { RawExtractedData } from '@/lib/extractedDataUtils';
 
 type DateRange = 'month' | 'quarter' | 'year';
 
@@ -114,7 +117,7 @@ const Finances = () => {
 
   const upsertPeriodStatus = useMutation({
     mutationFn: async (updates: { no_activity?: boolean; admin_override?: boolean }) => {
-      const payload: any = {
+      const payload: TablesInsert<'period_completeness'> = {
         user_id: targetUserId!,
         period_key: periodKey,
         ...updates,
@@ -165,16 +168,15 @@ const Finances = () => {
     const incomeCategories = ['zahlungseingaenge', 'gutschriften'];
 
     for (const doc of documents) {
-      const d = doc as any;
-      if (d.status !== 'geprueft' && d.status !== 'verarbeitet') continue;
-      const ext = d.extracted_data as any;
+      if (doc.status !== 'geprueft' && doc.status !== 'verarbeitet') continue;
+      const ext = doc.extracted_data as RawExtractedData | null;
       if (!ext) continue;
       const amount = Number(ext.total_amount) || Number(ext.net_amount) || 0;
       if (amount <= 0) continue;
 
-      if (expenseCategories.includes(d.category)) {
+      if (expenseCategories.includes(doc.category)) {
         expenses += amount;
-      } else if (incomeCategories.includes(d.category)) {
+      } else if (incomeCategories.includes(doc.category)) {
         docIncome += amount;
       }
     }
@@ -195,10 +197,10 @@ const Finances = () => {
     }
 
     const hasInvoices = invoices.some(inv => inv.status !== 'cancelled');
-    const hasExpenseDocs = documents.some((d: any) =>
+    const hasExpenseDocs = documents.some((d) =>
       ['eingangsrechnungen', 'bewirtung', 'fahrtkosten', 'reisekosten', 'miete', 'versicherungen', 'ausgaben'].includes(d.category)
     );
-    const hasBankDocs = documents.some((d: any) =>
+    const hasBankDocs = documents.some((d) =>
       ['kontoauszuege', 'kreditkarte', 'paypal_stripe', 'kassenbuch'].includes(d.category)
     );
 
@@ -297,7 +299,7 @@ const Finances = () => {
     URL.revokeObjectURL(url);
   };
 
-  const Row = ({ label, value, icon: Icon, color }: { label: string; value: string; icon?: any; color?: string }) => (
+  const Row = ({ label, value, icon: Icon, color }: { label: string; value: string; icon?: LucideIcon; color?: string }) => (
     <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
       <div className="flex items-center gap-2">
         {Icon && <Icon className={`h-4 w-4 ${color || 'text-muted-foreground'}`} />}

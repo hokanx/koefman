@@ -13,6 +13,33 @@ const TYPE_CONFIG = {
   contract: { table: 'contracts' as const, itemsTable: 'contract_items' as const, fk: 'contract_id', numberField: 'contract_number', label: 'Vertrag', publicPrefix: 'contract' },
 };
 
+interface AdminDocCustomer {
+  name: string;
+  email: string | null;
+}
+
+// Fields common to offers/invoices/contracts that this page reads, plus an
+// index signature so the numberField (offer_number/invoice_number/contract_number)
+// can be looked up dynamically via TYPE_CONFIG[type].numberField.
+interface AdminDocRow extends Record<string, unknown> {
+  status: string;
+  date?: string;
+  start_date?: string;
+  grand_total: number;
+  notes: string | null;
+  public_token: string | null;
+  customer: AdminDocCustomer | null;
+}
+
+interface AdminDocItem {
+  id: string;
+  title: string;
+  description: string | null;
+  total: number;
+  quantity: number;
+  unit_price: number;
+}
+
 const AdminDocumentDetail = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
   const navigate = useNavigate();
@@ -21,16 +48,16 @@ const AdminDocumentDetail = () => {
   const { data: doc, isLoading } = useQuery({
     queryKey: ['admin-doc', type, id],
     queryFn: async () => {
-      let result: { data: any; error: any };
+      let result: { data: AdminDocRow | null; error: unknown };
       switch (type) {
         case 'offer':
-          result = await supabase.from('offers').select('*, customer:customers(*)').eq('id', id!).single();
+          result = await supabase.from('offers').select('*, customer:customers(*)').eq('id', id!).single().returns<AdminDocRow>();
           break;
         case 'invoice':
-          result = await supabase.from('invoices').select('*, customer:customers(*)').eq('id', id!).single();
+          result = await supabase.from('invoices').select('*, customer:customers(*)').eq('id', id!).single().returns<AdminDocRow>();
           break;
         case 'contract':
-          result = await supabase.from('contracts').select('*, customer:customers(*)').eq('id', id!).single();
+          result = await supabase.from('contracts').select('*, customer:customers(*)').eq('id', id!).single().returns<AdminDocRow>();
           break;
         default:
           throw new Error('Unknown type');
@@ -44,16 +71,16 @@ const AdminDocumentDetail = () => {
   const { data: items = [] } = useQuery({
     queryKey: ['admin-doc-items', type, id],
     queryFn: async () => {
-      let result: { data: any[] | null };
+      let result: { data: AdminDocItem[] | null };
       switch (type) {
         case 'offer':
-          result = await supabase.from('offer_items').select('*').eq('offer_id', id!).order('sort_order');
+          result = await supabase.from('offer_items').select('*').eq('offer_id', id!).order('sort_order').returns<AdminDocItem[]>();
           break;
         case 'invoice':
-          result = await supabase.from('invoice_items').select('*').eq('invoice_id', id!).order('sort_order');
+          result = await supabase.from('invoice_items').select('*').eq('invoice_id', id!).order('sort_order').returns<AdminDocItem[]>();
           break;
         case 'contract':
-          result = await supabase.from('contract_items').select('*').eq('contract_id', id!).order('sort_order');
+          result = await supabase.from('contract_items').select('*').eq('contract_id', id!).order('sort_order').returns<AdminDocItem[]>();
           break;
         default:
           throw new Error('Unknown type');
@@ -67,7 +94,7 @@ const AdminDocumentDetail = () => {
     return <p className="text-muted-foreground p-6">Unbekannter Dokumenttyp.</p>;
   }
 
-  const docNumber = doc?.[config.numberField] || '–';
+  const docNumber = (doc?.[config.numberField] as string | undefined) || '–';
   const publicToken = doc?.public_token;
   const publicUrl = publicToken ? `${window.location.origin}/${config.publicPrefix}/view/${publicToken}` : null;
 
@@ -129,7 +156,7 @@ const AdminDocumentDetail = () => {
             <div className="rounded-xl border border-border bg-card p-5 space-y-3">
               <p className="text-xs text-muted-foreground font-semibold tracking-wide uppercase">Positionen</p>
               <div className="space-y-2">
-                {items.map((item: any) => (
+                {items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{item.title}</p>

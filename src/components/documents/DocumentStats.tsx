@@ -1,7 +1,8 @@
 import { FileText, CheckCircle2, Clock, Eye } from 'lucide-react';
+import type { Tables } from '@/integrations/supabase/types';
 
 interface DocumentStatsProps {
-  documents: any[];
+  documents: Pick<Tables<'documents'>, 'status'>[];
 }
 
 const DocumentStats = ({ documents }: DocumentStatsProps) => {

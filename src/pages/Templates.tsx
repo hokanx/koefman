@@ -9,6 +9,7 @@ import FormSection from '@/components/shared/FormSection';
 import LineItemsEditor from '@/components/shared/LineItemsEditor';
 import EmptyState from '@/components/shared/EmptyState';
 import type { LineItem } from '@/types';
+import type { Tables } from '@/integrations/supabase/types';
 
 const Templates = () => {
   const { t } = useLanguage();
@@ -38,7 +39,7 @@ const Templates = () => {
   const { data: allItems = [] } = useQuery({
     queryKey: ['service-template-items'],
     queryFn: async () => {
-      const templateIds = templates.map((t: any) => t.id);
+      const templateIds = templates.map((t) => t.id);
       if (templateIds.length === 0) return [];
       const { data } = await supabase
         .from('service_template_items')
@@ -116,12 +117,12 @@ const Templates = () => {
     setItems([]);
   };
 
-  const startEdit = (tmpl: any) => {
+  const startEdit = (tmpl: Tables<'service_templates'>) => {
     setEditingId(tmpl.id);
     setTemplateName(tmpl.template_name);
     setDescription(tmpl.description || '');
-    const tmplItems = allItems.filter((i: any) => i.template_id === tmpl.id);
-    setItems(tmplItems.map((i: any) => ({
+    const tmplItems = allItems.filter((i) => i.template_id === tmpl.id);
+    setItems(tmplItems.map((i) => ({
       id: crypto.randomUUID(), title: i.title, description: i.description || '',
       quantity: i.quantity, unit: i.unit, unit_price: i.unit_price,
       tax_rate: i.tax_rate, total: i.quantity * i.unit_price, sort_order: i.sort_order,
@@ -138,7 +139,7 @@ const Templates = () => {
   const inputClass = "w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none";
 
   const getTemplateItems = (templateId: string) =>
-    allItems.filter((i: any) => i.template_id === templateId);
+    allItems.filter((i) => i.template_id === templateId);
 
   return (
     <div className="animate-fade-in p-4 md:p-6">
@@ -195,10 +196,10 @@ const Templates = () => {
 
       {!showForm && templates.length > 0 && (
         <div className="space-y-3">
-          {templates.map((tmpl: any) => {
+          {templates.map((tmpl) => {
             const tmplItems = getTemplateItems(tmpl.id);
             const isExpanded = expandedId === tmpl.id;
-            const total = tmplItems.reduce((s: number, i: any) => s + (i.quantity * i.unit_price), 0);
+            const total = tmplItems.reduce((s, i) => s + (i.quantity * i.unit_price), 0);
 
             return (
               <div key={tmpl.id} className="rounded-lg border border-border bg-card p-4">
@@ -229,7 +230,7 @@ const Templates = () => {
 
                 {isExpanded && tmplItems.length > 0 && (
                   <div className="mt-3 space-y-2 border-t border-border pt-3">
-                    {tmplItems.map((item: any) => (
+                    {tmplItems.map((item) => (
                       <div key={item.id} className="flex items-center justify-between text-sm">
                         <div>
                           <span className="font-medium text-foreground">{item.title}</span>

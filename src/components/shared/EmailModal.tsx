@@ -71,7 +71,9 @@ const EmailModal = ({
           .limit(1)
           .maybeSingle();
         orgId = membership?.organization_id ?? null;
-      } catch {}
+      } catch {
+        // Fall through — orgId stays null and is handled by the check below
+      }
     }
     if (!orgId) {
       toast.error('E-Mail konnte nicht gesendet werden. Bitte schließen Sie zuerst die Einrichtung ab.');

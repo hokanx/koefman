@@ -64,7 +64,7 @@ const CustomerNew = () => {
         phone: form.phone, email: form.email, address, notes: form.notes, user_id: user!.id,
         street: form.street, house_number: form.house_number, postal_code: form.postal_code,
         city: form.city, country: form.country,
-      } as any).select().single();
+      }).select().single();
       if (error) throw error;
       if (category !== 'general') {
         await supabase.from('customer_extensions').insert({

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FileText, Calendar, Mail, User, Hash, Layers, StickyNote, Send, Link, ExternalLink, CheckCircle, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import StatusBadge from '@/components/shared/StatusBadge';
+import StatusBadge, { type StatusBadgeProps } from '@/components/shared/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -17,8 +17,9 @@ import {
   useUpdateOrgDocument,
 } from '@/hooks/useOrgDocuments';
 import { formatDateDE } from '@/lib/utils';
+import type { Tables } from '@/integrations/supabase/types';
 
-const STATUS_BADGE_MAP: Record<string, any> = {
+const STATUS_BADGE_MAP: Record<string, StatusBadgeProps['status']> = {
   draft: 'draft',
   generated: 'new',
   sent: 'sent',
@@ -27,6 +28,14 @@ const STATUS_BADGE_MAP: Record<string, any> = {
   cancelled: 'cancelled',
   archived: 'archived',
 };
+
+/**
+ * The `OrgDocument` interface (useOrgDocuments.ts) doesn't declare every column
+ * the `org_documents` table actually has — `public_token` and `sent_at` are
+ * read here but missing from that hand-written type. Widen to the real DB row
+ * shape for just those two fields rather than casting to `any`.
+ */
+type OrgDocumentWithMeta = OrgDocument & Pick<Tables<'org_documents'>, 'public_token' | 'sent_at'>;
 
 interface Props {
   document: OrgDocument | null;
@@ -44,12 +53,12 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
     queryKey: ['org-doc-acceptance', doc?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('org_document_acceptances' as any)
+        .from('org_document_acceptances')
         .select('*')
         .eq('document_id', doc!.id)
         .limit(1);
       if (error) throw error;
-      return (data as any)?.[0] || null;
+      return data?.[0] || null;
     },
     enabled: !!doc?.id && open,
   });
@@ -59,12 +68,12 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
   const allowedStatuses = getStatusesForType(doc.document_type);
   const payload = doc.document_payload_json ?? {};
   const hasTemplate = !!doc.template_snapshot_json?.id;
-  const docAny = doc as any;
-  const publicToken = docAny.public_token;
-  const sentAt = docAny.sent_at;
+  const docWithMeta = doc as OrgDocumentWithMeta;
+  const publicToken = docWithMeta.public_token;
+  const sentAt = docWithMeta.sent_at;
 
   const handleStatusChange = (newStatus: OrgDocumentStatus) => {
-    updateMutation.mutate({ id: doc.id, status: newStatus } as any);
+    updateMutation.mutate({ id: doc.id, status: newStatus });
   };
 
   const handleSend = async () => {
@@ -83,7 +92,7 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
       queryClient.invalidateQueries({ queryKey: ['org-documents'] });
       queryClient.invalidateQueries({ queryKey: ['org-doc-acceptance', doc.id] });
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Org document email send error:', err);
       toast.error('E-Mail konnte nicht gesendet werden. Bitte prüfen Sie die E-Mail-Einstellungen.');
     } finally {
@@ -94,7 +103,7 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
   const handleConvertToInvoice = async () => {
     try {
       const { error: createError } = await supabase
-        .from('org_documents' as any)
+        .from('org_documents')
         .insert({
           organization_id: doc.organization_id,
           created_by_user_id: doc.created_by_user_id,
@@ -112,13 +121,13 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
           },
           status: 'draft',
           notes: doc.document_number ? `Erstellt aus ${doc.document_number}` : undefined,
-        } as any);
+        });
       if (createError) throw createError;
       toast.success('Rechnung als Entwurf erstellt');
       queryClient.invalidateQueries({ queryKey: ['org-documents'] });
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Fehler beim Erstellen der Rechnung');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Erstellen der Rechnung');
     }
   };
 

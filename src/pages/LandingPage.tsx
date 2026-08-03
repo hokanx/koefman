@@ -6,6 +6,11 @@ import BrandMark from '@/components/shared/BrandMark';
 import LegalFooter from '@/components/shared/LegalFooter';
 import FadeSection from '@/components/ui/FadeSection';
 
+/** Safari/iOS-only, non-standard flag indicating the app was launched from the home screen. */
+interface NavigatorStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -21,7 +26,7 @@ const LandingPage = () => {
     // Homescreen / standalone launch → go straight to login
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as any).standalone === true;
+      (navigator as NavigatorStandalone).standalone === true;
     if (isStandalone && !user && !loading) {
       navigate('/login', { replace: true });
       return;

@@ -4,12 +4,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDateDE } from '@/lib/utils';
+import type { Tables } from '@/integrations/supabase/types';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+
+type NotificationRow = Tables<'notifications'>;
 
 const NotificationBell = () => {
   const { user } = useAuth();
@@ -31,7 +34,7 @@ const NotificationBell = () => {
     refetchInterval: 30000,
   });
 
-  const unreadCount = notifications.filter((n: any) => !n.read).length;
+  const unreadCount = notifications.filter((n: NotificationRow) => !n.read).length;
 
   const markReadMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -42,7 +45,7 @@ const NotificationBell = () => {
 
   const markAllRead = useMutation({
     mutationFn: async () => {
-      const unreadIds = notifications.filter((n: any) => !n.read).map((n: any) => n.id);
+      const unreadIds = notifications.filter((n: NotificationRow) => !n.read).map((n: NotificationRow) => n.id);
       if (unreadIds.length > 0) {
         await supabase.from('notifications').update({ read: true }).in('id', unreadIds);
       }
@@ -84,7 +87,7 @@ const NotificationBell = () => {
             {notifications.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">Keine Benachrichtigungen</p>
             ) : (
-              notifications.map((n: any) => (
+              notifications.map((n: NotificationRow) => (
                 <div
                   key={n.id}
                   className={`rounded-lg border p-3 text-sm transition ${

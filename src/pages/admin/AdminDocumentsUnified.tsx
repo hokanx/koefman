@@ -21,6 +21,42 @@ interface UnifiedDoc {
   date: string;
 }
 
+interface DocOfferRow {
+  id: string;
+  offer_number: string;
+  grand_total: number;
+  status: string;
+  date: string;
+  user_id: string;
+  customer: { name: string } | null;
+}
+
+interface DocInvoiceRow {
+  id: string;
+  invoice_number: string;
+  grand_total: number;
+  status: string;
+  date: string;
+  user_id: string;
+  customer: { name: string } | null;
+}
+
+interface DocContractRow {
+  id: string;
+  contract_number: string;
+  grand_total: number;
+  status: string;
+  start_date: string;
+  user_id: string;
+  customer: { name: string } | null;
+}
+
+interface OwnerSettingsRow {
+  user_id: string;
+  business_name: string | null;
+  owner_name: string | null;
+}
+
 const AdminDocumentsUnified = () => {
   const [tab, setTab] = useState<DocTab>('all');
   const [search, setSearch] = useState('');
@@ -29,15 +65,15 @@ const AdminDocumentsUnified = () => {
     queryKey: ['admin-unified-docs'],
     queryFn: async () => {
       const [offersRes, invoicesRes, contractsRes] = await Promise.all([
-        supabase.from('offers').select('id, offer_number, grand_total, status, date, user_id, customer:customers(name)'),
-        supabase.from('invoices').select('id, invoice_number, grand_total, status, date, user_id, customer:customers(name)'),
-        supabase.from('contracts').select('id, contract_number, grand_total, status, start_date, user_id, customer:customers(name)'),
+        supabase.from('offers').select('id, offer_number, grand_total, status, date, user_id, customer:customers(name)').returns<DocOfferRow[]>(),
+        supabase.from('invoices').select('id, invoice_number, grand_total, status, date, user_id, customer:customers(name)').returns<DocInvoiceRow[]>(),
+        supabase.from('contracts').select('id, contract_number, grand_total, status, start_date, user_id, customer:customers(name)').returns<DocContractRow[]>(),
       ]);
 
       // Collect unique user_ids to fetch owner names
       const userIds = new Set<string>();
       [offersRes.data, invoicesRes.data, contractsRes.data].forEach(arr =>
-        (arr || []).forEach((d: any) => { if (d.user_id) userIds.add(d.user_id); })
+        (arr || []).forEach((d) => { if (d.user_id) userIds.add(d.user_id); })
       );
 
       // Fetch owner business names
@@ -46,29 +82,30 @@ const AdminDocumentsUnified = () => {
         const { data: settings } = await supabase
           .from('business_settings')
           .select('user_id, business_name, owner_name')
-          .in('user_id', Array.from(userIds));
-        (settings || []).forEach((s: any) => {
+          .in('user_id', Array.from(userIds))
+          .returns<OwnerSettingsRow[]>();
+        (settings || []).forEach((s) => {
           ownerMap[s.user_id] = s.business_name || s.owner_name || '–';
         });
       }
 
       const unified: UnifiedDoc[] = [];
 
-      (offersRes.data || []).forEach((o: any) => unified.push({
+      (offersRes.data || []).forEach((o) => unified.push({
         id: o.id, type: 'offer', number: o.offer_number,
         customerName: o.customer?.name || '–', amount: o.grand_total,
         ownerName: ownerMap[o.user_id] || '–',
         status: o.status, date: o.date,
       }));
 
-      (invoicesRes.data || []).forEach((i: any) => unified.push({
+      (invoicesRes.data || []).forEach((i) => unified.push({
         id: i.id, type: 'invoice', number: i.invoice_number,
         customerName: i.customer?.name || '–', amount: i.grand_total,
         ownerName: ownerMap[i.user_id] || '–',
         status: i.status, date: i.date,
       }));
 
-      (contractsRes.data || []).forEach((c: any) => unified.push({
+      (contractsRes.data || []).forEach((c) => unified.push({
         id: c.id, type: 'contract', number: c.contract_number,
         customerName: c.customer?.name || '–', amount: c.grand_total,
         ownerName: ownerMap[c.user_id] || '–',

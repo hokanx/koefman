@@ -121,7 +121,9 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
       try {
         const { data } = await supabase.from('qr_sessions').insert({ campaign_id: variant, converted: false }).select('id').single();
         if (data) sessionIdRef.current = data.id;
-      } catch {}
+      } catch {
+        // Best-effort tracking only — ignore failures silently
+      }
     };
     trackVisit();
   }, [variant]);
@@ -131,7 +133,9 @@ export default function TruthLanding({ entryLine1, entryLine2, entryLine3, campa
       try {
         await supabase.from('qr_sessions').update({ converted: true }).eq('id', sessionIdRef.current);
         sessionStorage.setItem('qr_session_id', sessionIdRef.current);
-      } catch {}
+      } catch {
+        // Best-effort tracking only — ignore failures silently
+      }
     }
     navigate(`/diagnose?v=${variant}`);
   };

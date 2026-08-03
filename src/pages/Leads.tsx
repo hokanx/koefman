@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import SearchBar from '@/components/shared/SearchBar';
 import EmptyState from '@/components/shared/EmptyState';
-import StatusBadge from '@/components/shared/StatusBadge';
+import StatusBadge, { StatusBadgeProps } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { formatAddress } from '@/types';
 import { formatDateDE } from '@/lib/generatePdf';
@@ -71,7 +71,7 @@ const Leads = () => {
     queryKey: ['leads'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('intake_submissions' as any)
+        .from('intake_submissions')
         .select('*')
         .eq('owner_id', user!.id)
         .order('created_at', { ascending: false });
@@ -81,7 +81,7 @@ const Leads = () => {
     enabled: !!user,
   });
 
-  const intakeToken = (settings as any)?.intake_token;
+  const intakeToken = settings?.intake_token;
   const intakeLink = intakeToken ? `${window.location.origin}/intake/${intakeToken}` : '';
 
   const copyLink = () => {
@@ -94,7 +94,7 @@ const Leads = () => {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, silent }: { id: string; status: string; silent?: boolean }) => {
-      const { error } = await supabase.from('intake_submissions' as any).update({ status } as any).eq('id', id);
+      const { error } = await supabase.from('intake_submissions').update({ status }).eq('id', id);
       if (error) throw error;
       return { silent };
     },
@@ -121,7 +121,7 @@ const Leads = () => {
         country: lead.country,
         notes: lead.notes,
         address,
-      } as any).select().single();
+      }).select().single();
       if (error) throw error;
 
       // Insert extension fields if relevant
@@ -142,7 +142,7 @@ const Leads = () => {
       }
 
       // Update submission status
-      await supabase.from('intake_submissions' as any).update({ status: 'converted', converted_customer_id: customer.id } as any).eq('id', lead.id);
+      await supabase.from('intake_submissions').update({ status: 'converted', converted_customer_id: customer.id }).eq('id', lead.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
@@ -174,12 +174,12 @@ const Leads = () => {
           country: lead.country,
           notes: lead.notes,
           address,
-        } as any).select().single();
+        }).select().single();
         if (error) throw error;
         customerId = customer.id;
 
         // Update lead with customer reference
-        await supabase.from('intake_submissions' as any).update({ status: 'converted', converted_customer_id: customerId } as any).eq('id', lead.id);
+        await supabase.from('intake_submissions').update({ status: 'converted', converted_customer_id: customerId }).eq('id', lead.id);
       }
 
       return customerId;
@@ -261,7 +261,7 @@ const Leads = () => {
             onClick={e => e.stopPropagation()}>
             <div className="flex-shrink-0 flex items-center justify-between border-b border-border p-4">
               <h3 className="text-lg font-bold text-foreground">{selected.company_or_name}</h3>
-              <StatusBadge status={selected.status as any} label={(t.status as any)[selected.status] || selected.status} />
+              <StatusBadge status={selected.status as StatusBadgeProps['status']} label={t.status[selected.status as keyof typeof t.status] || selected.status} />
             </div>
 
             <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3 text-sm">
@@ -347,7 +347,7 @@ const Leads = () => {
                   <h3 className="font-medium text-foreground truncate">{lead.company_or_name}</h3>
                   {lead.contact_person && <p className="text-sm text-muted-foreground">{lead.contact_person}</p>}
                 </div>
-                <StatusBadge status={lead.status as any} label={(t.status as any)[lead.status] || lead.status} />
+                <StatusBadge status={lead.status as StatusBadgeProps['status']} label={t.status[lead.status as keyof typeof t.status] || lead.status} />
               </div>
               <div className="mt-2 flex flex-wrap gap-3 text-sm text-muted-foreground">
                 {lead.email && <span>{lead.email}</span>}

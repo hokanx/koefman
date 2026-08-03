@@ -98,7 +98,7 @@ const Settings = () => {
 
   // Sync tax mode from org
   useEffect(() => {
-    setTaxMode((activeOrganization as any)?.tax_mode === 'small_business' ? 'small_business' : 'standard');
+    setTaxMode(activeOrganization?.tax_mode === 'small_business' ? 'small_business' : 'standard');
   }, [activeOrganization]);
 
   useEffect(() => {
@@ -114,7 +114,7 @@ const Settings = () => {
         country: settings.country || 'Deutschland',
         email: settings.email || '',
         phone: settings.phone || '',
-        website: (settings as any).website || '',
+        website: settings.website || '',
         business_category: settings.business_category || 'general',
         tax_number: settings.tax_number || '',
         vat_id: settings.vat_id || '',
@@ -209,13 +209,13 @@ const Settings = () => {
       if (settings) {
         const { error } = await supabase
           .from('business_settings')
-          .update(payload as any)
+          .update(payload)
           .eq('id', settings.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('business_settings')
-          .insert({ ...payload, user_id: user!.id } as any);
+          .insert({ ...payload, user_id: user!.id });
         if (error) throw error;
       }
 
@@ -223,7 +223,7 @@ const Settings = () => {
       if (activeOrganizationId) {
         const { error: orgError } = await supabase
           .from('organizations')
-          .update({ tax_mode: taxMode } as any)
+          .update({ tax_mode: taxMode })
           .eq('id', activeOrganizationId);
         if (orgError) throw orgError;
       }

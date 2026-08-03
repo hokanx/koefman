@@ -75,7 +75,7 @@ export const useOrgExpenseList = (filters?: { category?: ExpenseCategory; export
     queryKey: ['org-expenses', activeOrganizationId, filters?.category, filters?.exportStatus],
     queryFn: async () => {
       let query = supabase
-        .from('org_expenses' as any)
+        .from('org_expenses')
         .select('*')
         .eq('organization_id', activeOrganizationId!)
         .order('expense_date', { ascending: false });
@@ -112,7 +112,7 @@ export const useCreateOrgExpense = () => {
     }) => {
       if (!activeOrganizationId) throw new Error('Kein aktives Geschäft');
       const { data, error } = await supabase
-        .from('org_expenses' as any)
+        .from('org_expenses')
         .insert({
           organization_id: activeOrganizationId,
           created_by_user_id: user?.id ?? null,
@@ -127,7 +127,7 @@ export const useCreateOrgExpense = () => {
           receipt_file_url: input.receipt_file_url ?? null,
           receipt_file_name: input.receipt_file_name ?? null,
           linked_document_id: input.linked_document_id ?? null,
-        } as any)
+        })
         .select('*')
         .single();
       if (error) throw error;
@@ -137,7 +137,7 @@ export const useCreateOrgExpense = () => {
       qc.invalidateQueries({ queryKey: ['org-expenses'] });
       toast.success('Ausgabe erstellt');
     },
-    onError: (err: any) => toast.error(err.message || 'Fehler beim Erstellen'),
+    onError: (err: Error) => toast.error(err.message || 'Fehler beim Erstellen'),
   });
 };
 
@@ -146,8 +146,8 @@ export const useUpdateOrgExpense = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<OrgExpense> & { id: string }) => {
       const { data, error } = await supabase
-        .from('org_expenses' as any)
-        .update(updates as any)
+        .from('org_expenses')
+        .update(updates)
         .eq('id', id)
         .select('*')
         .single();
@@ -158,7 +158,7 @@ export const useUpdateOrgExpense = () => {
       qc.invalidateQueries({ queryKey: ['org-expenses'] });
       toast.success('Ausgabe aktualisiert');
     },
-    onError: (err: any) => toast.error(err.message || 'Fehler beim Aktualisieren'),
+    onError: (err: Error) => toast.error(err.message || 'Fehler beim Aktualisieren'),
   });
 };
 
@@ -167,7 +167,7 @@ export const useDeleteOrgExpense = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('org_expenses' as any)
+        .from('org_expenses')
         .delete()
         .eq('id', id);
       if (error) throw error;
@@ -176,6 +176,6 @@ export const useDeleteOrgExpense = () => {
       qc.invalidateQueries({ queryKey: ['org-expenses'] });
       toast.success('Ausgabe gelöscht');
     },
-    onError: (err: any) => toast.error(err.message || 'Fehler beim Löschen'),
+    onError: (err: Error) => toast.error(err.message || 'Fehler beim Löschen'),
   });
 };

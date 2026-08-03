@@ -71,6 +71,11 @@ const SignaturePad = ({ onSignatureChange, onSignatureStateChange, clearLabel, i
     resize();
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
+    // Intentionally runs once on mount only: emitEmptyState wraps the
+    // onSignatureChange/onSignatureStateChange props, which are not
+    // guaranteed to be memoized by callers. Depending on it here would
+    // re-run resize() (and clear the canvas) on every parent re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

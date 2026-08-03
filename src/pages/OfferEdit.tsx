@@ -82,23 +82,23 @@ const OfferEdit = () => {
       setStatus(offer.status as OfferStatus);
       setNotes(offer.notes || '');
       setInternalNotes(offer.internal_notes || '');
-      setIntroText((offer as any).intro_text || (settings as any)?.default_offer_intro_text || fallbackIntro);
-      setFooterText((offer as any).footer_text || (settings as any)?.default_offer_footer_text || fallbackFooter);
-      setClosingText((offer as any).closing_text || (settings as any)?.default_closing_text || fallbackClosing);
-      setServiceType((offer as any).service_type || 'einmalig');
+      setIntroText(offer.intro_text || settings?.default_offer_intro_text || fallbackIntro);
+      setFooterText(offer.footer_text || settings?.default_offer_footer_text || fallbackFooter);
+      setClosingText(offer.closing_text || settings?.default_closing_text || fallbackClosing);
+      setServiceType((offer.service_type as 'einmalig' | 'laufend') || 'einmalig');
       setDiscount({
-        enabled: !!(offer as any).discount_type,
-        type: (offer as any).discount_type || 'percentage',
-        value: (offer as any).discount_value || 0,
-        scope: (offer as any).discount_scope || 'both',
-        duration_months: (offer as any).discount_duration_months ?? null,
+        enabled: !!offer.discount_type,
+        type: (offer.discount_type as DiscountData['type']) || 'percentage',
+        value: offer.discount_value || 0,
+        scope: (offer.discount_scope as DiscountData['scope']) || 'both',
+        duration_months: offer.discount_duration_months ?? null,
       });
     }
   }, [offer, settings]);
 
   useEffect(() => {
     if (offerItems) {
-      setItems(offerItems.map((i: any) => ({
+      setItems(offerItems.map((i) => ({
         id: i.id, title: i.title, description: i.description || '', quantity: i.quantity,
         unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate,
         total: i.quantity * i.unit_price, sort_order: i.sort_order,
@@ -118,7 +118,7 @@ const OfferEdit = () => {
         discount_value: discount.enabled ? discount.value : 0,
         discount_scope: discount.enabled ? discount.scope : 'both',
         discount_duration_months: discount.enabled ? discount.duration_months : null,
-      } as any).eq('id', id!);
+      }).eq('id', id!);
       if (error) throw error;
 
       await supabase.from('offer_items').delete().eq('offer_id', id!);

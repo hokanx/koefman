@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FileText, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { toast } from 'sonner';
+import type { Tables, TablesUpdate } from '@/integrations/supabase/types';
 
 const DOC_TYPE_LABELS: Record<string, string> = {
   offer: 'Angebot',
@@ -17,6 +18,20 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 };
 
 const SIGNABLE_TYPES = ['offer', 'contract'];
+
+interface OrgDocumentPayload {
+  description?: string;
+  client_address?: string;
+}
+
+interface OrgDocumentTemplateSnapshot {
+  content_html?: string;
+}
+
+type OrgDocumentRow = Omit<Tables<'org_documents'>, 'document_payload_json' | 'template_snapshot_json'> & {
+  document_payload_json: OrgDocumentPayload | null;
+  template_snapshot_json: OrgDocumentTemplateSnapshot | null;
+};
 
 const PublicDocumentView = () => {
   const { token } = useParams<{ token: string }>();
@@ -33,12 +48,12 @@ const PublicDocumentView = () => {
     queryKey: ['public-org-document', token],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('org_documents' as any)
+        .from('org_documents')
         .select('*')
         .eq('public_token', token!)
         .single();
       if (error) throw error;
-      return data as any;
+      return data as OrgDocumentRow;
     },
     enabled: !!token,
   });
@@ -47,12 +62,12 @@ const PublicDocumentView = () => {
     queryKey: ['public-org-doc-acceptance', doc?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('org_document_acceptances' as any)
+        .from('org_document_acceptances')
         .select('*')
         .eq('document_id', doc.id)
         .limit(1);
       if (error) throw error;
-      return (data as any)?.[0] || null;
+      return data?.[0] || null;
     },
     enabled: !!doc?.id,
   });
@@ -66,7 +81,7 @@ const PublicDocumentView = () => {
       const signatureImage = sigCanvas.toDataURL('image/png');
 
       // Save client data into document if missing
-      const updates: any = { status: 'accepted' };
+      const updates: TablesUpdate<'org_documents'> = { status: 'accepted' };
       if (!doc.recipient_name && signerName.trim()) {
         updates.recipient_name = signerName.trim();
       }
@@ -80,18 +95,18 @@ const PublicDocumentView = () => {
 
       // Insert acceptance record
       const { error: acceptError } = await supabase
-        .from('org_document_acceptances' as any)
+        .from('org_document_acceptances')
         .insert({
           document_id: doc.id,
           accepted_by_name: signerName.trim(),
           signature_image: signatureImage,
-        } as any);
+        });
       if (acceptError) throw acceptError;
 
       // Update document status + client data
       const { error: updateError } = await supabase
-        .from('org_documents' as any)
-        .update(updates as any)
+        .from('org_documents')
+        .update(updates)
         .eq('id', doc.id);
       if (updateError) throw updateError;
     },
@@ -100,8 +115,8 @@ const PublicDocumentView = () => {
       queryClient.invalidateQueries({ queryKey: ['public-org-document', token] });
       queryClient.invalidateQueries({ queryKey: ['public-org-doc-acceptance', doc?.id] });
     },
-    onError: (err: any) => {
-      setSignError(err.message || 'Fehler bei der Annahme');
+    onError: (err: unknown) => {
+      setSignError(err instanceof Error ? err.message : 'Fehler bei der Annahme');
     },
   });
 

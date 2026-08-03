@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
 export type TemplateType = 'offer' | 'invoice' | 'contract' | 'reminder' | 'expense_export_note' | 'generic_document';
+
+type DocumentTemplateRow = Database['public']['Tables']['document_templates']['Row'];
 
 /**
  * Resolves the active template for a given type and organization.
@@ -14,7 +17,7 @@ export const useTemplateResolver = (organizationId: string | null, templateType:
       // Try org-specific first (order by version desc for determinism)
       if (organizationId) {
         const { data: orgTemplates } = await supabase
-          .from('document_templates' as any)
+          .from('document_templates')
           .select('*')
           .eq('template_type', templateType)
           .eq('scope_type', 'organization')
@@ -28,13 +31,13 @@ export const useTemplateResolver = (organizationId: string | null, templateType:
           if ((orgTemplates?.length ?? 0) > 1) {
             console.warn(`[TemplateResolver] Multiple active org templates for type="${templateType}", org="${organizationId}". Using most recent.`);
           }
-          return { template: orgTemplate as any, source: 'organization' as const };
+          return { template: orgTemplate, source: 'organization' as const };
         }
       }
 
       // Fallback to global (order by version desc for determinism)
       const { data: globalTemplates } = await supabase
-        .from('document_templates' as any)
+        .from('document_templates')
         .select('*')
         .eq('template_type', templateType)
         .eq('scope_type', 'global')
@@ -48,7 +51,7 @@ export const useTemplateResolver = (organizationId: string | null, templateType:
         console.warn(`[TemplateResolver] Multiple active global templates for type="${templateType}". Using most recent.`);
       }
 
-      return { template: (globalTemplates?.[0] as any) ?? null, source: 'global' as const };
+      return { template: globalTemplates?.[0] ?? null, source: 'global' as const };
     },
     enabled: !!templateType,
   });
@@ -64,13 +67,13 @@ export const useOrgTemplateStatus = (organizationId: string) => {
     queryFn: async () => {
       const [{ data: orgTemplates }, { data: globalTemplates }] = await Promise.all([
         supabase
-          .from('document_templates' as any)
+          .from('document_templates')
           .select('*')
           .eq('scope_type', 'organization')
           .eq('organization_id', organizationId)
           .order('template_type'),
         supabase
-          .from('document_templates' as any)
+          .from('document_templates')
           .select('*')
           .eq('scope_type', 'global')
           .is('organization_id', null)
@@ -78,8 +81,8 @@ export const useOrgTemplateStatus = (organizationId: string) => {
           .order('template_type'),
       ]);
       return {
-        orgTemplates: (orgTemplates || []) as any[],
-        globalTemplates: (globalTemplates || []) as any[],
+        orgTemplates: (orgTemplates || []) as DocumentTemplateRow[],
+        globalTemplates: (globalTemplates || []) as DocumentTemplateRow[],
       };
     },
     enabled: !!organizationId,

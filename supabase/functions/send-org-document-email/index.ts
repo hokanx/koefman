@@ -3,7 +3,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.25.76";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -125,7 +125,7 @@ function buildTextBody(subject: string, messageBody: string, ctaLabel?: string, 
   return parts.join('\n');
 }
 
-async function ensureOrganizationAccess(supabaseAdmin: any, userId: string, organizationId: string) {
+async function ensureOrganizationAccess(supabaseAdmin: SupabaseClient, userId: string, organizationId: string) {
   const [membershipResult, ownerResult, adminResult] = await Promise.all([
     supabaseAdmin
       .from('organization_memberships')
@@ -151,7 +151,7 @@ async function ensureOrganizationAccess(supabaseAdmin: any, userId: string, orga
   return Boolean(membershipResult.data || ownerResult.data || adminResult.data);
 }
 
-async function loadBranding(supabaseAdmin: any, organizationId: string, userId?: string): Promise<BrandingSettings> {
+async function loadBranding(supabaseAdmin: SupabaseClient, organizationId: string, userId?: string): Promise<BrandingSettings> {
   const [{ data: org, error: orgError }, { data: emailSettings, error: emailSettingsError }] = await Promise.all([
     supabaseAdmin
       .from('organizations')
@@ -296,7 +296,7 @@ async function sendViaResend(resendApiKey: string, emailPayload: Record<string, 
 }
 
 async function resolveLegacyDocument(
-  supabaseAdmin: any,
+  supabaseAdmin: SupabaseClient,
   requestData: ParsedRequest,
   userId: string,
   appUrl: string,
@@ -451,12 +451,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
-    const supabaseAdmin: any = createClient(
+    const supabaseAdmin: SupabaseClient = createClient(
       supabaseUrl,
       serviceRoleKey
     );
 
-    const supabaseUser: any = createClient(
+    const supabaseUser: SupabaseClient = createClient(
       supabaseUrl,
       anonKey,
       { global: { headers: { Authorization: authHeader } } }

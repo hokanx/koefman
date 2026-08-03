@@ -11,5 +11,7 @@ export function trackFunnelEvent(
       variant: opts?.variant || null,
       submission_id: opts?.submission_id || null,
     }).then(() => {});
-  } catch {}
+  } catch {
+    // ignore tracking failures
+  }
 }

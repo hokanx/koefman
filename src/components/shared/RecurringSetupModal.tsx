@@ -57,10 +57,10 @@ const RecurringSetupModal = ({ open, onClose, invoiceId, customerId }: Recurring
         end_date: endDate || null,
         status: 'active',
         auto_generate: autoGenerate,
-      } as any);
+      });
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['recurring-invoices'] });
-      toast.success((t as any).recurring.created);
+      toast.success(t.recurring.created);
       onClose();
     } catch {
       toast.error(t.common.error);
@@ -69,7 +69,7 @@ const RecurringSetupModal = ({ open, onClose, invoiceId, customerId }: Recurring
     }
   };
 
-  const rt = (t as any).recurring;
+  const rt = t.recurring;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>

@@ -8,6 +8,13 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { formatDateDE } from '@/lib/generatePdf';
 import { Button } from '@/components/ui/button';
 import { Pause, Play, XCircle, FileText } from 'lucide-react';
+import type { Tables } from '@/integrations/supabase/types';
+import type { StatusBadgeProps } from '@/components/shared/StatusBadge';
+
+type RecurringInvoiceWithRelations = Tables<'recurring_invoices'> & {
+  customer: Pick<Tables<'customers'>, 'name'> | null;
+  source_invoice: Pick<Tables<'invoices'>, 'invoice_number'> | null;
+};
 
 const frequencyLabels: Record<string, Record<string, string>> = {
   weekly: { de: 'Wöchentlich', en: 'Weekly', ar: 'أسبوعياً' },
@@ -21,7 +28,7 @@ const RecurringInvoices = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const rt = (t as any).recurring;
+  const rt = t.recurring;
   const statusLabels = t.status as Record<string, string>;
 
   const { data: recurringList = [], isLoading } = useQuery({
@@ -33,14 +40,14 @@ const RecurringInvoices = () => {
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []) as RecurringInvoiceWithRelations[];
     },
     enabled: !!user,
   });
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from('recurring_invoices').update({ status } as any).eq('id', id);
+      const { error } = await supabase.from('recurring_invoices').update({ status }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -74,7 +81,7 @@ const RecurringInvoices = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {recurringList.map((r: any) => (
+          {recurringList.map((r) => (
             <div key={r.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-start justify-between">
                 <div>
@@ -84,7 +91,7 @@ const RecurringInvoices = () => {
                   </p>
                 </div>
                 <StatusBadge
-                  status={recurringStatusMap[r.status] as any}
+                  status={recurringStatusMap[r.status] as StatusBadgeProps['status']}
                   label={recurringStatusLabel[r.status] || r.status}
                 />
               </div>

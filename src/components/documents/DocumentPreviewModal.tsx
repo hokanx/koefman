@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Sparkles, Save, FileText } from 'lucide-react';
@@ -8,11 +8,18 @@ import { formatDateDE } from '@/lib/utils';
 import { getCategoryInfo, getStatusInfo, DOCUMENT_GROUPS, STATUS_OPTIONS } from '@/lib/documentCategories';
 import { normalizeExtracted, formatAmountDE } from '@/lib/extractedDataUtils';
 import { useAdmin } from '@/hooks/useAdmin';
+import type { Tables, Json } from '@/integrations/supabase/types';
+
+type DocumentRow = Tables<'documents'>;
+
+/** Narrow a Json column value down to a plain record, for use with normalizeExtracted/spreading. */
+const asRecord = (value: Json | null | undefined): Record<string, Json | undefined> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value : null;
 
 interface DocumentPreviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  document: any | null;
+  document: DocumentRow | null;
   onUpdate?: () => void;
 }
 
@@ -40,7 +47,7 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
   useEffect(() => {
     if (!doc || !open) { setPreviewUrl(null); return; }
 
-    const norm = normalizeExtracted(doc.extracted_data);
+    const norm = normalizeExtracted(asRecord(doc.extracted_data));
     setEditCategory(doc.category || '');
     setEditStatus(doc.status || 'neu');
     setEditNote(doc.admin_note || '');
@@ -70,14 +77,18 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
     if (!isNaN(net) && !isNaN(vat) && !editGross) {
       setEditGross((net + vat).toFixed(2));
     }
+    // editGross is intentionally excluded: including it would re-run this effect
+    // every time the computed value is written, creating a feedback loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editNet, editVat]);
 
   if (!doc) return null;
 
   const isImage = doc.mime_type?.startsWith('image/');
   const isPdf = doc.mime_type === 'application/pdf';
-  const norm = normalizeExtracted(doc.extracted_data);
-  const hasExtracted = !!doc.extracted_data && Object.keys(doc.extracted_data).length > 0;
+  const extractedRecord = asRecord(doc.extracted_data);
+  const norm = normalizeExtracted(extractedRecord);
+  const hasExtracted = !!extractedRecord && Object.keys(extractedRecord).length > 0;
   const catInfo = getCategoryInfo(doc.category);
   const statusInfo = getStatusInfo(doc.status);
 
@@ -99,7 +110,7 @@ const DocumentPreviewModal = ({ open, onOpenChange, document: doc, onUpdate }: D
   const handleSave = async () => {
     setSaving(true);
     try {
-      const extractedData: Record<string, any> = { ...(doc.extracted_data || {}) };
+      const extractedData: Record<string, Json | undefined> = { ...(asRecord(doc.extracted_data) ?? {}) };
       // Save normalized fields back
       extractedData.vendor = editVendor || undefined;
       extractedData.vendor_name = editVendor || undefined;

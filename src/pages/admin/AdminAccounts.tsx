@@ -23,6 +23,11 @@ interface ProfileRow {
   admin_notes: string | null;
 }
 
+interface OrgMembershipRow {
+  user_id: string;
+  organizations: { name: string } | null;
+}
+
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
   pending: { label: 'Ausstehend', icon: <Clock className="h-3.5 w-3.5" />, className: 'bg-warning/10 text-warning border-warning/30' },
   active: { label: 'Aktiv', icon: <CheckCircle className="h-3.5 w-3.5" />, className: 'bg-green-500/10 text-green-600 border-green-500/30' },
@@ -87,9 +92,10 @@ const AdminAccounts = () => {
       const { data } = await supabase
         .from('organization_memberships')
         .select('user_id, organizations(name)')
-        .in('user_id', profileIds);
+        .in('user_id', profileIds)
+        .returns<OrgMembershipRow[]>();
       const map: Record<string, string> = {};
-      (data ?? []).forEach((m: any) => { map[m.user_id] = m.organizations?.name || ''; });
+      (data ?? []).forEach((m) => { map[m.user_id] = m.organizations?.name || ''; });
       return map;
     },
     enabled: profileIds.length > 0,

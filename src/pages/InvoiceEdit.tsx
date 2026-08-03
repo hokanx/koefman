@@ -78,15 +78,15 @@ const InvoiceEdit = () => {
       setDueDate(invoice.due_date);
       setStatus(invoice.status as InvoiceStatus);
       setNotes(invoice.notes || '');
-      setIntroText((invoice as any).intro_text || (settings as any)?.default_invoice_intro_text || fallbackIntro);
-      setFooterText((invoice as any).footer_text || (settings as any)?.default_invoice_footer_text || fallbackFooter);
-      setClosingText((invoice as any).closing_text || (settings as any)?.default_closing_text || fallbackClosing);
+      setIntroText(invoice.intro_text || settings?.default_invoice_intro_text || fallbackIntro);
+      setFooterText(invoice.footer_text || settings?.default_invoice_footer_text || fallbackFooter);
+      setClosingText(invoice.closing_text || settings?.default_closing_text || fallbackClosing);
     }
   }, [invoice, settings]);
 
   useEffect(() => {
     if (invoiceItems) {
-      setItems(invoiceItems.map((i: any) => ({
+      setItems(invoiceItems.map((i) => ({
         id: i.id, title: i.title, description: i.description || '', quantity: i.quantity,
         unit: i.unit, unit_price: i.unit_price, tax_rate: i.tax_rate,
         total: i.quantity * i.unit_price, sort_order: i.sort_order,
@@ -104,7 +104,7 @@ const InvoiceEdit = () => {
         customer_id: customerId, date, due_date: dueDate, status, notes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total,
-      } as any).eq('id', id!);
+      }).eq('id', id!);
       if (error) throw error;
 
       await supabase.from('invoice_items').delete().eq('invoice_id', id!);

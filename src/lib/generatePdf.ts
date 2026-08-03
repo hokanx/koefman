@@ -1,11 +1,16 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { type Styles } from 'jspdf-autotable';
+
+/** jsPDF instance augmented with the `lastAutoTable` property attached by the jspdf-autotable plugin. */
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: { finalY: number };
+}
 
 // ============================================================
 // TYPES
 // ============================================================
 
-interface BusinessInfo {
+export interface BusinessInfo {
   business_name: string;
   address?: string;
   email?: string;
@@ -22,14 +27,14 @@ interface BusinessInfo {
   owner_name?: string;
 }
 
-interface CustomerInfo {
+export interface CustomerInfo {
   name: string;
   address?: string;
   email?: string;
   phone?: string;
 }
 
-interface DocumentItem {
+export interface DocumentItem {
   title: string;
   description?: string;
   quantity: number;
@@ -393,7 +398,7 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
   // Build head/body/colStyles based on mode — completely separate branches, no conditionals inside rows
   let tableHead: string[][];
   let tableBody: string[][];
-  let colStyles: Record<number, any>;
+  let colStyles: Record<number, Partial<Styles>>;
 
   if (opts.hidesTaxColumn) {
     // Kleinunternehmer: Pos · Bezeichnung · Menge · Einzelpreis · Gesamt
@@ -447,7 +452,7 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
       lineWidth: 0,
     },
     headStyles: {
-      fillColor: false as any,
+      fillColor: false,
       textColor: [100, 100, 100],
       fontStyle: 'bold',
       fontSize: 7.5,
@@ -457,7 +462,7 @@ const renderItemsTable = (doc: jsPDF, y: number, opts: ItemsTableOptions): numbe
     columnStyles: colStyles,
   });
 
-  const tableEndY = (doc as any).lastAutoTable.finalY;
+  const tableEndY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY;
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.3);
   doc.line(MARGIN, tableEndY + 1, RIGHT_EDGE, tableEndY + 1);

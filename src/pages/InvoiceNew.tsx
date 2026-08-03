@@ -57,9 +57,9 @@ const InvoiceNew = () => {
       const fallbackFooter = 'Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer.';
       const fallbackClosing = 'Mit freundlichen Grüßen';
       const fallbackPayment = 'Zahlbar innerhalb von 14 Tagen ohne Abzug.';
-      setIntroText((settings as any).default_invoice_intro_text || fallbackIntro);
-      setFooterText((settings as any).default_invoice_footer_text || fallbackFooter);
-      setClosingText((settings as any).default_closing_text || fallbackClosing);
+      setIntroText(settings.default_invoice_intro_text || fallbackIntro);
+      setFooterText(settings.default_invoice_footer_text || fallbackFooter);
+      setClosingText(settings.default_closing_text || fallbackClosing);
       setPaymentTerms(settings.payment_terms || fallbackPayment);
       if (!dueDate) {
         const due = new Date();
@@ -67,7 +67,7 @@ const InvoiceNew = () => {
         setDueDate(due.toISOString().split('T')[0]);
       }
     }
-  }, [settings]);
+  }, [settings, dueDate]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -82,7 +82,7 @@ const InvoiceNew = () => {
         date, due_date: dueDate || date, status: 'open', notes,
         intro_text: introText, footer_text: footerText, closing_text: closingText,
         subtotal, tax_total, grand_total,
-      } as any).select().single();
+      }).select().single();
       if (error) throw error;
 
       if (items.length > 0) {

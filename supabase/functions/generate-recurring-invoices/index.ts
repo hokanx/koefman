@@ -1,5 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+/** Shape of a source invoice's line item, as copied onto the newly generated recurring invoice. */
+interface RecurringInvoiceSourceItem {
+  title: string;
+  description: string | null;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  tax_rate: number;
+  total: number;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -91,7 +102,7 @@ Deno.serve(async (req) => {
       const sourceItems = source.invoice_items || [];
       if (sourceItems.length > 0) {
         await supabase.from('invoice_items').insert(
-          sourceItems.map((item: any, i: number) => ({
+          sourceItems.map((item: RecurringInvoiceSourceItem, i: number) => ({
             invoice_id: newInvoice.id,
             title: item.title,
             description: item.description,
@@ -125,9 +136,10 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ success: true, generated }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating recurring invoices:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

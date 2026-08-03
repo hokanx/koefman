@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 export type OrgDocumentType = 'offer' | 'invoice' | 'contract' | 'reminder';
 export type OrgDocumentStatus = 'draft' | 'generated' | 'sent' | 'accepted' | 'paid' | 'cancelled' | 'archived';
@@ -18,9 +19,9 @@ export interface OrgDocument {
   title: string;
   document_number: string | null;
   template_id: string | null;
-  template_snapshot_json: any;
-  document_payload_json: any;
-  rendered_content_json: any;
+  template_snapshot_json: Json | null;
+  document_payload_json: Json | null;
+  rendered_content_json: Json | null;
   rendered_html: string | null;
   notes: string | null;
   recipient_name: string | null;
@@ -136,7 +137,7 @@ export const useOrgDocumentList = (filters?: { type?: OrgDocumentType; status?: 
     queryKey: ['org-documents', activeOrganizationId, filters?.type, filters?.status],
     queryFn: async () => {
       let query = supabase
-        .from('org_documents' as any)
+        .from('org_documents')
         .select('*')
         .eq('organization_id', activeOrganizationId!)
         .order('created_at', { ascending: false });
@@ -160,7 +161,7 @@ export const useOrgDocument = (documentId: string | null) => {
     queryKey: ['org-document', documentId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('org_documents' as any)
+        .from('org_documents')
         .select('*')
         .eq('id', documentId!)
         .single();
@@ -170,6 +171,18 @@ export const useOrgDocument = (documentId: string | null) => {
     enabled: !!documentId,
   });
 };
+
+interface TemplateSnapshot {
+  id: string;
+  name: string;
+  template_type: string;
+  scope_type: string;
+  version_number: number;
+  content_json: Json | null;
+  content_html: string | null;
+  content_text: string | null;
+  snapshot_at: string;
+}
 
 /**
  * Resolve template + create a new org document with template snapshot.
@@ -185,19 +198,19 @@ export const useCreateOrgDocument = () => {
       title: string;
       recipient_name?: string;
       recipient_email?: string;
-      document_payload_json?: any;
+      document_payload_json?: Json;
       notes?: string;
       amount_total?: number;
     }) => {
       if (!activeOrganizationId) throw new Error('Kein aktives Geschäft');
 
       // Resolve template
-      let templateSnapshot: any = {};
+      let templateSnapshot: TemplateSnapshot | Record<string, never> = {};
       let templateId: string | null = null;
 
       // Try org override first, then global
       const { data: orgTemplates } = await supabase
-        .from('document_templates' as any)
+        .from('document_templates')
         .select('*')
         .eq('template_type', input.document_type)
         .eq('scope_type', 'organization')
@@ -206,11 +219,11 @@ export const useCreateOrgDocument = () => {
         .order('version_number', { ascending: false })
         .limit(1);
 
-      let resolvedTemplate = (orgTemplates as any)?.[0];
+      let resolvedTemplate = orgTemplates?.[0];
 
       if (!resolvedTemplate) {
         const { data: globalTemplates } = await supabase
-          .from('document_templates' as any)
+          .from('document_templates')
           .select('*')
           .eq('template_type', input.document_type)
           .eq('scope_type', 'global')
@@ -218,7 +231,7 @@ export const useCreateOrgDocument = () => {
           .eq('is_active', true)
           .order('version_number', { ascending: false })
           .limit(1);
-        resolvedTemplate = (globalTemplates as any)?.[0];
+        resolvedTemplate = globalTemplates?.[0];
       }
 
       if (resolvedTemplate) {
@@ -237,21 +250,21 @@ export const useCreateOrgDocument = () => {
       }
 
       const { data, error } = await supabase
-        .from('org_documents' as any)
+        .from('org_documents')
         .insert({
           organization_id: activeOrganizationId,
           created_by_user_id: user?.id ?? null,
           document_type: input.document_type,
           title: input.title,
           template_id: templateId,
-          template_snapshot_json: templateSnapshot,
+          template_snapshot_json: templateSnapshot as Json,
           document_payload_json: input.document_payload_json ?? {},
           recipient_name: input.recipient_name ?? null,
           recipient_email: input.recipient_email ?? null,
           amount_total: input.amount_total ?? 0,
           notes: input.notes ?? null,
           status: 'draft',
-        } as any)
+        })
         .select('*')
         .single();
 
@@ -262,7 +275,7 @@ export const useCreateOrgDocument = () => {
       queryClient.invalidateQueries({ queryKey: ['org-documents'] });
       toast.success('Dokument erstellt');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || 'Fehler beim Erstellen');
     },
   });
@@ -277,8 +290,8 @@ export const useUpdateOrgDocument = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<OrgDocument> & { id: string }) => {
       const { data, error } = await supabase
-        .from('org_documents' as any)
-        .update(updates as any)
+        .from('org_documents')
+        .update(updates)
         .eq('id', id)
         .select('*')
         .single();
@@ -290,7 +303,7 @@ export const useUpdateOrgDocument = () => {
       queryClient.invalidateQueries({ queryKey: ['org-document', doc.id] });
       toast.success('Dokument aktualisiert');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || 'Fehler beim Aktualisieren');
     },
   });
@@ -305,7 +318,7 @@ export const useDeleteOrgDocument = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('org_documents' as any)
+        .from('org_documents')
         .delete()
         .eq('id', id);
       if (error) throw error;
@@ -314,7 +327,7 @@ export const useDeleteOrgDocument = () => {
       queryClient.invalidateQueries({ queryKey: ['org-documents'] });
       toast.success('Dokument gelöscht');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || 'Fehler beim Löschen');
     },
   });

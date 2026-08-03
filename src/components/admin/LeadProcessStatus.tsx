@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { Check, Circle, Minus, ChevronRight, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type { Tables } from '@/integrations/supabase/types';
+
+type OfferRow = Pick<Tables<'offers'>, 'id' | 'offer_number' | 'status' | 'grand_total' | 'customer_id' | 'created_at'>;
+type InvoiceRow = Pick<Tables<'invoices'>, 'id' | 'invoice_number' | 'status' | 'grand_total' | 'customer_id' | 'source_offer_id' | 'created_at'>;
+type ContractRow = Pick<Tables<'contracts'>, 'id' | 'contract_number' | 'status' | 'grand_total' | 'customer_id' | 'source_offer_id' | 'created_at'>;
 
 type StepState = 'completed' | 'open' | 'not_started' | 'not_linked';
 
@@ -33,12 +38,7 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!leadEmail) return;
-    loadPipeline();
-  }, [leadEmail, hasBooking]);
-
-  const loadPipeline = async () => {
+  const loadPipeline = useCallback(async () => {
     setLoading(true);
 
     // Find ONE customer by email (most recent)
@@ -51,9 +51,9 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
 
     const customerId = customers?.[0]?.id ?? null;
 
-    let offers: any[] = [];
-    let invoices: any[] = [];
-    let contracts: any[] = [];
+    let offers: OfferRow[] = [];
+    let invoices: InvoiceRow[] = [];
+    let contracts: ContractRow[] = [];
 
     if (customerId) {
       const [offersRes, invoicesRes, contractsRes] = await Promise.all([
@@ -163,7 +163,12 @@ const LeadProcessStatus = ({ leadEmail, hasBooking, onClose }: LeadProcessStatus
     else setNextAction(null);
 
     setLoading(false);
-  };
+  }, [leadEmail, hasBooking]);
+
+  useEffect(() => {
+    if (!leadEmail) return;
+    loadPipeline();
+  }, [leadEmail, loadPipeline]);
 
   if (loading) {
     return (

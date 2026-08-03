@@ -10,6 +10,11 @@ import { formatAddress } from '@/types';
 import { formatDateDE } from '@/lib/generatePdf';
 import { formatEUR } from '@/lib/utils';
 import type { Customer } from '@/types';
+import type { Tables } from '@/integrations/supabase/types';
+import type { StatusBadgeProps } from '@/components/shared/StatusBadge';
+
+type RelatedOfferRow = Pick<Tables<'offers'>, 'id' | 'offer_number' | 'status' | 'grand_total' | 'date'>;
+type RelatedInvoiceRow = Pick<Tables<'invoices'>, 'id' | 'invoice_number' | 'status' | 'grand_total' | 'date'>;
 
 const CustomerDetail = () => {
   const { t } = useLanguage();
@@ -23,7 +28,7 @@ const CustomerDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from('customers').select('*').eq('id', id!).eq('user_id', user!.id).single();
       if (error) throw error;
-      return data as any as Customer;
+      return data as unknown as Customer;
     },
     enabled: !!user && !!id,
   });
@@ -40,7 +45,7 @@ const CustomerDetail = () => {
   const { data: relatedOffers = [] } = useQuery({
     queryKey: ['customer-offers', id],
     queryFn: async () => {
-      const { data } = await supabase.from('offers').select('id, offer_number, status, grand_total, date').eq('customer_id', id!).order('created_at', { ascending: false }).limit(5);
+      const { data } = await supabase.from('offers').select('id, offer_number, status, grand_total, date').eq('customer_id', id!).order('created_at', { ascending: false }).limit(5).returns<RelatedOfferRow[]>();
       return data || [];
     },
     enabled: !!id,
@@ -49,7 +54,7 @@ const CustomerDetail = () => {
   const { data: relatedInvoices = [] } = useQuery({
     queryKey: ['customer-invoices', id],
     queryFn: async () => {
-      const { data } = await supabase.from('invoices').select('id, invoice_number, status, grand_total, date').eq('customer_id', id!).order('created_at', { ascending: false }).limit(5);
+      const { data } = await supabase.from('invoices').select('id, invoice_number, status, grand_total, date').eq('customer_id', id!).order('created_at', { ascending: false }).limit(5).returns<RelatedInvoiceRow[]>();
       return data || [];
     },
     enabled: !!id,
@@ -156,7 +161,7 @@ const CustomerDetail = () => {
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
             <h3 className="mb-3 font-semibold text-foreground">{t.customers.relatedOffers}</h3>
             <div className="space-y-2">
-              {relatedOffers.map((o: any) => (
+              {relatedOffers.map((o) => (
                 <Link key={o.id} to={`/offers/${o.id}`} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm hover:bg-muted/50">
                   <div>
                     <span className="font-medium text-foreground">{o.offer_number}</span>
@@ -164,7 +169,7 @@ const CustomerDetail = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">{formatEUR(o.grand_total)}</span>
-                    <StatusBadge status={o.status} label={statusLabels[o.status] || o.status} />
+                    <StatusBadge status={o.status as StatusBadgeProps['status']} label={statusLabels[o.status] || o.status} />
                   </div>
                 </Link>
               ))}
@@ -176,7 +181,7 @@ const CustomerDetail = () => {
           <div className="rounded-xl border border-border bg-card p-4 md:p-6">
             <h3 className="mb-3 font-semibold text-foreground">{t.customers.relatedInvoices}</h3>
             <div className="space-y-2">
-              {relatedInvoices.map((inv: any) => (
+              {relatedInvoices.map((inv) => (
                 <Link key={inv.id} to={`/invoices/${inv.id}`} className="flex items-center justify-between rounded-lg bg-muted/30 p-3 text-sm hover:bg-muted/50">
                   <div>
                     <span className="font-medium text-foreground">{inv.invoice_number}</span>
@@ -184,7 +189,7 @@ const CustomerDetail = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">{formatEUR(inv.grand_total)}</span>
-                    <StatusBadge status={inv.status} label={statusLabels[inv.status] || inv.status} />
+                    <StatusBadge status={inv.status as StatusBadgeProps['status']} label={statusLabels[inv.status] || inv.status} />
                   </div>
                 </Link>
               ))}

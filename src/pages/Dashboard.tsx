@@ -5,6 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { formatEUR } from '@/lib/utils';
 
+// `documents.extracted_data` is stored as generic Json; only these numeric
+// fields are read here, so narrow to the shape actually used.
+interface ExtractedExpenseData {
+  gross_amount?: number;
+  amount?: number;
+  total?: number;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -25,12 +33,12 @@ const Dashboard = () => {
       ]);
 
       const totalRevenue = (paidInvoices || []).reduce((s, i) => s + Number(i.grand_total), 0);
-      const totalExpenses = (expenses || []).reduce((s, d: any) => {
-        const ext = d.extracted_data;
+      const totalExpenses = (expenses || []).reduce((s, d) => {
+        const ext = d.extracted_data as ExtractedExpenseData | null;
         const amt = ext?.gross_amount || ext?.amount || ext?.total || 0;
         return s + Number(amt);
       }, 0);
-      const notExported = (expenses || []).filter((d: any) => d.status === 'neu' || d.status === 'hochgeladen').length;
+      const notExported = (expenses || []).filter((d) => d.status === 'neu' || d.status === 'hochgeladen').length;
 
       return {
         totalRevenue,

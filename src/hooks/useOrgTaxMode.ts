@@ -7,7 +7,7 @@ import { useWorkspace } from '@/contexts/WorkspaceContext';
 export const useOrgTaxMode = () => {
   const { activeOrganization, isLoading } = useWorkspace();
 
-  const taxMode = (activeOrganization as any)?.tax_mode as string | undefined;
+  const taxMode = activeOrganization?.tax_mode;
   const isKleinunternehmer = taxMode === 'small_business';
 
   return {

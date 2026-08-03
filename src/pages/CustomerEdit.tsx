@@ -61,9 +61,9 @@ const CustomerEdit = () => {
         name: customer.name, customer_type: customer.customer_type as CustomerType,
         contact_person: customer.contact_person || '', phone: customer.phone || '',
         email: customer.email || '',
-        street: (customer as any).street || '', house_number: (customer as any).house_number || '',
-        postal_code: (customer as any).postal_code || '', city: (customer as any).city || '',
-        country: (customer as any).country || '',
+        street: customer.street || '', house_number: customer.house_number || '',
+        postal_code: customer.postal_code || '', city: customer.city || '',
+        country: customer.country || '',
         notes: customer.notes || '',
       });
     }
@@ -96,7 +96,7 @@ const CustomerEdit = () => {
         phone: form.phone, email: form.email, address, notes: form.notes,
         street: form.street, house_number: form.house_number, postal_code: form.postal_code,
         city: form.city, country: form.country,
-      } as any).eq('id', id!);
+      }).eq('id', id!);
       if (error) throw error;
       const category = ext.business_category;
       if (category !== 'general') {

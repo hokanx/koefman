@@ -10,8 +10,18 @@ import { formatDateDE } from '@/lib/generatePdf';
 import { formatEUR } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useOrgTaxMode } from '@/hooks/useOrgTaxMode';
+import type { Tables } from '@/integrations/supabase/types';
+import type { StatusBadgeProps } from '@/components/shared/StatusBadge';
 
 type Tab = 'offers' | 'invoices';
+
+type OfferListItem = Pick<Tables<'offers'>, 'id' | 'offer_number' | 'status' | 'date' | 'grand_total'> & {
+  customers: Pick<Tables<'customers'>, 'name'> | null;
+};
+
+type InvoiceListItem = Pick<Tables<'invoices'>, 'id' | 'invoice_number' | 'status' | 'date' | 'due_date' | 'grand_total'> & {
+  customers: Pick<Tables<'customers'>, 'name'> | null;
+};
 
 const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: 'offers', label: 'Angebote', icon: FileText },
@@ -38,7 +48,7 @@ const Revenue = () => {
         .select('id, offer_number, status, date, grand_total, customers(name)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
-      return data || [];
+      return (data || []) as OfferListItem[];
     },
     enabled: !!user,
   });
@@ -51,30 +61,30 @@ const Revenue = () => {
         .select('id, invoice_number, status, date, due_date, grand_total, customers(name)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
-      return data || [];
+      return (data || []) as InvoiceListItem[];
     },
     enabled: !!user,
   });
 
 
   const totalPaid = invoices
-    .filter((i: any) => i.status === 'paid')
-    .reduce((sum: number, i: any) => sum + Number(i.grand_total), 0);
+    .filter((i) => i.status === 'paid')
+    .reduce((sum, i) => sum + Number(i.grand_total), 0);
 
   const isLoading = tab === 'offers' ? loadingOffers : loadingInvoices;
 
   const renderList = () => {
     if (tab === 'offers') {
       if (offers.length === 0) return <EmptyState icon={FileText} title="Erstes Angebot erstellen" description="Erstellen Sie Ihr erstes Angebot." />;
-      return offers.map((o: any) => (
+      return offers.map((o) => (
         <Link key={o.id} to={`/offers/${o.id}`} state={{ from: '/revenue' }} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 transition hover:border-primary/40">
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-foreground truncate">{(o.customers as any)?.name || o.offer_number}</p>
+            <p className="font-medium text-foreground truncate">{o.customers?.name || o.offer_number}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{o.offer_number} · {formatDateDE(o.date)}</p>
           </div>
           <div className="flex items-center gap-3 ml-3 shrink-0">
             <span className="font-medium text-foreground">{formatEUR(o.grand_total)}</span>
-            <StatusBadge status={o.status} label={statusLabel[o.status] || o.status} />
+            <StatusBadge status={o.status as StatusBadgeProps['status']} label={statusLabel[o.status] || o.status} />
           </div>
         </Link>
       ));
@@ -82,18 +92,18 @@ const Revenue = () => {
 
     if (tab === 'invoices') {
       if (invoices.length === 0) return <EmptyState icon={Receipt} title="Erste Rechnung erstellen" description="Erstellen Sie Ihre erste Rechnung." />;
-      return invoices.map((inv: any) => {
+      return invoices.map((inv) => {
         const isOverdue = inv.status === 'open' && inv.due_date && new Date(inv.due_date) < new Date();
         const displayStatus = isOverdue ? 'overdue' : inv.status;
         return (
           <Link key={inv.id} to={`/invoices/${inv.id}`} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 transition hover:border-primary/40">
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-foreground truncate">{(inv.customers as any)?.name || inv.invoice_number}</p>
+              <p className="font-medium text-foreground truncate">{inv.customers?.name || inv.invoice_number}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{inv.invoice_number} · {formatDateDE(inv.date)}</p>
             </div>
             <div className="flex items-center gap-3 ml-3 shrink-0">
               <span className="font-medium text-foreground">{formatEUR(inv.grand_total)}</span>
-              <StatusBadge status={displayStatus as any} label={statusLabel[displayStatus] || displayStatus} />
+              <StatusBadge status={displayStatus as StatusBadgeProps['status']} label={statusLabel[displayStatus] || displayStatus} />
             </div>
           </Link>
         );
