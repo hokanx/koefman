@@ -7,6 +7,40 @@ high-end PDFs** and a **closed-loop offer → signature → invoice → paid lif
 
 ---
 
+## 0. Phase 0 — Legacy web app stabilization (current, separate codebase)
+
+Before the rebuild described in this spec begins, the **existing** Vite +
+React + Supabase web app (this repo, live at koefman.de) needed to be
+stabilized and secured — it's a different codebase from the Expo/React
+Native rebuild below and is tracked here only so it isn't mistaken for
+progress against the sections that follow.
+
+**In scope (Phase 0):**
+- Security: fixed an `organization_memberships` RLS policy that allowed
+  cross-organization privilege escalation.
+- Infrastructure: original Supabase project became inaccessible (account
+  unrecoverable); migrated the app to a fresh project (`koefman-web`) with
+  all schema/RLS/edge functions replayed.
+- Code health: eliminated all `@typescript-eslint/no-explicit-any` lint
+  errors (492 → 0) across the codebase.
+- Email delivery: configured custom SMTP (Resend) + branded confirmation
+  email template; fixed `auth.site_url` pointing at `localhost`.
+- Bug fixes: admin-bootstrap gap causing new accounts to skip
+  onboarding/org-creation; a date-formatting crash that blanked the public
+  offer/invoice/contract pages when the underlying record hadn't loaded yet.
+
+**Known outstanding (not yet applied):**
+- `invoices.public_token` / `org_documents.public_token` are missing a DB
+  default (`DEFAULT (gen_random_uuid())::text`), so public share links can
+  resolve to `NULL` until a document is first sent. Root cause diagnosed,
+  fix drafted, not yet applied to `koefman-web`.
+
+**Relationship to the rebuild below:** independent. Phase 0 keeps the
+current web app (and its real customer data) working at koefman.de; it does
+not block, gate, or share code/backend with the Expo/React Native rebuild.
+
+---
+
 ## 1. Product summary
 
 KÖFMAN Simple Office — a fast, premium, mobile-native office tool for a single
