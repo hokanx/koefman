@@ -96,7 +96,7 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
                 type="number"
                 min="0"
                 step="0.01"
-                value={item.quantity}
+                value={item.quantity === 0 ? '' : item.quantity}
                 onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                 className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
@@ -123,7 +123,7 @@ const LineItemsEditor = ({ items, onChange, labels, showTemplatePicker = false, 
                 type="number"
                 min="0"
                 step="0.01"
-                value={item.unit_price}
+                value={item.unit_price === 0 ? '' : item.unit_price}
                 onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
                 className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
