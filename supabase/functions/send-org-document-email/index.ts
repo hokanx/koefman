@@ -173,19 +173,23 @@ async function loadBranding(supabaseAdmin: SupabaseClient, organizationId: strin
     throw emailSettingsError;
   }
 
-  // Fallback reply-to: try business_settings email if no reply_to configured
+  // business_settings.business_name is the value users actually edit in Settings —
+  // it takes priority over organizations.name, which is set once at onboarding and
+  // has no UI to edit afterward, so it silently goes stale if the business is renamed.
+  let businessName: string | undefined;
   let replyTo = emailSettings?.reply_to_email || undefined;
-  if (!replyTo && userId) {
+  if (userId) {
     const { data: bs } = await supabaseAdmin
       .from('business_settings')
-      .select('email')
+      .select('business_name, email')
       .eq('user_id', userId)
       .maybeSingle();
-    replyTo = bs?.email || undefined;
+    businessName = bs?.business_name || undefined;
+    if (!replyTo) replyTo = bs?.email || undefined;
   }
 
   return {
-    senderName: emailSettings?.sender_name || org.name || 'KÖFMAN',
+    senderName: emailSettings?.sender_name || businessName || org.name || 'KÖFMAN',
     replyTo,
     logoUrl: emailSettings?.logo_url || '',
     footerText: emailSettings?.footer_text || '',
