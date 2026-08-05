@@ -16,8 +16,10 @@ export function formatNumber(value: number, decimals = 2): string {
 }
 
 /** Format a date as DD.MM.YYYY */
-export function formatDateDE(date: Date | string): string {
+export function formatDateDE(date: Date | string | null | undefined): string {
+  if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
   const day = String(d.getDate()).padStart(2, '0');
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const year = d.getFullYear();
@@ -25,8 +27,10 @@ export function formatDateDE(date: Date | string): string {
 }
 
 /** Format a date+time as DD.MM.YYYY, HH:mm */
-export function formatDateTimeDE(date: Date | string): string {
+export function formatDateTimeDE(date: Date | string | null | undefined): string {
+  if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
   const datePart = formatDateDE(d);
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
