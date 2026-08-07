@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Receipt, Settings, LogOut, Inbox, MoreHorizontal, Sun, Moon, PiggyBank, FolderOpen, Shield, ScrollText } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, Settings, LogOut, Inbox, MoreHorizontal, Sun, Moon, PiggyBank, FolderOpen, Shield, ScrollText, type LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -19,6 +19,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+
+interface NavItem {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  badge?: number;
+}
 
 const AppLayout = () => {
   const { t } = useLanguage();
@@ -45,14 +52,14 @@ const AppLayout = () => {
     refetchInterval: 30000,
   });
 
-  const primaryNavItems: { to: string; icon: typeof LayoutDashboard; label: string; badge?: number }[] = [
+  const primaryNavItems: NavItem[] = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Übersicht' },
     { to: '/revenue', icon: Receipt, label: 'Einnahmen' },
     { to: '/expenses', icon: FolderOpen, label: 'Ausgaben' },
     { to: '/tax-export', icon: PiggyBank, label: 'Steuer Export' },
   ];
 
-  const secondaryNavItems: { to: string; icon: typeof LayoutDashboard; label: string; badge?: number }[] = [
+  const secondaryNavItems: NavItem[] = [
     { to: '/customers', icon: Users, label: t.nav.customers, badge: 0 },
     { to: '/leads', icon: Inbox, label: t.nav.leads, badge: newLeadsCount },
     { to: '/contracts', icon: ScrollText, label: 'Verträge', badge: 0 },

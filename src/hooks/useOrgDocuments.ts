@@ -3,10 +3,33 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import type { Json } from '@/integrations/supabase/types';
+import type { Json, TablesUpdate } from '@/integrations/supabase/types';
 
 export type OrgDocumentType = 'offer' | 'invoice' | 'contract' | 'reminder';
 export type OrgDocumentStatus = 'draft' | 'generated' | 'sent' | 'accepted' | 'paid' | 'cancelled' | 'archived';
+
+/** Snapshot of the template used to render a document, captured at creation time. */
+export interface OrgDocumentTemplateSnapshot {
+  id: string;
+  name: string;
+  template_type: string;
+  scope_type: string;
+  version_number: number;
+  content_json: Json | null;
+  content_html: string | null;
+  content_text: string | null;
+  snapshot_at: string;
+}
+
+/** Free-form, type-specific fields captured on a document (varies by document_type). */
+export interface OrgDocumentPayload {
+  description?: string;
+  due_date?: string;
+  start_date?: string;
+  related_invoice?: string;
+  source_offer_id?: string;
+  source_offer_number?: string | null;
+}
 
 export interface OrgDocument {
   id: string;
@@ -19,8 +42,8 @@ export interface OrgDocument {
   title: string;
   document_number: string | null;
   template_id: string | null;
-  template_snapshot_json: Json | null;
-  document_payload_json: Json | null;
+  template_snapshot_json: OrgDocumentTemplateSnapshot | Record<string, never> | null;
+  document_payload_json: OrgDocumentPayload | null;
   rendered_content_json: Json | null;
   rendered_html: string | null;
   notes: string | null;
@@ -28,6 +51,8 @@ export interface OrgDocument {
   recipient_email: string | null;
   amount_total: number | null;
   currency: string;
+  public_token: string | null;
+  sent_at: string | null;
 }
 
 // --- Labels ---
@@ -172,18 +197,6 @@ export const useOrgDocument = (documentId: string | null) => {
   });
 };
 
-interface TemplateSnapshot {
-  id: string;
-  name: string;
-  template_type: string;
-  scope_type: string;
-  version_number: number;
-  content_json: Json | null;
-  content_html: string | null;
-  content_text: string | null;
-  snapshot_at: string;
-}
-
 /**
  * Resolve template + create a new org document with template snapshot.
  */
@@ -198,14 +211,14 @@ export const useCreateOrgDocument = () => {
       title: string;
       recipient_name?: string;
       recipient_email?: string;
-      document_payload_json?: Json;
+      document_payload_json?: OrgDocumentPayload;
       notes?: string;
       amount_total?: number;
     }) => {
       if (!activeOrganizationId) throw new Error('Kein aktives Geschäft');
 
       // Resolve template
-      let templateSnapshot: TemplateSnapshot | Record<string, never> = {};
+      let templateSnapshot: OrgDocumentTemplateSnapshot | Record<string, never> = {};
       let templateId: string | null = null;
 
       // Try org override first, then global
@@ -257,8 +270,8 @@ export const useCreateOrgDocument = () => {
           document_type: input.document_type,
           title: input.title,
           template_id: templateId,
-          template_snapshot_json: templateSnapshot as Json,
-          document_payload_json: input.document_payload_json ?? {},
+          template_snapshot_json: templateSnapshot as unknown as Json,
+          document_payload_json: (input.document_payload_json ?? {}) as unknown as Json,
           recipient_name: input.recipient_name ?? null,
           recipient_email: input.recipient_email ?? null,
           amount_total: input.amount_total ?? 0,
@@ -291,7 +304,7 @@ export const useUpdateOrgDocument = () => {
     mutationFn: async ({ id, ...updates }: Partial<OrgDocument> & { id: string }) => {
       const { data, error } = await supabase
         .from('org_documents')
-        .update(updates)
+        .update(updates as unknown as TablesUpdate<'org_documents'>)
         .eq('id', id)
         .select('*')
         .single();

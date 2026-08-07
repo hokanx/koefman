@@ -17,7 +17,7 @@ import {
   useUpdateOrgDocument,
 } from '@/hooks/useOrgDocuments';
 import { formatDateDE } from '@/lib/utils';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Tables, Json } from '@/integrations/supabase/types';
 
 const STATUS_BADGE_MAP: Record<string, StatusBadgeProps['status']> = {
   draft: 'draft',
@@ -113,7 +113,7 @@ const OrgDocumentDetail = ({ document: doc, open, onOpenChange }: Props) => {
           recipient_email: doc.recipient_email,
           amount_total: doc.amount_total,
           template_id: doc.template_id,
-          template_snapshot_json: doc.template_snapshot_json,
+          template_snapshot_json: doc.template_snapshot_json as unknown as Json,
           document_payload_json: {
             ...(doc.document_payload_json ?? {}),
             source_offer_id: doc.id,
