@@ -1161,8 +1161,8 @@ Edge Functions → Secrets:
 | --- | --- | --- |
 | `GEMINI_API_KEY` | `analyze-receipt`, `generate-lead-analysis` | Google AI Studio key |
 | `RESEND_API_KEY` | `generate-lead-analysis`, `send-org-document-email` | Transactional email |
-| `GEMINI_RECEIPT_MODEL` | `analyze-receipt` | Optional. Defaults to `gemini-2.5-flash` |
-| `GEMINI_ANALYSIS_MODEL` | `generate-lead-analysis` | Optional. Defaults to `gemini-3-flash-preview` |
+| `GEMINI_RECEIPT_MODEL` | `analyze-receipt` | Optional. Defaults to `gemini-3.6-flash` |
+| `GEMINI_ANALYSIS_MODEL` | `generate-lead-analysis` | Optional. Defaults to `gemini-3.6-flash` |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected into edge
 functions automatically.

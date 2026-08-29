@@ -32,7 +32,7 @@ serve(async (req) => {
 
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
-    const GEMINI_MODEL = Deno.env.get("GEMINI_RECEIPT_MODEL") ?? "gemini-2.5-flash";
+    const GEMINI_MODEL = Deno.env.get("GEMINI_RECEIPT_MODEL") ?? "gemini-3.6-flash";
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

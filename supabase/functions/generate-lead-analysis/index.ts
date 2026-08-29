@@ -399,7 +399,7 @@ serve(async (req) => {
 
     // 2. Generate AI analysis
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    const GEMINI_MODEL = Deno.env.get("GEMINI_ANALYSIS_MODEL") ?? "gemini-3-flash-preview";
+    const GEMINI_MODEL = Deno.env.get("GEMINI_ANALYSIS_MODEL") ?? "gemini-3.6-flash";
     let analysis: {
       headline: string;
       main_issue: string;
