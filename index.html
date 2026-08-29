@@ -3,6 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!--
+      The app used to be hosted on Lovable. Forward anyone still arriving on the
+      old *.lovable.app URL to the live site, preserving the path they asked for.
+
+      This runs before the app bundle loads, so it still works if that build is
+      misconfigured. It is guarded on hostname, so it never fires on koefman.de,
+      on Vercel preview URLs, or on localhost. Delete this block once the Lovable
+      project is gone.
+    -->
+    <script>
+      (function () {
+        if (/(^|\.)lovable\.app$/i.test(location.hostname)) {
+          location.replace(
+            "https://koefman.de" + location.pathname + location.search + location.hash
+          );
+        }
+      })();
+    </script>
     <!-- TODO: Set the document title to the name of your application -->
     <title>KÖFMAN – Büroverwaltung</title>
     <meta name="description" content="KÖFMAN OS – Einfache Büroverwaltung">
