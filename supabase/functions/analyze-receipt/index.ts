@@ -6,6 +6,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * Base64-encode bytes in chunks. Encoding in one pass would blow the argument
+ * limit of String.fromCharCode on larger receipt scans.
+ */
+function toBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -17,8 +30,9 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
+    const GEMINI_MODEL = Deno.env.get("GEMINI_RECEIPT_MODEL") ?? "gemini-2.5-flash";
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -36,17 +50,28 @@ serve(async (req) => {
       });
     }
 
-    const imageUrl = signedData.signedUrl;
+    // Google's OpenAI-compatible endpoint documents base64 data URIs for image
+    // input, so send the bytes inline rather than a signed URL the model host
+    // would have to fetch itself.
+    const imageRes = await fetch(signedData.signedUrl);
+    if (!imageRes.ok) {
+      console.error("Failed to download file for analysis:", imageRes.status);
+      return new Response(JSON.stringify({ error: "Could not access file" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const imageMediaType = imageRes.headers.get("content-type") ?? "image/jpeg";
+    const imageUrl = `data:${imageMediaType};base64,${toBase64(new Uint8Array(await imageRes.arrayBuffer()))}`;
 
-    // Call Lovable AI with vision
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Call the Gemini API (OpenAI-compatible endpoint) with vision
+    const aiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GEMINI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: GEMINI_MODEL,
         messages: [
           {
             role: "system",
@@ -132,7 +157,7 @@ serve(async (req) => {
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errText);
+      console.error("Gemini API error:", aiResponse.status, errText);
 
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Analyse gerade nicht verfügbar. Bitte versuchen Sie es später erneut." }), {

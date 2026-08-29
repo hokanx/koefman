@@ -1128,3 +1128,41 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+Create a `.env` file in the project root with:
+
+```sh
+VITE_SUPABASE_URL=<your-supabase-project-url>
+VITE_SUPABASE_PUBLISHABLE_KEY=<your-supabase-anon-key>
+```
+
+These are the only two variables the client reads. They are published in the
+browser bundle by design, so they are not secrets — but `.env` is gitignored
+and should stay untracked.
+
+## Deployment
+
+The app is a static Vite single-page app deployed on Vercel. `vercel.json`
+pins the build command, output directory, and the rewrite that sends every
+non-file request to `index.html` so client-side routes resolve on refresh.
+
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the Vercel
+project's environment variables (Production, Preview, and Development), then
+deploy. Pushes to `main` deploy to production; every other branch gets a
+preview URL.
+
+### Supabase secrets
+
+The edge functions read their own secrets from Supabase, not from Vercel. Set
+these with `supabase secrets set` or in the dashboard under
+Edge Functions → Secrets:
+
+| Secret | Used by | Notes |
+| --- | --- | --- |
+| `GEMINI_API_KEY` | `analyze-receipt`, `generate-lead-analysis` | Google AI Studio key |
+| `RESEND_API_KEY` | `generate-lead-analysis`, `send-org-document-email` | Transactional email |
+| `GEMINI_RECEIPT_MODEL` | `analyze-receipt` | Optional. Defaults to `gemini-2.5-flash` |
+| `GEMINI_ANALYSIS_MODEL` | `generate-lead-analysis` | Optional. Defaults to `gemini-3-flash-preview` |
+
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected into edge
+functions automatically.

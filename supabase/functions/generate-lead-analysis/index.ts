@@ -398,7 +398,8 @@ serve(async (req) => {
 
 
     // 2. Generate AI analysis
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    const GEMINI_MODEL = Deno.env.get("GEMINI_ANALYSIS_MODEL") ?? "gemini-3-flash-preview";
     let analysis: {
       headline: string;
       main_issue: string;
@@ -409,9 +410,9 @@ serve(async (req) => {
     let analysisStatus = "completed";
     let errorMessage: string | null = null;
 
-    if (!LOVABLE_API_KEY) {
+    if (!GEMINI_API_KEY) {
       analysisStatus = "failed";
-      errorMessage = "LOVABLE_API_KEY not configured";
+      errorMessage = "GEMINI_API_KEY not configured";
       analysis = {
         headline: "Kurzanalyse",
         main_issue: "Analyse konnte nicht generiert werden.",
@@ -436,15 +437,15 @@ serve(async (req) => {
       };
 
       const aiResponse = await fetch(
-        "https://ai.gateway.lovable.dev/v1/chat/completions",
+        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${GEMINI_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+            model: GEMINI_MODEL,
             messages: [
               {
                 role: "system",
@@ -519,9 +520,9 @@ Erstelle eine strukturierte Mini-Analyse.`,
 
       if (!aiResponse.ok) {
         const errText = await aiResponse.text();
-        console.error("AI gateway error:", aiResponse.status, errText);
+        console.error("Gemini API error:", aiResponse.status, errText);
         analysisStatus = "failed";
-        errorMessage = `AI gateway ${aiResponse.status}: ${errText.slice(0, 200)}`;
+        errorMessage = `Gemini API ${aiResponse.status}: ${errText.slice(0, 200)}`;
         analysis = {
           headline: "Kurzanalyse",
           main_issue: "Analyse konnte gerade nicht generiert werden.",
