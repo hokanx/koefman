@@ -28,6 +28,8 @@ export interface OrgDocument {
   recipient_email: string | null;
   amount_total: number | null;
   currency: string;
+  public_token: string | null;
+  sent_at: string | null;
 }
 
 // --- Labels ---
