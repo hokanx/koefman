@@ -39,3 +39,5 @@ supabase/.temp/
 
 .vercel
 .env*
+# ...but the template with no values in it must be tracked
+!.env.example
